@@ -1,6 +1,6 @@
-$picture-overlay-handle-width: 18px;
+$picture-overlay-handle-width: 24px;
 $image-overlay-form-width: 350px - $picture-overlay-handle-width;
-$image-overlay-transition-duration: 200ms;
+$image-overlay-transition-duration: $transition-duration;
 $image-overlay-transition-easing: ease-in;
 
 .alchemy-image-overlay {
@@ -41,8 +41,8 @@ $image-overlay-transition-easing: ease-in;
     .picture-overlay-handle {
       right: 0;
 
-      .icon-angle-double-right {
-        @include transform(rotate(180deg) translate(50%, 50%));
+      .icon {
+        transform: rotate(180deg) translate(50%, 50%);
       }
     }
   }
@@ -64,13 +64,13 @@ $image-overlay-transition-easing: ease-in;
   top: 2*$default-padding;
   right: 2*$default-padding + $picture-overlay-handle-width + $image-overlay-form-width;
   cursor: pointer;
-  @include transition(right $image-overlay-transition-duration $image-overlay-transition-easing);
+  transition: right $image-overlay-transition-duration $image-overlay-transition-easing;
 
-  .icon.close.small {
-    font-size: 32px;
+  .icon {
+    font-size: 2em;
     color: $medium-gray;
     text-shadow: 0 0 $default-padding $text-color;
-    @include transition(color $image-overlay-transition-duration linear);
+    transition: color $image-overlay-transition-duration linear;
 
     &:hover {
       color: $white;
@@ -84,11 +84,10 @@ $image-overlay-transition-easing: ease-in;
   top: 0;
   background-color: $medium-gray;
   box-shadow: -2px 0 $default-padding -2px $text-color;
-  @include transition(right $image-overlay-transition-duration $image-overlay-transition-easing);
+  transition: right $image-overlay-transition-duration $image-overlay-transition-easing;
 }
 
 .picture-details-overlay {
-  box-sizing: border-box;
   right: 0;
   width: $image-overlay-form-width;
   height: 100%;
@@ -97,12 +96,7 @@ $image-overlay-transition-easing: ease-in;
 
   form .control-label,
   .resource_info .value label {
-    width: 100%;
     text-align: left;
-    float: none;
-    display: block;
-    padding: 0;
-    margin: $default-margin 0 0;
   }
 
   form .input .hint {
@@ -122,14 +116,14 @@ $image-overlay-transition-easing: ease-in;
   right: $image-overlay-form-width;
   cursor: pointer;
 
-  .icon-angle-double-right {
+  .icon {
     position: absolute;
     top: 50%;
     left: 50%;
-    @include transform(translate(-50%, -50%));
-    font-size: 14px;
+    transform: translate(-50%, -50%);
+    font-size: 1.2em;
     color: $text-color;
-    @include transition(transform $image-overlay-transition-duration $image-overlay-transition-easing);
+    transition: transform $image-overlay-transition-duration $image-overlay-transition-easing;
   }
 
   &:hover {
@@ -138,7 +132,6 @@ $image-overlay-transition-easing: ease-in;
 }
 
 .zoomed-picture-background {
-  box-sizing: border-box;
   width: 100%;
   height: 100%;
   padding-top: 2*$default-padding;
@@ -148,7 +141,7 @@ $image-overlay-transition-easing: ease-in;
   margin: 0 auto;
   text-align: center;
   cursor: pointer;
-  @include transition(padding-right $image-overlay-transition-duration $image-overlay-transition-easing);
+  transition: padding-right $image-overlay-transition-duration $image-overlay-transition-easing;
 
   &:before {
     content: '';
@@ -175,33 +168,43 @@ $image-overlay-transition-easing: ease-in;
   padding: 2*$default-padding 0;
 
   .message {
-    box-sizing: border-box;
     margin: 2*$default-padding 0;
   }
 }
 
 #pictures_page_list {
-
   h3 {
-    padding: $default-padding 0 0;
+    display: flex;
+    padding: 4px 8px 0;
     margin: 0;
   }
 
-  ol {
+  ul {
     padding-left: 0;
-    list-style-position: inside;
+    list-style-type: none;
   }
 
   .list {
     margin: 2*$default-margin 0;
 
     li {
+      display: flex;
       padding: 2*$default-padding;
       border-radius: $default-border-radius;
       white-space: normal;
-
-      &.even { background: #F7F7F7 }
+      margin-bottom: 1em;
     }
+  }
+
+  .icon {
+    padding-top: 3px;
+    text-align: left;
+    width: 7%;
+  }
+
+  p {
+    width: 93%;
+    margin: 0;
   }
 }
 
@@ -222,25 +225,24 @@ $image-overlay-transition-easing: ease-in;
     cursor: pointer;
     text-align: center;
     text-decoration: none;
-    @include transition(background-color $image-overlay-transition-duration linear);
+    transition: background-color $image-overlay-transition-duration linear;
 
     &:hover {
       background-color: rgba(0,0,0, 0.3);
 
-      .icon-angle-left,
-      .icon-angle-right {
+      .icon {
         color: $white;
         text-shadow: none;
       }
     }
   }
 
-  .icon-angle-left,
-  .icon-angle-right {
-    font-size: 48px;
+  .icon {
+    font-size: 4em;
     color: $medium-gray;
     text-shadow: 0 0 $default-padding $text-color;
-    @include transition(all $image-overlay-transition-duration linear);
+    transition: all $image-overlay-transition-duration linear;
+    vertical-align: middle;
   }
 
   .previous-picture {
@@ -251,6 +253,6 @@ $image-overlay-transition-easing: ease-in;
   .next-picture {
     right: $image-overlay-form-width + $picture-overlay-handle-width;
     @include border-left-radius($default-border-radius);
-    @include transition(right $image-overlay-transition-duration $image-overlay-transition-easing);
+    transition: right $image-overlay-transition-duration $image-overlay-transition-easing;
   }
 }

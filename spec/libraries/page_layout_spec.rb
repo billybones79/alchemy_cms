@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 module Alchemy
   describe PageLayout do
@@ -17,8 +19,20 @@ module Alchemy
         expect(subject.collect { |l| l['name'] }).to include('erb_layout')
       end
 
+      context "with a YAML file including a symbol" do
+        let(:yaml) { 'name: :symbol' }
+        before do
+          expect(File).to receive(:exist?).and_return(true)
+          expect(File).to receive(:read).and_return(yaml)
+        end
+
+        it "returns the definition without error" do
+          expect { subject }.to_not raise_error
+        end
+      end
+
       context "with empty layouts file" do
-        before { expect(YAML).to receive(:load).and_return(false) }
+        before { expect(YAML).to receive(:safe_load).and_return(false) }
 
         it "returns empty array" do
           is_expected.to eq([])

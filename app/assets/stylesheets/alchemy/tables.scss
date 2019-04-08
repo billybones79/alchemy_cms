@@ -4,21 +4,43 @@ table {
   padding: 0;
   font-size: inherit;
   width: 100%;
+
+  &.list .tools {
+    button, a {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      margin: 0 $default-margin;
+      line-height: inherit;
+      text-align: center;
+
+      > .icon {
+        margin: 0;
+      }
+    }
+  }
 }
 
 .list td, .list th {
-  padding: $default-padding 2*$default-padding;
+  padding: 2*$default-padding;
   vertical-align: top;
   line-height: 18px;
   border-right: 1px solid $medium-gray;
+  transition: background-color $transition-duration;
+
+  &:last-child {
+    border-right: 0 none;
+  }
 
   &.wrap-text {
     white-space: normal !important;
   }
-}
 
-.list td:first-child, .list th:first-child {
-  border-left: 1px solid $medium-gray
+  &.icon {
+    width: 16px;
+    text-align: center;
+  }
 }
 
 .list th {
@@ -29,29 +51,12 @@ table {
   }
 }
 
-.floatThead-container {
-  background: $light-gray;
-  overflow: visible !important; // the javascript author thought that, but ....
-
-  &:after {
-    position: absolute;
-    bottom: -4px;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    @include background(linear-gradient(top, $light-gray 0%, rgba($light-gray, .0) 100%));
-    content: '';
-  }
-}
-
 th {
   white-space: nowrap;
   text-align: left;
   vertical-align: top;
-  background: $light-gray;
   border-bottom: 1px solid $medium-gray;
-  font-weight: normal;
-  text-transform: uppercase;
+  font-weight: bold;
 
   i {
     font-style: normal;
@@ -77,19 +82,16 @@ th {
   }
 }
 
-tr.odd td {
-  background-color: #eaf3f9;
+tr.even td {
+  background-color: $table-row-even-background-color;
 }
 
-tr.even td {
-  background-color: white;
+tr.odd td {
+  background-color: $table-row-odd-background-color;
 }
 
 .list tr .tools {
   width: 40px;
-  background: $light-gray;
-  border-top: 0 none;
-  border-right: 0 none;
   white-space: nowrap;
   @extend .disable-user-select;
 
@@ -104,48 +106,20 @@ td.heading {
   text-decoration: underline;
 }
 
-.list td.icon, .list th.icon {
-  background-color: $light-gray;
-  background-image: none;
-  border-left: 0 none;
-  padding: 0;
-  border-right: 1px solid $medium-gray;
-  text-align: center;
-  display: table-cell; // reset the .icon display: inline-block
-}
-
-.list .tools .icon, .list td.icon .icon {
-  display: inline-block;
-  vertical-align: middle;
-  width: 16px;
-  height: 16px;
-  @extend .disable-user-select;
-  background-repeat: no-repeat;
-  margin: 0 $default-margin;
-  text-indent: -100px;
-}
-
+.list .tools .icon,
 .list td.icon .icon {
-  margin: $default-margin 2*$default-margin 0;
+  @extend .disable-user-select;
+  margin: 0 $default-margin;
 }
 
 .list tr:hover td {
-  background-color: $light_yellow;
+  background-color: $table-row-hover-color;
 }
 
 td, th {
 
   &.center, &.boolean {
     text-align: center;
-
-    .icon.false {
-      @extend .false;
-    }
-
-    .icon.true {
-      @extend .icon;
-      @extend .true;
-    }
   }
 
   &.right {

@@ -1,16 +1,16 @@
 # Instantiate the global Alchemy namespace
 module Alchemy
+  Alchemy::YAML_WHITELIST_CLASSES = %w(Symbol Date Regexp)
 end
 
 # Require globally used external libraries
 require 'acts_as_list'
-require 'acts-as-taggable-on'
 require 'action_view/dependency_tracker'
 require 'active_model_serializers'
 require 'awesome_nested_set'
-require 'bourbon'
 require 'cancan'
 require 'dragonfly'
+require 'gutentag'
 require 'handlebars_assets'
 require 'jquery-rails'
 require 'jquery-ui-rails'
@@ -32,6 +32,8 @@ require_relative 'alchemy/cache_digests/template_tracker'
 require_relative 'alchemy/config'
 require_relative 'alchemy/configuration_methods'
 require_relative 'alchemy/controller_actions'
+require_relative 'alchemy/deprecation'
+require_relative 'alchemy/elements_finder'
 require_relative 'alchemy/errors'
 require_relative 'alchemy/essence'
 require_relative 'alchemy/filetypes'
@@ -51,7 +53,7 @@ require_relative 'alchemy/sass_support'
 require_relative 'alchemy/ssl_protection'
 require_relative 'alchemy/resource'
 require_relative 'alchemy/tinymce'
-require_relative 'alchemy/touching'
+require_relative 'alchemy/taggable'
 
 # Require hacks
 require_relative 'kaminari/scoped_pagination_url_helper'

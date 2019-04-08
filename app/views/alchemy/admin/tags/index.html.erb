@@ -1,7 +1,7 @@
 <%= toolbar(
   buttons: [
     {
-      icon: 'tag_add',
+      icon: :plus,
       label: Alchemy.t('New Tag'),
       url: alchemy.new_admin_tag_path,
       title: Alchemy.t('New Tag'),
@@ -16,10 +16,7 @@
 ) %>
 
 <div id="archive_all" class="resources-table-wrapper">
-  <h1 class="resources-header">
-    <%= @tags.total_count %>
-    <%= ActsAsTaggableOn::Tag.model_name.human(count: @tags.total_count) %>
-  </h1>
+  <%= render 'alchemy/admin/resources/table_header' %>
   <% if @tags.any? %>
 
   <table class="list">
@@ -27,7 +24,7 @@
       <tr>
         <th class="icon"></th>
         <th class="name"><%= sort_link(@query, :name, hide_indicator: true) %></th>
-        <th class="count"><%= ActsAsTaggableOn::Tag.human_attribute_name(:taggings_types) %></th>
+        <th class="count"><%= Gutentag::Tag.human_attribute_name(:taggings_types) %></th>
         <th class="count"><%= sort_link(@query, :taggings_count, hide_indicator: true) %></th>
         <th class="tools"></th>
       </tr>
@@ -43,7 +40,7 @@
 
   <%= render_message do %>
     <h2><%= Alchemy.t('No Tags found') %></h2>
-    <% if params[:q].blank? %>
+    <% if search_filter_params[:q].blank? %>
       <p><%= Alchemy.t(:tags_get_created_if_used_the_first_time) %></p>
     <% end %>
   <% end %>

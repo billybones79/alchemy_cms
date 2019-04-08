@@ -1,6 +1,10 @@
-@mixin default-focus-style {
-  border-color: $blue;
-  box-shadow: 0 0 1px 1px $blue;
+@mixin default-focus-style(
+  $border-color: $focus-color,
+  $box-shadow: 0 0 0 2px $focus-color,
+  $border-radius: $default-border-radius) {
+  border-color: $border-color;
+  border-radius: $border-radius;
+  box-shadow: $box-shadow;
   outline: none;
 
   &::-moz-focus-inner {
@@ -10,49 +14,57 @@
 }
 
 @mixin button-defaults(
-  $first-color: $button-gradient-first-color,
-  $second-color: $button-gradient-second-color,
-  $border-radius: $default-border-radius,
+  $background-color: $button-bg-color,
+  $hover-color: $button-hover-bg-color,
+  $hover-border-color: $button-hover-border-color,
+  $border-radius: $button-border-radius,
+  $border: $button-border-width solid $button-border-color,
+  $box-shadow: $button-box-shadow,
   $padding: $button-padding,
-  $margin: $button-margin) {
+  $margin: $button-margin,
+  $color: $button-text-color,
+  $line-height: $form-field-line-height,
+  $focus-border-color: $button-focus-border-color,
+  $focus-box-shadow: $button-focus-box-shadow) {
   display: inline-block;
-  font-size: 12px;
+  font-family: $default-font-family;
+  font-size: $default-font-size;
+  font-weight: $button-font-weight;
+  line-height: $line-height;
   padding: $padding;
   cursor: pointer;
   border-radius: $border-radius;
-  background-color: $button-bg-color;
-  background-image: linear-gradient($first-color, $second-color);
-  box-shadow: white 0 1px 0 inset;
-  border: 1px solid $button-border-color;
-  color: $text-color;
-  text-shadow: $button-text-shadow;
+  background-color: $background-color;
+  box-shadow: $box-shadow;
+  border: $border;
+  color: $color;
   margin: $margin;
-  @include appearance(none);
+  -webkit-appearance: none;
+  transition: all $transition-duration;
+  @include antialiased-font-smoothing;
 
   &:hover {
     text-decoration: none;
-    background-color: $button-hover-bg-color;
-    background-image: linear-gradient(
-      darken($first-color, 5%),
-      darken($second-color, 5%)
-    );
-    border-color: $button-hover-border-color;
+    background-color: $hover-color;
+    border-color: $hover-border-color;
   }
 
   &:active, &:active:focus {
-    box-shadow: #c4c4c4 0 1px 2px inset;
-    border-color: $button-border-color;
+    border-color: $hover-border-color;
+    box-shadow: none;
   }
 
   &:focus {
-    @include default-focus-style;
+    @include default-focus-style(
+      $border-color: $focus-border-color,
+      $box-shadow: $focus-box-shadow
+    );
   }
 
   &.disabled, &[disabled],
   &.disabled:active, &[disabled]:active,
   &.disabled:hover, &[disabled]:hover {
-    opacity: 0.6;
-    background: $second-color;
+    background-color: transparentize($button-bg-color, 0.5);
     cursor: not-allowed;
     box-shadow: none;
   }
@@ -63,60 +75,38 @@
   }
 }
 
-@mixin default-label-style {
-  font-size: 10px;
-  text-shadow: #fff 0 1px 2px;
-  margin-top: $default-margin;
-  display: block;
-  line-height: 100%;
-  @extend .disable-user-select;
-  clear: both;
-}
-
 @mixin form-label {
-  @extend .border-box-sizing;
   width: $form-left-width;
-  padding-right: 2*$default-padding;
-  padding-top: $default-padding + 1;
-  margin-top: 4px;
+  padding-right: 2 * $default-padding;
+  padding-top: 0.6em;
+  margin-top: $default-margin;
   vertical-align: top;
-  line-height: 19px;
   word-break: normal;
   float: left;
   text-align: right;
-}
-
-@mixin form-heading {
-  border-bottom: 1px solid #CECECE;
-  padding-right: 8px;
-  margin-top: 8px;
-  text-align: right;
-  font-weight: normal;
-  color: #585858;
-  text-transform: uppercase;
+  font-size: $default-font-size;
 }
 
 @mixin form-value-display {
   float: right;
   width: $form-right-width;
-  margin: $default-form-field-margin;
+  margin: $form-field-margin;
   padding: $default-padding 2*$default-padding;
   line-height: 21px;
-  min-height: $default-form-field-height;
+  min-height: $form-field-height;
   background: white;
-  @extend %rounded-border;
-  @extend .border-box-sizing;
+  border-radius: $default-border-radius;
 }
 
 @mixin form-hint($background-color: $light_yellow, $border-color: $medium-gray) {
-  font-size: 10px;
+  font-size: $small-font-size;
   line-height: 1.5em;
   padding: $default-padding;
   background-color: $background-color;
   border: 1px solid $border-color;
   display: block;
   clear: both;
-  @extend %rounded-border;
+  border-radius: $default-border-radius;
 }
 
 @mixin animate-left {
@@ -146,36 +136,40 @@
   box-shadow: $shadow;
 }
 
-@mixin box-sizing($box-sizing-type: content-box) {
-  -webkit-box-sizing: $box-sizing-type;
-  -moz-box-sizing: $box-sizing-type;
-  box-sizing: $box-sizing-type;
-}
-
-@mixin tag-base($margin: 2*$default-margin 0, $padding: $default-padding 4*$default-padding $default-padding 6*$default-padding) {
+@mixin tag-base($margin: 2*$default-margin 0, $padding: $default-padding 3*$default-padding) {
   padding: $padding;
   margin: $margin;
   background-color: $medium-gray;
   overflow: hidden;
   position: relative;
-  @extend %rounded-border;
+  border-radius: $default-border-radius;
 
   &:before {
-    position: absolute;
-    left: 8px;
-    top: 8px;
-    font-family: 'Alchemy Icons';
-    @extend .icon-tag:before;
-    line-height: 8px;
+    content: fa-content($fa-var-tag);
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    font-size: 0.8em;
+    padding-right: 2*$default-padding;
+  }
+
+  &:focus {
+    @include default-focus-style($box-shadow: inset 0 0 0 2px $focus-color);
   }
 }
 
-@mixin linked-button($border-radius: $default-border-radius) {
+@mixin linked-button(
+  $border-radius: $default-border-radius,
+  $line-height: $form-field-line-height,
+  $padding: 3px) {
   @include button-defaults(
-    $first-color: $linked-color,
-    $second-color: darken($linked-color, 10%),
+    $line-height: $line-height,
+    $background-color: $linked-button-color,
+    $hover-color: darken($linked-button-color, 10%),
+    $border: 1px solid $linked-border-color,
+    $hover-border-color: darken($linked-border-color, 10%),
     $border-radius: $border-radius,
-    $padding: 3px,
+    $box-shadow: none,
+    $padding: $padding,
     $margin: 0
   );
 }
@@ -188,11 +182,12 @@
   cursor: zoom-in;
 }
 
-@mixin truncate($max-width, $display: inline-block) {
+@mixin truncate($max-width, $display: inline-block, $wrap: normal) {
   display: $display;
   max-width: $max-width;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: $wrap;
 }
 
 @mixin hint-hover-style {
@@ -200,4 +195,37 @@
   top: 26px;
   opacity: 1;
   transition-delay: .2s;
+}
+
+@mixin clearfix {
+  &::after {
+    clear: both;
+    content: "";
+    display: table;
+  }
+}
+
+@mixin border-top-radius($radius) {
+  border-top-left-radius: $radius;
+  border-top-right-radius: $radius;
+}
+
+@mixin border-bottom-radius($radius) {
+  border-bottom-left-radius: $radius;
+  border-bottom-right-radius: $radius;
+}
+
+@mixin border-left-radius($radius) {
+  border-bottom-left-radius: $radius;
+  border-top-left-radius: $radius;
+}
+
+@mixin border-right-radius($radius) {
+  border-bottom-right-radius: $radius;
+  border-top-right-radius: $radius;
+}
+
+@mixin antialiased-font-smoothing {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

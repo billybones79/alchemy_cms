@@ -1,7 +1,8 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 describe Alchemy::Admin::PagesHelper do
-
   describe '#preview_sizes_for_select' do
     it "returns a options string of preview screen sizes for select tag" do
       expect(helper.preview_sizes_for_select).to include('option', 'auto', '240', '320', '480', '768', '1024', '1280')
@@ -19,7 +20,7 @@ describe Alchemy::Admin::PagesHelper do
       end
     end
 
-    context 'when page is persited' do
+    context 'when page is persisted' do
       before { page.save! }
 
       context 'with page layout existing' do
@@ -34,7 +35,7 @@ describe Alchemy::Admin::PagesHelper do
         end
 
         it 'displays icon with warning and tooltip' do
-          is_expected.to have_selector '.warning.icon.with-hint .hint-bubble'
+          is_expected.to have_selector '.hint-with-icon .hint-bubble'
         end
       end
     end

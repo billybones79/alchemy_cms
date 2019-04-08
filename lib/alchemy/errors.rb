@@ -1,18 +1,25 @@
+# frozen_string_literal: true
+
 # Custom error classes.
 #
 module Alchemy
-  class CellDefinitionError < StandardError
-    # Raised if no cell definition can be found.
-  end
-
   class ContentDefinitionError < StandardError
     # Raised if no content definition can be found.
   end
 
   class DefaultLanguageNotFoundError < StandardError
-    # Raised if no default language can be found.
+    # Raised if no default language configuration can be found.
     def message
-      "No default language found! Please run the `bin/rake db:seed` task."
+      "No default language configuration found!" \
+        " Please ensure that you have a 'default_language' defined in Alchemy configuration file."
+    end
+  end
+
+  class DefaultSiteNotFoundError < StandardError
+    # Raised if no default site configuration can be found.
+    def message
+      "No default site configuration found!" \
+        " Please ensure that you have a 'default_site' defined in Alchemy configuration file."
     end
   end
 
@@ -46,9 +53,14 @@ module Alchemy
 
   # Raised if calling +image_file+ on a Picture object returns nil.
   class WrongImageFormatError < StandardError
+    def initialize(image, requested_format)
+      @image = image
+      @requested_format = requested_format
+    end
+
     def message
       allowed_filetypes = Alchemy::Picture.allowed_filetypes.map(&:upcase).to_sentence
-      "Requested image format is not one of allowed filetypes (#{allowed_filetypes})."
+      "Requested image format (#{@requested_format.inspect}) for #{@image.inspect} is not one of allowed filetypes (#{allowed_filetypes})."
     end
   end
 

@@ -4,6 +4,9 @@
  *= require_self
  */
 
+@import "fontawesome/fontawesome";
+@import "fontawesome/fa-regular";
+@import "fontawesome/fa-solid";
 @import "alchemy/defaults";
 @import "alchemy/archive";
 @import "alchemy/navigation";
@@ -12,27 +15,33 @@
 @import "alchemy/buttons";
 @import "alchemy/dialogs";
 @import "alchemy/toolbar";
+@import "alchemy/clipboard";
 @import "alchemy/dashboard";
 @import "alchemy/elements";
 @import "alchemy/errors";
+@import "alchemy/filter_field";
 @import "alchemy/flash";
+@import "alchemy/flatpickr";
+@import "alchemy/fonts";
 @import "alchemy/forms";
 @import "alchemy/form_fields";
 @import "alchemy/frame";
 @import "alchemy/hints";
 @import "alchemy/icons";
 @import "alchemy/image_library";
-@import "alchemy/modules";
 @import "alchemy/notices";
 @import "alchemy/pagination";
+@import "alchemy/preview_window";
 @import "alchemy/resource_info";
 @import "alchemy/search";
 @import "alchemy/selects";
 @import "alchemy/sitemap";
 @import "alchemy/spinner";
 @import "alchemy/tables";
+@import "alchemy/tags";
+@import "alchemy/trash";
+@import "alchemy/typography";
 @import "alchemy/lists";
 @import "alchemy/upload";
 @import "alchemy/jquery-ui";
 @import "jquery.Jcrop.min";
-@import "jquery.datetimepicker";

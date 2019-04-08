@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 module Alchemy
   module PagesHelper
     include Alchemy::BaseHelper
     include Alchemy::ElementsHelper
-    include Alchemy::DeprecatedPagesHelper
 
     def picture_essence_caption(content)
       content.try(:essence).try(:caption)
@@ -68,7 +69,7 @@ module Alchemy
       render current_alchemy_site
     rescue ActionView::MissingTemplate
       warning("Site layout for #{current_alchemy_site.try(:name)} not found. Please run `rails g alchemy:site_layouts`")
-      return ""
+      ""
     end
 
     # Renders the navigation.
@@ -166,7 +167,7 @@ module Alchemy
       pages = page.children.accessible_by(current_ability, :see)
       pages = pages.restricted if options.delete(:restricted_only)
       if depth = options[:deepness]
-        pages = pages.where("#{Page.table_name}.depth <= #{depth}")
+        pages = pages.where('depth <= ?', depth)
       end
       if options[:reverse]
         pages.reverse!
@@ -246,15 +247,12 @@ module Alchemy
       end
 
       if options.delete(:reverse)
-        pages.to_a.reverse!
+        pages = pages.reorder('lft DESC')
       end
 
       if options[:without].present?
-        if options[:without].class == Array
-          pages = pages.to_a - options[:without]
-        else
-          pages.to_a.delete(options[:without])
-        end
+        without = options.delete(:without)
+        pages = pages.where.not(id: without.try(:collect, &:id) || without.id)
       end
 
       render 'alchemy/breadcrumb/wrapper', pages: pages, options: options
@@ -271,6 +269,7 @@ module Alchemy
       return "" if @page.title.blank?
       options = {
         prefix: "",
+        suffix: "",
         separator: ""
       }.update(options)
       title_parts = [options[:prefix]]
@@ -279,7 +278,8 @@ module Alchemy
       else
         title_parts << response.status
       end
-      title_parts.join(options[:separator]).html_safe
+      title_parts << options[:suffix]
+      title_parts.reject(&:blank?).join(options[:separator]).html_safe
     end
 
     def meta_description
@@ -321,5 +321,7 @@ module Alchemy
       return true if cell.blank?
       cell.elements.not_trashed.empty?
     end
+    deprecate render_cell: 'Use render_elements(only: <cell-name>, fixed: true) instead',
+      deprecator: Alchemy::Deprecation
   end
 end

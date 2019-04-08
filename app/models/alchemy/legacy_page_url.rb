@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_legacy_page_urls
 #
 #  id         :integer          not null, primary key
-#  urlname    :string(255)      not null
+#  urlname    :string           not null
 #  page_id    :integer          not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null

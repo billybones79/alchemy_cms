@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   class PageTreeSerializer < BaseSerializer
     def attributes
@@ -8,23 +10,24 @@ module Alchemy
       tree = []
       path = [{id: object.parent_id, children: tree}]
       page_list = object.self_and_descendants
-      skip_branch = false
       base_level = object.level - 1
+      # Load folded pages in advance
+      folded_user_pages = FoldedPage.folded_for_user(opts[:user]).pluck(:page_id)
+      folded_depth = Float::INFINITY
 
       page_list.each_with_index do |page, i|
         has_children = page_list[i + 1] && page_list[i + 1].parent_id == page.id
-        folded = has_children && page.folded?(opts[:user])
+        folded = has_children && folded_user_pages.include?(page.id)
 
-        if skip_branch
-          next if page.parent_id == path.last[:children].last[:id]
-
-          skip_branch = false
+        if page.depth > folded_depth
+          next
+        else
+          folded_depth = Float::INFINITY
         end
 
-        # Do not walk my children if I'm folded and you don't need to have the
-        # full tree.
+        # If this page is folded, skip all pages that are on a higher level (further down the tree).
         if folded && !opts[:full]
-          skip_branch = true
+          folded_depth = page.depth
         end
 
         if page.parent_id != path.last[:id]
@@ -64,7 +67,7 @@ module Alchemy
       }
 
       if opts[:elements]
-        p_hash.update(elements: ActiveModel::ArraySerializer.new(page_elements(page)))
+        p_hash.update(elements: ActiveModel::Serializer::CollectionSerializer.new(page_elements(page)))
       end
 
       if opts[:ability].can?(:index, :alchemy_admin_pages)

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Page::PageNatures
     extend ActiveSupport::Concern
@@ -20,7 +22,7 @@ module Alchemy
     end
 
     def systempage?
-      return true if Page.root.nil?
+      return true if Page.count.zero?
       rootpage? || (parent_id == Page.root.id && !language_root?)
     end
 
@@ -96,7 +98,6 @@ module Alchemy
 
     # Returns the self#page_layout definition from config/alchemy/page_layouts.yml file.
     def definition
-      return {} if systempage?
       definition = PageLayout.get(page_layout)
       if definition.nil?
         log_warning "Page definition for `#{page_layout}` not found. Please check `page_layouts.yml` file."

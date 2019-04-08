@@ -1,11 +1,8 @@
-require 'spec_helper'
+# frozen_string_literal: true
 
-def reload_event_class
-  Object.send(:remove_const, :Event)
-  load "spec/dummy/app/models/event.rb"
-end
+require 'rails_helper'
 
-describe "Resources" do
+RSpec.describe "Resources", type: :system do
   let(:event)        { create(:event) }
   let(:second_event) { create(:event, name: 'My second Event', entrance_fee: 12.32) }
 
@@ -14,7 +11,7 @@ describe "Resources" do
   describe "index view" do
     it "should have a button for creating a new resource items" do
       visit '/admin/events'
-      expect(page).to have_selector('#toolbar div.button_with_label a.icon_button span.icon.create')
+      expect(page).to have_selector('#toolbar div.button_with_label a.icon_button .icon.fa-plus')
     end
 
     it "should list existing items" do
@@ -37,14 +34,12 @@ describe "Resources" do
     it "renders an input field according to the attribute's type" do
       visit '/admin/events/new'
       expect(page).to have_selector('input#event_name[type="text"]')
-      expect(page).to have_selector('input#event_starts_at[type="datetime"]')
+      expect(page).to have_selector('input#event_starts_at[data-datepicker-type="datetime"]')
+      expect(page).to have_selector('input#event_ends_at[data-datepicker-type="datetime"]')
       expect(page).to have_selector('textarea#event_description')
       expect(page).to have_selector('input#event_published[type="checkbox"]')
-      expect(page).to have_selector('input#event_lunch_starts_at_1i[type="hidden"]')
-      expect(page).to have_selector('input#event_lunch_starts_at_2i[type="hidden"]')
-      expect(page).to have_selector('input#event_lunch_starts_at_3i[type="hidden"]')
-      expect(page).to have_selector('select#event_lunch_starts_at_4i')
-      expect(page).to have_selector('select#event_lunch_starts_at_5i')
+      expect(page).to have_selector('input#event_lunch_starts_at[data-datepicker-type="time"]')
+      expect(page).to have_selector('input#event_lunch_ends_at[data-datepicker-type="time"]')
     end
 
     it "should have a select box for associated models" do
@@ -57,10 +52,13 @@ describe "Resources" do
 
   describe "create resource item" do
     context "when form filled with valid data" do
+      let!(:location) { create(:location) }
+
       before do
         visit '/admin/events/new'
         fill_in 'event_name', with: 'My second event'
-        fill_in 'event_starts_at', with: DateTime.new(2012, 03, 03, 20, 00)
+        fill_in 'event_starts_at', with: Time.local(2012, 03, 03, 20, 00)
+        select location.name, from: 'Location'
         click_on 'Save'
       end
 
@@ -132,12 +130,6 @@ describe "Resources" do
   end
 
   context "with event that acts_as_taggable" do
-    around do |example|
-      Event.class_eval { acts_as_taggable }
-      example.run
-      reload_event_class
-    end
-
     it "shows an autocomplete tag list in the form" do
       visit "/admin/events/new"
       expect(page).to have_selector('input#event_tag_list[type="text"][data-autocomplete="/admin/tags/autocomplete"]')
@@ -171,22 +163,9 @@ describe "Resources" do
   end
 
   context "with event that has filters defined" do
-    around do |example|
-      Event.class_eval do
-        def self.alchemy_resource_filters
-          %w(starting_today future)
-        end
-
-        scope :starting_today, -> { where(starts_at: DateTime.current.at_midnight..DateTime.tomorrow.at_midnight) }
-        scope :future, -> { where("starts_at > ?", DateTime.tomorrow.at_midnight) }
-      end
-      example.run
-      reload_event_class
-    end
-
-    let!(:past_event) { create(:event, name: "Horse Expo", starts_at: DateTime.current - 100.years) }
-    let!(:today_event) { create(:event, name: "Car Expo", starts_at: DateTime.current.at_noon) }
-    let!(:future_event) { create(:event, name: "Hovercar Expo", starts_at: DateTime.current + 30.years) }
+    let!(:past_event) { create(:event, name: "Horse Expo", starts_at: Time.current - 100.years) }
+    let!(:today_event) { create(:event, name: "Car Expo", starts_at: Time.current.at_noon) }
+    let!(:future_event) { create(:event, name: "Hovercar Expo", starts_at: Time.current + 30.years) }
 
     it "lets the user filter by the defined scopes", aggregate_failures: true do
       visit "/admin/events"

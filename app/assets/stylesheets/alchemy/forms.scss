@@ -16,10 +16,6 @@ form {
     height: 67px;
   }
 
-  > h2 {
-    @include form-heading;
-  }
-
   .control-label {
     @include form-label;
   }
@@ -136,11 +132,9 @@ form {
   .inline-input {
     @include clearfix;
     margin: 0 -1*$default-margin;
-    box-sizing: border-box;
 
     .left-column, .right-column {
       padding: 0 $default-padding;
-      box-sizing: border-box;
     }
 
     .left-column {
@@ -166,11 +160,16 @@ form {
 
   .control_group {
     width: $form-right-width;
-    padding-top: 6px;
+    padding-top: $default-margin;
     float: right;
   }
 
-  .foot_note, .input .hint {
+  .check_boxes .control_group {
+    padding-top: 0.6em;
+  }
+
+  .input .hint {
+    @include form-hint;
     margin-left: $form-left-width;
   }
 
@@ -180,7 +179,6 @@ form {
   }
 
   .input-column {
-    box-sizing: border-box;
     float: left;
     padding: 0 $default-padding;
     width: 50%;
@@ -207,6 +205,10 @@ textarea#essence_picture_caption {
 
 // styles for link overlay selects
 .window_form {
+
+  td.checkbox {
+    text-align: left;
+  }
 
   .select2-container {
     width: 100%;

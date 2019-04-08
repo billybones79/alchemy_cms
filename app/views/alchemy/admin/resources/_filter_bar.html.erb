@@ -1,11 +1,9 @@
-<% params_to_keep = [:tagged_with, :q] %>
-
 <div id="filter_bar">
-  <h2><%= Alchemy.t('Filter') %></h2>
+  <h3><%= Alchemy.t('Filter') %></h3>
   <%= select_tag(
     'resource_filter',
     options_for_select(
-      resource_filter_select, params[:filter]
+      resource_filter_select, search_filter_params[:filter]
     ),
     include_blank: Alchemy.t(:all, scope: ['resources', resource_name, 'filters']),
     data: { remote: !!request.xhr? },
@@ -17,13 +15,12 @@
   $(function() {
     $('#resource_filter').on('change', function(e) {
       var $this = $(this);
-      var url = '<%= resources_path(resource_handler.namespaced_resources_name, merge_params_only(params_to_keep)).html_safe %>';
+      var url = '<%= resources_path(resource_handler.namespaced_resources_name, search_filter_params.except(:filter).to_h) %>';
       if ($this.data('remote') === true) {
         $.get(url, {filter: $this.val()}, null, 'script');
       } else {
-        Alchemy.pleaseWaitOverlay();
         delimiter = url.match(/\?/) ? '&' : '?';
-        window.location = url + delimiter + 'filter=' + encodeURIComponent($this.val());
+        Turbolinks.visit(url + delimiter + 'filter=' + encodeURIComponent($this.val()));
       }
       return false;
     });

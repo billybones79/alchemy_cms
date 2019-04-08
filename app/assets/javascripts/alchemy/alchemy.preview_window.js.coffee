@@ -13,16 +13,12 @@ Alchemy.PreviewWindow =
     $('body').append($iframe)
     @currentWindow = $iframe
     @_bindReloadButton()
-    @resize()
 
-  resize: ->
-    width = @_calculateWidth()
-    height = $(window).height() - @HEIGHT
+  resize: (width) ->
     width = @MIN_WIDTH if width < @MIN_WIDTH
     @currentWidth = width
     @currentWindow.css
       width: width
-      height: height
 
   refresh: (callback) ->
     $iframe = $('#alchemy_preview_window')
@@ -43,20 +39,15 @@ Alchemy.PreviewWindow =
 
   _hideSpinner: ->
     @spinner.stop()
-    @reload.html('<span class="icon reload"></span>')
+    @reload.html('<i class="icon fas fa-redo fa-fw"></i>')
 
   _bindReloadButton: ->
     $reload = $('#reload_preview_button')
     key 'alt+r', =>
       @refresh()
-    $reload.click =>
+    $reload.click (e) =>
+      e.preventDefault()
       @refresh()
-
-  _calculateWidth: ->
-    width = $(window).width() - $('#left_menu').width()
-    unless Alchemy.ElementsWindow.hidden
-      width -= $('#alchemy_elements_window').width()
-    return width
 
 Alchemy.reloadPreview = ->
   Alchemy.PreviewWindow.refresh()

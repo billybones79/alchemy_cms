@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 class Party < ActiveRecord::Base
   belongs_to :location
@@ -345,7 +347,7 @@ module Alchemy
 
       describe '#model_association_names' do
         it 'returns an array of association names' do
-          expect(resource.model_association_names).to eq [:location]
+          expect(resource.model_association_names).to include(:location)
         end
       end
 

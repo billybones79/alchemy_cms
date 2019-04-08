@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   class Api::PagesController < Api::BaseController
     before_action :load_page, only: [:show]
@@ -5,11 +7,16 @@ module Alchemy
     # Returns all pages as json object
     #
     def index
-      @pages = Page.accessible_by(current_ability, :index)
+      # Fix for cancancan not able to merge multiple AR scopes for logged in users
+      if can? :edit_content, Alchemy::Page
+        @pages = Page.all
+      else
+        @pages = Page.accessible_by(current_ability, :index)
+      end
       if params[:page_layout].present?
         @pages = @pages.where(page_layout: params[:page_layout])
       end
-      respond_with @pages
+      render json: @pages, adapter: :json, root: :pages
     end
 
     # Returns all pages as nested json object for tree views

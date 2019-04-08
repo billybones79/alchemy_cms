@@ -1,12 +1,13 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Tinymce
     mattr_accessor :languages, :plugins
 
-    @@plugins = %w(alchemy_link anchor autoresize charmap code directionality fullscreen hr link paste tabfocus table)
-    @@languages = ['en', 'de']
+    @@plugins = %w(alchemy_link anchor autoresize charmap code directionality fullscreen hr link lists paste tabfocus table)
     @@init = {
       skin: 'alchemy',
-      width: '100%',
+      width: 'auto',
       resize: true,
       autoresize_min_height: '105',
       autoresize_max_height: '480',
@@ -20,7 +21,8 @@ module Alchemy
       convert_urls: false,
       entity_encoding: 'raw',
       paste_as_text: true,
-      element_format: 'html'
+      element_format: 'html',
+      branding: false
     }
 
     class << self

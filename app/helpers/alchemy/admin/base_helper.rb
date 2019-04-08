@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     # This module contains helper methods for rendering dialogs, toolbar buttons and confirmation windows.
@@ -103,8 +105,7 @@ module Alchemy
         content_tag(:div, class: 'js_filter_field_box') do
           concat text_field_tag(nil, nil, options)
           concat render_icon(:search)
-          concat link_to('', '', class: 'js_filter_field_clear', title: Alchemy.t(:click_to_show_all))
-          concat content_tag(:label, Alchemy.t(:search), for: options[:id])
+          concat link_to(render_icon(:times, size: 'xs'), '', class: 'js_filter_field_clear', title: Alchemy.t(:click_to_show_all))
         end
       end
 
@@ -189,7 +190,7 @@ module Alchemy
         options = {
           title: Alchemy.t('Delete'),
           message: Alchemy.t('Are you sure?'),
-          icon: 'destroy'
+          icon: :minus
         }.merge(options)
         button_with_confirm(
           render_icon(options[:icon]),
@@ -198,7 +199,7 @@ module Alchemy
           }, {
             method: 'delete',
             title: options[:title],
-            class: "icon_only #{html_options.delete(:class)}".strip
+            class: "icon_button #{html_options.delete(:class)}".strip
           }.merge(html_options)
         )
       end
@@ -213,19 +214,12 @@ module Alchemy
         "Alchemy CMS - #{title}"
       end
 
-      # (internal) Returns max image count as integer or nil. Used for the picture editor in element editor views.
-      def max_image_count
-        return nil if !@options
-        image_count = @options[:maximum_amount_of_images] || @options[:max_images]
-        image_count.blank? ? nil : image_count.to_i
-      end
-
       # Renders a toolbar button for the Alchemy toolbar
       #
       # == Example
       #
       #   <%= toolbar_button(
-      #     icon: 'create',
+      #     icon: :plus,
       #     label: 'Create',
       #     url: new_resource_path,
       #     title: 'Create Resource',
@@ -265,7 +259,7 @@ module Alchemy
           active: false,
           link_options: {},
           dialog_options: {},
-          loading_indicator: true
+          loading_indicator: false
         }.merge(options.symbolize_keys)
         button = render(
           'alchemy/admin/partials/toolbar_button',
@@ -286,7 +280,7 @@ module Alchemy
       #   <% toolbar(
       #     buttons: [
       #       {
-      #         icon: 'create',
+      #         icon: :plus,
       #         label: label_title,
       #         url: new_resource_path,
       #         title: label_title,
@@ -312,9 +306,9 @@ module Alchemy
         }
         options = defaults.merge(options)
         content_for(:toolbar) do
-          content = <<-CONTENT
-#{options[:buttons].map { |button_options| toolbar_button(button_options) }.join}
-          #{render('alchemy/admin/partials/search_form', url: options[:search_url]) if options[:search]}
+          content = <<-CONTENT.strip_heredoc
+            #{options[:buttons].map { |button_options| toolbar_button(button_options) }.join}
+            #{render('alchemy/admin/partials/search_form', url: options[:search_url]) if options[:search]}
           CONTENT
           content.html_safe
         end
@@ -332,12 +326,14 @@ module Alchemy
 
       # Renders a textfield ready to display a datepicker
       #
-      # Uses a HTML5 +<input type="date">+ field.
       # A Javascript observer converts this into a fancy Datepicker.
       # If you pass +'datetime'+ as +:type+ the datepicker will also have a Time select.
+      # If you pass +'time'+ as +:type+ the datepicker will only have a Time select.
       #
-      # The date value gets localized via +I18n.l+. The format on Time and Date is +datepicker+
-      # or +datetimepicker+, if you pass another +type+.
+      # This helper always renders "text" as input type because:
+      # HTML5 supports input types like 'date' but Browsers are using the users OS settings
+      # to validate the input format. Since Alchemy is localized in the backend the date formats
+      # should be aligned with the users locale setting in the backend but not the OS settings.
       #
       # === Date Example
       #
@@ -347,13 +343,17 @@ module Alchemy
       #
       #   <%= alchemy_datepicker(@page, :public_on, type: 'datetime') %>
       #
+      # === Time Example
+      #
+      #   <%= alchemy_datepicker(@meeting, :starts_at, type: 'time') %>
+      #
       # @param [ActiveModel::Base] object
       #   An instance of a model
       # @param [String or Symbol] method
       #   The attribute method to be called for the date value
       #
-      # @option html_options [String] :type (date)
-      #   The type of text field
+      # @option html_options [String] :data-datepicker-type (type)
+      #   The value of the data attribute for the type
       # @option html_options [String] :class (type)
       #   CSS classes of the input field
       # @option html_options [String] :value (value of method on object)
@@ -363,38 +363,10 @@ module Alchemy
         type = html_options.delete(:type) || 'date'
         date = html_options.delete(:value) || object.send(method.to_sym).presence
         date = Time.zone.parse(date) if date.is_a?(String)
-        value = date ? l(date, format: "#{type}picker".to_sym) : nil
+        value = date ? date.iso8601 : nil
 
         text_field object.class.name.demodulize.underscore.to_sym,
-          method.to_sym, {type: type, class: type, value: value}.merge(html_options)
-      end
-
-      # Merges the params-hash with the given hash
-      def merge_params(p = {})
-        params.merge(p).delete_if { |_k, v| v.blank? }
-      end
-
-      # Deletes one or several params from the params-hash and merges some new params in
-      def merge_params_without(excludes, p = {})
-        current_params = params.clone.symbolize_keys
-        if excludes.is_a?(Array)
-          excludes.map { |i| current_params.delete(i.to_sym) }
-        else
-          current_params.delete(excludes.to_sym)
-        end
-        current_params.merge(p).delete_if { |_k, v| v.blank? }
-      end
-
-      # Deletes all params from the params-hash except the given ones and merges some new params in
-      def merge_params_only(includes, p = {})
-        current_params = params.clone.symbolize_keys
-        if includes.is_a?(Array)
-          symbolized_includes = includes.map(&:to_sym)
-          current_params.delete_if { |k, _v| !symbolized_includes.include?(k) }
-        else
-          current_params.delete_if { |k, _v| k != includes.to_sym }
-        end
-        current_params.merge(p).delete_if { |_k, v| v.blank? }
+          method.to_sym, {type: "text", class: type, "data-datepicker-type" => type, value: value}.merge(html_options)
       end
 
       # Render a hint icon with tooltip for given object.
@@ -402,7 +374,7 @@ module Alchemy
       def render_hint_for(element)
         return unless element.has_hint?
         content_tag :span, class: 'hint-with-icon' do
-          render_icon(:questionmark) +
+          render_icon('question-circle') +
             content_tag(:span, element.hint.html_safe, class: 'hint-bubble')
         end
       end
@@ -419,14 +391,15 @@ module Alchemy
 
       # (internal) Returns options for the clipboard select tag
       def clipboard_select_tag_options(items)
-        if @page.persisted? && @page.can_have_cells?
-          grouped_options_for_select(grouped_elements_for_select(items, :id))
-        else
-          options = items.map do |item|
-            [item.respond_to?(:display_name_with_preview_text) ? item.display_name_with_preview_text : item.name, item.id]
+        options = items.map do |item|
+          if item.respond_to?(:display_name_with_preview_text)
+            name = item.display_name_with_preview_text
+          else
+            name = item.name
           end
-          options_for_select(options)
+          [name, item.id]
         end
+        options_for_select(options)
       end
 
       # Returns the regular expression used for external url validation in link dialog.
@@ -438,15 +411,15 @@ module Alchemy
       #
       # == Example
       #
-      #   <%= hint_with_tooltip('Page layout is missing', class: 'warning icon') %>
+      #   <%= hint_with_tooltip('Page layout is missing', icon: 'info') %>
       #
       # @param text [String] - The text displayed in the tooltip
-      # @param html_options [Hash] - Options passed to the wrapper `content_tag`
+      # @param icon: 'exclamation-triangle' [String] - Icon name
       #
-      def hint_with_tooltip(text, html_options = {})
-        css_class = "#{html_options[:class]} with-hint"
-        content_tag :span, html_options.merge(class: css_class) do
-          content_tag(:span, text, class: 'hint-bubble')
+      # @return [String]
+      def hint_with_tooltip(text, icon: 'exclamation-triangle')
+        content_tag :span, class: 'hint-with-icon' do
+          render_icon(icon) + content_tag(:span, text, class: 'hint-bubble')
         end
       end
 
@@ -454,8 +427,7 @@ module Alchemy
       # that explains the user that the page layout is missing
       def page_layout_missing_warning
         hint_with_tooltip(
-          Alchemy.t(:page_definition_missing),
-          class: 'inline warning icon'
+          Alchemy.t(:page_definition_missing)
         )
       end
 

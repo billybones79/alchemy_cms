@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'active_support'
 require 'active_support/core_ext'
 require 'active_support/inflector'
@@ -93,7 +95,7 @@ module Alchemy
   # If you don't want to stick with these conventions you can separate model and controller by providing
   # a model class (for example used by Alchemy's Tags admin interface):
   #
-  #     resource = Resource.new('/admin/tags', {"engine_name"=>"alchemy"}, ActsAsTaggableOn::Tag)
+  #     resource = Resource.new('/admin/tags', {"engine_name"=>"alchemy"}, Gutentag::Tag)
   #
   class Resource
     attr_accessor :resource_relations, :model_associations
@@ -236,23 +238,23 @@ module Alchemy
 
     private
 
-    def searchable_attribute?(a)
-      SEARCHABLE_COLUMN_TYPES.include?(a[:type].to_sym) && !a.key?(:relation)
+    def searchable_attribute?(attribute)
+      SEARCHABLE_COLUMN_TYPES.include?(attribute[:type].to_sym) && !attribute.key?(:relation)
     end
 
-    def searchable_attribute_on_relation?(a)
-      a.key?(:relation) &&
-        SEARCHABLE_COLUMN_TYPES.include?(a[:relation][:attr_type].to_sym)
+    def searchable_attribute_on_relation?(attribute)
+      attribute.key?(:relation) &&
+        SEARCHABLE_COLUMN_TYPES.include?(attribute[:relation][:attr_type].to_sym)
     end
 
     def searchable_relation_attributes(attrs)
       attrs.select { |a| searchable_attribute_on_relation?(a) }.map { |a| searchable_relation_attribute(a) }
     end
 
-    def searchable_relation_attribute(a)
+    def searchable_relation_attribute(attribute)
       {
-        name: "#{a[:relation][:model_association].name}_#{a[:relation][:attr_method]}",
-        type: a[:relation][:attr_type]
+        name: "#{attribute[:relation][:model_association].name}_#{attribute[:relation][:attr_method]}",
+        type: attribute[:relation][:attr_type]
       }
     end
 

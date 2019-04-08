@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   # Module concerning element definitions
   #
@@ -11,7 +13,7 @@ module Alchemy
       # your own set of elements
       #
       def definitions
-        @definitions ||= read_definitions_file
+        @definitions ||= read_definitions_file.map(&:with_indifferent_access)
       end
 
       # Returns one element definition by given name.
@@ -26,7 +28,7 @@ module Alchemy
       #
       def read_definitions_file
         if ::File.exist?(definitions_file_path)
-          ::YAML.load(ERB.new(File.read(definitions_file_path)).result) || []
+          ::YAML.safe_load(ERB.new(File.read(definitions_file_path)).result, YAML_WHITELIST_CLASSES, [], true) || []
         else
           raise LoadError, "Could not find elements.yml file! Please run `rails generate alchemy:scaffold`"
         end
@@ -46,7 +48,7 @@ module Alchemy
         definition
       else
         log_warning "Could not find element definition for #{name}. Please check your elements.yml file!"
-        return {}
+        {}
       end
     end
   end

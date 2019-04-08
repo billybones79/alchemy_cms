@@ -1,9 +1,11 @@
 <div class="widget">
-  <h2><%= Alchemy.t('Your last updated pages') %>:</h2>
-  <table>
+  <table class="list">
+    <tr>
+      <th colspan="4"><%= Alchemy.t('Your last updated pages') %></th>
+    </tr>
   <% if @last_edited_pages.blank? %>
     <tr class="even">
-      <td><%= Alchemy.t('no pages') %></td>
+      <td colspan="4"><%= Alchemy.t('no pages') %></td>
     </tr>
   <% else %>
     <% @last_edited_pages.each do |page| %>
@@ -22,7 +24,7 @@
         <% end %>
       </td>
       <td>
-        <small><%= l(page.updated_at, format: :short) %></small>
+        <small><%= l(page.updated_at, format: :'alchemy.short_datetime') %></small>
       </td>
     </tr>
     <% end %>

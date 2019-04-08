@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     class EssencePicturesController < Alchemy::Admin::BaseController
+      FLOAT_REGEX = /\A\d+(\.\d+)?\z/
       authorize_resource class: Alchemy::EssencePicture
 
       before_action :load_essence_picture, only: [:edit, :crop, :update]
       before_action :load_content, only: [:edit, :update, :assign]
-      before_action :load_options
 
       helper 'alchemy/admin/contents'
       helper 'alchemy/admin/essences'
@@ -17,7 +19,7 @@ module Alchemy
       def crop
         if @picture = @essence_picture.picture
           @content = @essence_picture.content
-          @options[:format] ||= (configuration(:image_store_format) || 'png')
+          options_from_params[:format] ||= (configuration(:image_store_format) || 'png')
 
           @min_size = sizes_from_essence_or_params
           @ratio = ratio_from_size_or_params
@@ -34,7 +36,7 @@ module Alchemy
         @essence_picture.update(essence_picture_params)
       end
 
-      # Assigns picture, but does not saves it.
+      # Assigns picture, but does not save it.
       #
       # When the user saves the element the content gets updated as well.
       #
@@ -42,14 +44,10 @@ module Alchemy
         @picture = Picture.find_by(id: params[:picture_id])
         @content.essence.picture = @picture
         @element = @content.element
-        @dragable = @options[:grouped]
-        @options = @options.merge(dragable: @dragable)
 
         # We need to update timestamp here because we don't save yet,
         # but the cache needs to be get invalid.
-        # And we don't user @content.touch here, because that updates
-        # also the element and page timestamps what we don't want yet.
-        @content.update_column(:updated_at, Time.current)
+        @content.touch
       end
 
       def destroy
@@ -61,10 +59,6 @@ module Alchemy
       end
 
       private
-
-      def load_options
-        @options = options_from_params
-      end
 
       def load_essence_picture
         @essence_picture = EssencePicture.find(params[:id])
@@ -81,8 +75,8 @@ module Alchemy
       def sizes_from_essence_or_params
         if @essence_picture.render_size?
           @essence_picture.sizes_from_string(@essence_picture.render_size)
-        elsif @options[:size]
-          @essence_picture.sizes_from_string(@options[:size])
+        elsif options_from_params[:size]
+          @essence_picture.sizes_from_string(options_from_params[:size])
         else
           { width: 0, height: 0 }
         end
@@ -92,8 +86,8 @@ module Alchemy
       # aspect ratio, don't specify a size or only width or height.
       #
       def ratio_from_size_or_params
-        if @min_size.value?(0) && @options[:fixed_ratio]
-          @options[:fixed_ratio].to_f
+        if @min_size.value?(0) && options_from_params[:fixed_ratio].to_s =~ FLOAT_REGEX
+          options_from_params[:fixed_ratio].to_f
         elsif !@min_size[:width].zero? && !@min_size[:height].zero?
           @min_size[:width].to_f / @min_size[:height].to_f
         else

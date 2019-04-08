@@ -1,6 +1,8 @@
-require 'spec_helper'
+# frozen_string_literal: true
 
-RSpec.feature "Admin::LanguagesFeatures", type: :feature do
+require 'rails_helper'
+
+RSpec.describe "Admin Languages Features", type: :system do
   before do
     authorize_user(:as_admin)
   end
@@ -23,6 +25,8 @@ RSpec.feature "Admin::LanguagesFeatures", type: :feature do
     end
 
     context "with multiple sites" do
+      let!(:default_site) { create(:alchemy_site, :default) }
+
       let!(:site_2) do
         create(:alchemy_site, host: 'another-site.com')
       end

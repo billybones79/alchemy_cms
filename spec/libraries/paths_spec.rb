@@ -1,10 +1,12 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 module Alchemy
   describe 'Paths' do
     describe 'defaults' do
       it 'has default value for Alchemy.admin_path' do
-        expect(Alchemy.admin_path).to eq('/admin')
+        expect(Alchemy.admin_path).to eq('admin')
       end
 
       it 'has default value for Alchemy.admin_constraints' do

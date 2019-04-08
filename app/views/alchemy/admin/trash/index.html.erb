@@ -1,21 +1,21 @@
 <%- if @elements.blank? -%>
-<div id="trash_empty_notice" <%= @elements.blank? ? '' : 'style="display: none"' %> class="info">
-  <%= render_icon('info') %>
+<%= render_message do %>
   <%= Alchemy.t('Your trash is empty') %>
-</div>
+<% end %>
 <%- else -%>
 <%= render_message do %>
   <%= Alchemy.t('Drag an element over to the element window to restore it') %>
 <% end %>
 <div id="trash_items">
 <%- @elements.each do |element| -%>
-  <%= render partial: 'alchemy/admin/elements/element',
-    object: element,
-    locals: {
-      draggable: @allowed_elements.any? do |e|
-        e['name'] == element.name || e.fetch('nestable_elements', []).include?(element.name)
-      end
-    } %>
+  <% draggable = @allowed_elements.any? { |e|
+    !e['fixed'] && e['name'] == element.name || element.name.in?(e.fetch('nestable_elements', []))
+  } %>
+  <%= content_tag :div,
+    data: {'element-id' => element.id, 'element-name' => element.name},
+    class: ['element-editor', draggable ? 'draggable' : 'not-draggable'] do %>
+    <%= render 'alchemy/admin/elements/element_header', element: element %>
+  <% end %>
 <%- end -%>
 </div>
 <p>

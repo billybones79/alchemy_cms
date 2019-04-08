@@ -1,36 +1,35 @@
-// leave this as div, bcz some table columns also have .message
-div.message, p.message {
+// Some table columns also have .message class
+div.message {
   padding: 8px 8px 8px 32px;
   line-height: 17px;
-  border-width: 1px;
-  border-style: solid;
-  @extend %rounded-border;
+  border-width: $default-border-width;
+  border-style: $default-border-style;
+  border-radius: $default-border-radius;
   position: relative;
   margin-bottom: 8px;
   text-align: left;
 
-  h1 {
-    font-size: 14px;
-    margin: 8px 0;
-  }
+  h1, h2, h3 { margin-top: 0 }
 
-  h1, h2 { margin-top: 0 }
-
-  span.icon {
+  .icon {
     position: absolute;
     left: 8px;
-    top: 8px;
+    top: 10px;
+    color: inherit;
   }
 
   &.footnote {
-    font-size: 10px;
+    font-size: $small-font-size;
     margin: 16px;
   }
 
   a {
     text-decoration: underline;
 
-    &:hover { color: #000 }
+    &:hover {
+      color: inherit;
+      text-decoration: none;
+    }
   }
 
   ol {
@@ -42,23 +41,22 @@ div.message, p.message {
       margin-bottom: 4px;
     }
   }
-}
 
-div.info {
-  @extend div.message;
-  color: $text-color;
-  background-color: #eaf4f9;
-  border-color: #0b5c84;
-}
+  &.info {
+    background-color: $info_background_color;
+    border-color: $info_border_color;
+    color: $info_text_color;
+  }
 
-div.error {
-  @extend div.message;
-  background-color: #f1c9ca;
-  color: #931f23;
-}
+  &.error {
+    background-color: $error_background_color;
+    border-color: $error_border_color;
+    color: $error_text_color;
+  }
 
-div.warning, div.warn {
-  @extend div.message;
-  background-color: #f7efb8;
-  color: #756f47;
+  &.warning, &.warn, &.alert {
+    background-color: $warning_background_color;
+    border-color: $warning_border_color;
+    color: $warning_text_color;
+  }
 }

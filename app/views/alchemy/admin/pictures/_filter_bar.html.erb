@@ -1,7 +1,5 @@
-<% params_to_keep = [:size, :tagged_with, :query, :element_id, :options, :content_id, :_] %>
-
 <div id="filter_bar">
-  <h2><%= Alchemy.t('Filter') %></h2>
+  <h3><%= Alchemy.t('Filter') %></h3>
   <%= select_tag(
     'picture_filter',
     options_for_select([
@@ -9,7 +7,7 @@
       [Alchemy.t(:last_upload_only), 'last_upload'],
       [Alchemy.t(:recently_uploaded_only), 'recent'],
       [Alchemy.t(:without_tag), 'without_tag']
-    ], params[:filter]),
+    ], search_filter_params[:filter]),
     :data => { :remote => !!request.xhr? },
     :class => 'alchemy_selectbox'
   ) %>
@@ -19,13 +17,12 @@
   $(function() {
     $('#picture_filter').on('change', function(e) {
       var $this = $(this);
-      var url = '<%= alchemy.admin_pictures_path(merge_params_only(params_to_keep)).html_safe %>';
+      var url = '<%= alchemy.admin_pictures_path(search_filter_params.except(:filter).to_h) %>';
       if ($this.data('remote') === true) {
         $.get(url, {filter: $this.val()}, null, 'script');
       } else {
-        Alchemy.pleaseWaitOverlay();
         delimiter = url.match(/\?/) ? '&' : '?';
-        window.location = url + delimiter + 'filter=' + $this.val();
+        Turbolinks.visit(url + delimiter + 'filter=' + $this.val());
       }
       return false;
     });

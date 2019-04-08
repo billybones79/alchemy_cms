@@ -42,7 +42,6 @@
 }
 
 .overall-upload {
-  box-sizing: border-box;
   position: fixed;
   bottom: -100%;
   left: 0;
@@ -52,7 +51,7 @@
   padding: 8px;
   overflow: hidden;
   background-color: rgba($dark-gray, 0.6);
-  transition: all 250ms ease-in-out;
+  transition: all $transition-duration ease-in-out;
 
   &.visible {
     bottom: 0;
@@ -81,7 +80,7 @@
     background-color: $medium-gray;
     position: relative;
     margin-top: 8px;
-    @extend %rounded-border;
+    border-radius: $default-border-radius;
   }
 
   .progress-name,
@@ -94,12 +93,12 @@
   }
 
   .progress-bar-status {
-    font-size: 10px;
+    font-size: $small-font-size;
   }
 
   .progress-bar-container {
     background-color: #f9f9f9;
-    @extend %rounded-border;
+    border-radius: $default-border-radius;
     height: 16px;
     overflow: hidden;
     width: 100%;
@@ -130,11 +129,10 @@
   }
 
   .progress-cancel {
-    @extend .icon-cross;
-    width: 16px;
-    height: 16px;
     position: absolute;
     top: 8px;
     right: 4px;
+    width: 16px;
+    height: 16px;
   }
 }

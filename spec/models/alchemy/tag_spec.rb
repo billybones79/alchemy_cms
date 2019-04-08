@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 module Alchemy
   describe Tag do
@@ -14,8 +16,8 @@ module Alchemy
         allow(picture).to receive(:save).and_return(true)
         allow(element).to receive(:save).and_return(true)
         allow(tag).to receive(:taggings).and_return([
-          mock_model(ActsAsTaggableOn::Tagging, taggable: picture),
-          mock_model(ActsAsTaggableOn::Tagging, taggable: element)
+          mock_model(Gutentag::Tagging, taggable: picture),
+          mock_model(Gutentag::Tagging, taggable: element)
         ])
       end
 

@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 require 'alchemy/tasks/helpers'
 
 module Alchemy
@@ -20,13 +22,13 @@ module Alchemy
     before do
       allow(File).to receive(:exist?) { true }
       allow(File).to receive(:read) do
-<<-END
-test:
-  adapter: mysql2
-  username: testuser
-  password: "123456"
-  host: localhost
-END
+        <<-END.strip_heredoc
+          test:
+            adapter: mysql2
+            username: testuser
+            password: "123456"
+            host: localhost
+        END
       end
     end
 

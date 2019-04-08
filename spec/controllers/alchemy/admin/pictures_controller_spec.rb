@@ -1,11 +1,13 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 RSpec.shared_examples :redirecting_to_picture_library do
   let(:params) do
     {
       filter: 'latest',
       page: 2,
-      q: {name_cont: 'kitten'},
+      q: {name_or_image_file_name_cont: 'kitten'},
       size: 'small',
       tagged_with: 'cat'
     }
@@ -18,6 +20,8 @@ end
 
 module Alchemy
   describe Admin::PicturesController do
+    routes { Alchemy::Engine.routes }
+
     before do
       authorize_user(:as_admin)
     end
@@ -28,7 +32,7 @@ module Alchemy
         let!(:picture_2) { create(:alchemy_picture, name: 'nice beach') }
 
         it 'assigns @pictures with filtered pictures' do
-          alchemy_get :index, q: {name_cont: 'kitten'}
+          get :index, params: {q: {name_or_image_file_name_cont: 'kitten'}}
           expect(assigns(:pictures)).to include(picture_1)
           expect(assigns(:pictures)).to_not include(picture_2)
         end
@@ -39,7 +43,7 @@ module Alchemy
         let!(:picture_2) { create(:alchemy_picture, tag_list: %w(kitten)) }
 
         it 'assigns @pictures with filtered pictures' do
-          alchemy_get :index, filter: 'without_tag'
+          get :index, params: {filter: 'without_tag'}
           expect(assigns(:pictures)).to include(picture_1)
           expect(assigns(:pictures)).to_not include(picture_2)
         end
@@ -48,47 +52,55 @@ module Alchemy
       context 'with tag params' do
         let!(:picture_1) { create(:alchemy_picture, tag_list: %w(water)) }
         let!(:picture_2) { create(:alchemy_picture, tag_list: %w(kitten)) }
+        let!(:picture_3) { create(:alchemy_picture, tag_list: %w(water nature)) }
 
         it 'assigns @pictures with filtered pictures' do
-          alchemy_get :index, tagged_with: 'water'
+          get :index, params: {tagged_with: 'water'}
           expect(assigns(:pictures)).to include(picture_1)
           expect(assigns(:pictures)).to_not include(picture_2)
+          expect(assigns(:pictures)).to include(picture_3)
+        end
+      end
+
+      context 'with multiple tag params' do
+        let!(:picture_1) { create(:alchemy_picture, tag_list: %w(water)) }
+        let!(:picture_2) { create(:alchemy_picture, tag_list: %w(water nature)) }
+
+        it 'assigns @pictures with filtered pictures' do
+          get :index, params: {tagged_with: 'water,nature'}
+          expect(assigns(:pictures)).to_not include(picture_1)
+          expect(assigns(:pictures)).to include(picture_2)
         end
       end
 
       it 'assigns @size to default value' do
-        alchemy_get :index
+        get :index
         expect(assigns(:size)).to eq('medium')
       end
 
       context "with params[:size] set to 'large'" do
         it 'assigns @size to large' do
-          alchemy_get :index, size: 'large'
+          get :index, params: {size: 'large'}
           expect(assigns(:size)).to eq('large')
         end
       end
 
-      context "when params[:element_id]" do
+      context "when params[:content_id]" do
         context "is set" do
-          before do
-            allow(Element).to \
-              receive(:find).with('1', {select: 'id'}).and_return(mock_model(Element))
-          end
-
           it "for html requests it renders the archive_overlay partial" do
-            alchemy_get :index, {element_id: 1}
+            get :index, params: {content_id: 1}
             expect(response).to render_template(partial: '_archive_overlay')
           end
 
           it "for ajax requests it renders the archive_overlay template" do
-            alchemy_xhr :get, :index, {element_id: 1}
+            get :index, params: {content_id: 1}, xhr: true
             expect(response).to render_template(:archive_overlay)
           end
         end
 
         context "is not set" do
           it "should render the default index view" do
-            alchemy_get :index
+            get :index
             expect(response).to render_template(:index)
           end
         end
@@ -96,7 +108,7 @@ module Alchemy
     end
 
     describe '#create' do
-      subject { alchemy_post :create, params }
+      subject { post :create, params: params }
 
       let(:params)  { {picture: {name: ''}} }
       let(:picture) { mock_model('Picture', humanized_name: 'Cute kittens', to_jq_upload: {}) }
@@ -128,7 +140,7 @@ module Alchemy
       let(:picture) { create(:alchemy_picture, name: 'kitten') }
 
       it 'assigns @picture' do
-        alchemy_get :show, id: picture.id
+        get :show, params: {id: picture.id}
         expect(assigns(:picture).id).to eq(picture.id)
       end
 
@@ -138,9 +150,9 @@ module Alchemy
         let!(:content) { create(:alchemy_content, element: element) }
         let!(:essence) { create(:alchemy_essence_picture, content: content, picture: picture) }
 
-        it 'assigns @pages to assignments grouped by page' do
-          alchemy_get :show, id: picture.id
-          expect(assigns(:pages)).to eq({page => [essence]})
+        it 'assigns all essence pictures having an assignment to @assignments' do
+          get :show, params: {id: picture.id}
+          expect(assigns(:assignments)).to eq([essence])
         end
       end
 
@@ -148,7 +160,7 @@ module Alchemy
         let!(:previous) { create(:alchemy_picture, name: 'abraham') }
 
         it 'assigns @previous to previous picture' do
-          alchemy_get :show, id: picture.id
+          get :show, params: {id: picture.id}
           expect(assigns(:previous).id).to eq(previous.id)
         end
       end
@@ -157,7 +169,7 @@ module Alchemy
         let!(:next_picture) { create(:alchemy_picture, name: 'zebra') }
 
         it 'assigns @next to next picture' do
-          alchemy_get :show, id: picture.id
+          get :show, params: {id: picture.id}
           expect(assigns(:next).id).to eq(next_picture.id)
         end
       end
@@ -168,18 +180,20 @@ module Alchemy
       before { expect(Picture).to receive(:where).and_return(pictures) }
 
       it 'assigns pictures instance variable' do
-        alchemy_get :edit_multiple
+        get :edit_multiple
         expect(assigns(:pictures)).to eq(pictures)
       end
 
       it 'assigns tags instance variable' do
-        alchemy_get :edit_multiple
+        get :edit_multiple
         expect(assigns(:tags)).to include('kitten')
       end
     end
 
     describe '#update' do
-      subject { alchemy_xhr :put, :update, {id: 1, picture: {name: ''}} }
+      subject do
+        put :update, params: {id: 1, picture: {name: ''}}, xhr: true
+      end
 
       let(:picture) { build_stubbed(:alchemy_picture, name: 'Cute kitten') }
 
@@ -223,21 +237,21 @@ module Alchemy
       end
 
       it "loads and assigns pictures" do
-        alchemy_post :update_multiple
+        post :update_multiple
         expect(assigns(:pictures)).to eq(pictures)
       end
 
       it_behaves_like :redirecting_to_picture_library do
-        let(:subject) { alchemy_post(:update_multiple, params) }
+        let(:subject) { post(:update_multiple, params: params) }
       end
     end
 
     describe "#delete_multiple" do
-      subject { alchemy_delete :delete_multiple, picture_ids: picture_ids }
+      subject { delete :delete_multiple, params: {picture_ids: picture_ids} }
 
       it_behaves_like :redirecting_to_picture_library do
         let(:subject) do
-          alchemy_delete :delete_multiple, {
+          delete :delete_multiple, params: {
             picture_ids: %w(1 2)
           }.merge(params)
         end
@@ -317,7 +331,7 @@ module Alchemy
 
       it "destroys the picture and sets and success message" do
         expect(picture).to receive(:destroy)
-        alchemy_delete :destroy, id: picture.id
+        delete :destroy, params: {id: picture.id}
         expect(assigns(:picture)).to eq(picture)
         expect(flash[:notice]).not_to be_blank
       end
@@ -328,41 +342,84 @@ module Alchemy
         end
 
         it "shows error notice" do
-          alchemy_delete :destroy, id: picture.id
+          delete :destroy, params: {id: picture.id}
           expect(flash[:error]).not_to be_blank
         end
 
         it "redirects to index" do
-          alchemy_delete :destroy, id: picture.id
+          delete :destroy, params: {id: picture.id}
           expect(response).to redirect_to admin_pictures_path
         end
       end
 
       it_behaves_like :redirecting_to_picture_library do
-        let(:subject) { alchemy_delete :destroy, {id: picture.id}.merge(params) }
+        let(:subject) { delete :destroy, params: {id: picture.id}.merge(params) }
       end
     end
 
-    describe '#pictures_per_page_for_size' do
-      subject { controller.send(:pictures_per_page_for_size, size) }
+    describe '#items_per_page' do
+      subject { controller.send(:items_per_page) }
 
       before do
-        expect(controller).to receive(:in_overlay?).and_return(true)
+        expect(controller).to receive(:params).at_least(:once) { params }
       end
 
-      context 'with params[:size] set to medium' do
-        let(:size) { 'medium' }
-        it { is_expected.to eq(9) }
+      context 'in overlay' do
+        let(:params) { {content_id: :id, size: size} }
+
+        context 'with params[:size] set to medium' do
+          let(:size) { 'medium' }
+
+          it { is_expected.to eq(9) }
+        end
+
+        context 'with params[:size] set to small' do
+          let(:size) { 'small' }
+
+          it { is_expected.to eq(25) }
+        end
+
+        context 'with params[:size] set to large' do
+          let(:size) { 'large' }
+
+          it { is_expected.to eq(4) }
+        end
       end
 
-      context 'with params[:size] set to small' do
-        let(:size) { 'small' }
-        it { is_expected.to eq(25) }
-      end
+      context 'in archive' do
+        let(:params) { {size: size} }
 
-      context 'with params[:size] set to large' do
-        let(:size) { 'large' }
-        it { is_expected.to eq(4) }
+        context 'with params[:size] set to medium' do
+          let(:size) { 'medium' }
+
+          it { is_expected.to eq(20) }
+
+          context 'with cookie set' do
+            before do
+              @request.cookies[:alchemy_pictures_per_page] = 2
+            end
+
+            it { is_expected.to eq(2) }
+
+            context 'with params[:per_page] given' do
+              let(:params) { {per_page: 8, size: size} }
+
+              it { is_expected.to eq(8) }
+            end
+          end
+        end
+
+        context 'with params[:size] set to small' do
+          let(:size) { 'small' }
+
+          it { is_expected.to eq(60) }
+        end
+
+        context 'with params[:size] set to large' do
+          let(:size) { 'large' }
+
+          it { is_expected.to eq(12) }
+        end
       end
     end
   end

@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 # Provides admin interface routing configuration accessors.
 #
 # Alchemy has some defaults for admin path and admin constraints:
 #
-# +Alchemy.admin_path defaults to +'/admin'+
+# +Alchemy.admin_path defaults to +'admin'+
 # +Alchemy.admin_constraints defaults to +{}+
 #
 # Anyway, you can tell Alchemy about your routing configuration:
@@ -15,11 +17,11 @@
 #
 # == Example
 #
-# If you do not wish to use the default admin interface routing ('example.com/admin/')
-# and prefer e.g. 'hidden.example.com/backend/', those are the settings you need:
+# If you do not wish to use the default admin interface routing ('example.com/admin')
+# and prefer e.g. 'hidden.example.com/backend', those are the settings you need:
 #
 #     # config/initializers/alchemy.rb
-#     Alchemy.admin_path = '/backend'
+#     Alchemy.admin_path = 'backend'
 #     Alchemy.admin_constraints = {subdomain: 'hidden'}
 #
 module Alchemy
@@ -27,6 +29,6 @@ module Alchemy
 
   # Defaults
   #
-  @@admin_path = '/admin'
+  @@admin_path = 'admin'
   @@admin_constraints = {}
 end

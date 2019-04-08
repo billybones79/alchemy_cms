@@ -2,28 +2,24 @@
  *= require_self
  */
 
-@import "bourbon";
 @import "alchemy/variables";
 @import "alchemy/mixins";
-@import "alchemy/extends";
 
 #alchemy_menubar {
   position: fixed;
   top: 0;
-  left: -356px;
+  left: -358px;
   width: 400px;
   z-index: 10000;
-  background: $light-gray;
-  @include animate-left;
-  @include bottom-right-rounded-border;
-  @include drop-shadow;
+  background: $main-menu-bg-color;
+  transition: left 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 0 0 1px $white;
   box-sizing: border-box;
-  border-right: $default-border;
-  border-bottom: $default-border;
-  height: 44px;
-  padding: 4px 40px 4px 8px;
+  height: auto;
+  padding: 8px 40px 8px 8px;
   overflow: hidden;
-  font: $default-font-style;
+  font-family: $default-font-family;
+  font-size: $base-font-size;
 
   * {
     box-sizing: border-box;
@@ -37,41 +33,45 @@
 
   &:after {
     content: '';
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     position: absolute;
-    right: 8px;
-    top: 8px;
-    background: image-url('alchemy/icon.svg') 0 0 no-repeat;
-    background-size: 28px 28px;
+    right: 10px;
+    top: 50%;
+    background: image-url('alchemy/icon-white.svg') 1px 1px no-repeat;
+    background-size: 24px 24px;
+    transform: translateY(-50%);
   }
 
   ul {
     padding: 0;
     margin: 0;
-    height: auto;
+    height: 100%;
 
     li {
-      width: 32%;
-      height: 35px;
-      margin: 0 $default-margin 0 0;
-      padding: 0;
+      width: 33.333%;
+      height: 100%;
+      margin: 0;
+      padding: 0 $default-padding;
       float: left;
       list-style-type: none;
       text-align: center;
 
       a, button {
-        @include button-defaults;
-        padding-left: $default-padding;
-        padding-right: $default-padding;
+        @include button-defaults(
+          $background-color: $main-menu-bg-color,
+          $hover-color: $blue,
+          $hover-border-color: $white,
+          $border: 1px solid $white,
+          $box-shadow: none,
+          $padding: 0.5em 0,
+          $margin: 0,
+          $color: $white
+        );
         width: 100%;
-        display: block;
-        line-height: 14px;
-        font-weight: normal;
         text-decoration: none !important;
         text-transform: none;
-        color: $text-color !important;
-        font-family: $default-font-face;
+        font-family: $default-font-family;
 
         &:after { display: none }
       }

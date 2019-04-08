@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'csv'
 require 'alchemy/resource'
 require 'alchemy/resources_helper'
@@ -5,37 +7,38 @@ require 'alchemy/resources_helper'
 module Alchemy
   module Admin
     class ResourcesController < Alchemy::Admin::BaseController
+      COMMON_SEARCH_FILTER_EXCLUDES = [:id, :utf8, :_method, :_, :format].freeze
+
       include Alchemy::ResourcesHelper
 
       helper Alchemy::ResourcesHelper, TagsHelper
-      helper_method :resource_handler
+      helper_method :resource_handler, :search_filter_params,
+        :items_per_page, :items_per_page_options
 
       before_action :load_resource,
         only: [:show, :edit, :update, :destroy]
 
-      before_action do
-        authorize!(action_name.to_sym, resource_instance_variable || resource_handler.model)
-      end
+      before_action :authorize_resource
 
       def index
-        @query = resource_handler.model.ransack(params[:q])
+        @query = resource_handler.model.ransack(search_filter_params[:q])
         items = @query.result
 
         if contains_relations?
           items = items.includes(*resource_relations_names)
         end
 
-        if params[:tagged_with].present?
-          items = items.tagged_with(params[:tagged_with])
+        if search_filter_params[:tagged_with].present?
+          items = items.tagged_with(search_filter_params[:tagged_with])
         end
 
-        if params[:filter].present?
+        if search_filter_params[:filter].present?
           items = items.public_send(sanitized_filter_params)
         end
 
         respond_to do |format|
           format.html {
-            items = items.page(params[:page] || 1).per(per_page_value_for_screen_size)
+            items = items.page(params[:page] || 1).per(items_per_page)
             instance_variable_set("@#{resource_handler.resources_name}", items)
           }
           format.csv {
@@ -59,7 +62,7 @@ module Alchemy
         resource_instance_variable.save
         render_errors_or_redirect(
           resource_instance_variable,
-          resources_path(resource_handler.namespaced_resources_name, current_location_params),
+          resources_path(resource_instance_variable.class, search_filter_params),
           flash_notice_for_resource_action
         )
       end
@@ -68,7 +71,7 @@ module Alchemy
         resource_instance_variable.update_attributes(resource_params)
         render_errors_or_redirect(
           resource_instance_variable,
-          resources_path(resource_handler.namespaced_resources_name, current_location_params),
+          resources_path(resource_instance_variable.class, search_filter_params),
           flash_notice_for_resource_action
         )
       end
@@ -76,7 +79,7 @@ module Alchemy
       def destroy
         resource_instance_variable.destroy
         flash_notice_for_resource_action
-        do_redirect_to resource_url_proxy.url_for(current_location_params.merge(action: 'index'))
+        do_redirect_to resource_url_proxy.url_for(search_filter_params.merge(action: 'index'))
       end
 
       def resource_handler
@@ -112,6 +115,10 @@ module Alchemy
         instance_variable_set("@#{resource_handler.resource_name}", resource_handler.model.find(params[:id]))
       end
 
+      def authorize_resource
+        authorize!(action_name.to_sym, resource_instance_variable || resource_handler.model)
+      end
+
       # Permits all parameters as default!
       #
       # THIS IS INSECURE! Although only signed in admin users can send requests anyway, but we should change this.
@@ -126,8 +133,36 @@ module Alchemy
 
       def sanitized_filter_params
         resource_model.alchemy_resource_filters.detect do |filter|
-          filter == params[:filter]
+          filter == search_filter_params[:filter]
         end || :all
+      end
+
+      def search_filter_params
+        @_search_filter_params ||= params.except(*COMMON_SEARCH_FILTER_EXCLUDES).permit(*common_search_filter_includes).to_h
+      end
+
+      def common_search_filter_includes
+        [
+          # contrary to Rails' documentation passing an empty hash to permit all keys does not work
+          {options: options_from_params.keys},
+          {q: [
+            resource_handler.search_field_name,
+            :s
+          ]},
+          :tagged_with,
+          :filter,
+          :page,
+          :per_page
+        ].freeze
+      end
+
+      def items_per_page
+        cookies[:alchemy_items_per_page] = params[:per_page] || cookies[:alchemy_items_per_page] || Alchemy::Config.get(:items_per_page)
+      end
+
+      def items_per_page_options
+        per_page = Alchemy::Config.get(:items_per_page)
+        [per_page, per_page * 2, per_page * 4]
       end
     end
   end

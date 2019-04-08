@@ -1,5 +1,6 @@
-# encoding: utf-8
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 module Alchemy
   describe PagesHelper do
@@ -104,13 +105,15 @@ module Alchemy
         end
       end
 
-      context "with id and class in the html options" do
-        it "should append id to the generated ul tag" do
-          expect(helper.render_navigation({}, {id: 'foobar_id'})).to have_selector("ul[id='foobar_id']")
+      context "when passing html options" do
+        it "should append all given attributes to the generated ul tag" do
+          expect(helper.render_navigation({}, {id: 'foo', data: {navigation: 'main'} })).to have_selector("ul[id='foo'][data-navigation='main']")
         end
 
-        it "should replace the default css class from the generated ul tag" do
-          expect(helper.render_navigation({}, {class: 'foobar_class'})).to have_selector("ul[class='foobar_class']")
+        context "when overriding the `class` attribute" do
+          it "should replace the default css classes from the generated ul tag" do
+            expect(helper.render_navigation({}, {class: 'foo'})).to have_selector("ul[class='foo']")
+          end
         end
       end
 
@@ -373,44 +376,6 @@ module Alchemy
               end
             end
           end
-        end
-      end
-    end
-
-    describe "#cell_empty" do
-      let(:cell)    { create(:alchemy_cell, name: 'test_cell', page: public_page) }
-      let(:element) { create(:alchemy_element) }
-
-      before { @page = public_page }
-
-      context "with elements" do
-        before do
-          cell.elements << element
-          cell.save!
-        end
-
-        it "should return true" do
-          expect(helper.cell_empty?('test_cell')).to eq(false)
-        end
-      end
-
-      context "with zero elements" do
-        it "should return true" do
-          expect(helper.cell_empty?('test_cell')).to eq(true)
-        end
-      end
-
-      context "with trashed elements" do
-        before do
-          cell.elements << element
-          cell.save!
-
-          element.trash!
-          element.save!
-        end
-
-        it "should return true" do
-          expect(helper.cell_empty?('test_cell')).to eq(true)
         end
       end
     end

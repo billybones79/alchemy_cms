@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     class BaseController < Alchemy::BaseController
@@ -7,7 +9,8 @@ module Alchemy
       before_action { enforce_ssl if ssl_required? && !request.ssl? }
       before_action :load_locked_pages
 
-      helper_method :clipboard_empty?, :trash_empty?, :get_clipboard, :is_admin?
+      helper_method :clipboard_empty?, :trash_empty?, :get_clipboard, :is_admin?,
+        :options_from_params
 
       check_authorization
 
@@ -36,32 +39,24 @@ module Alchemy
       end
 
       # Handles exceptions
-      def exception_handler(e)
-        exception_logger(e)
-        show_error_notice(e)
+      def exception_handler(error)
+        exception_logger(error)
+        show_error_notice(error)
         if defined?(Airbrake)
-          notify_airbrake(e) unless Rails.env.development? || Rails.env.test?
+          notify_airbrake(error) unless Rails.env.development? || Rails.env.test?
         end
       end
 
       # Displays an error notice in the Alchemy backend.
-      def show_error_notice(e)
-        @error = e
+      def show_error_notice(error)
+        @error = error
         # truncate the message, because very long error messages (i.e from mysql2) causes cookie overflow errors
-        @notice = e.message[0..255]
-        @trace = e.backtrace[0..50]
+        @notice = error.message[0..255]
+        @trace = error.backtrace[0..50]
         if request.xhr?
           render action: "error_notice"
         else
           render '500', status: 500
-        end
-      end
-
-      def redirect_back_or_to_default(default_path = admin_dashboard_path)
-        if request.referer.present?
-          redirect_to :back
-        else
-          redirect_to default_path
         end
       end
 
@@ -115,9 +110,10 @@ module Alchemy
       end
 
       def per_page_value_for_screen_size
-        return 25 if session[:screen_size].blank?
+        Alchemy::Deprecation.warn("#per_page_value_for_screen_size is deprecated, please use #items_per_page instead")
+        return items_per_page if session[:screen_size].blank?
         screen_height = session[:screen_size].split('x').last.to_i
-        (screen_height / 30) - 10
+        (screen_height / 50) - 12
       end
 
       # Does redirects for html and js requests
@@ -132,19 +128,15 @@ module Alchemy
         end
       end
 
-      # Extracts options from params.
+      # Extracts options from params and permits all keys
       #
-      # Helps to parse JSONified options into Hash or Array
+      # If no options are present it returns an empty parameters hash.
       #
+      # @returns [ActionController::Parameters]
       def options_from_params
-        case params[:options]
-        when '', nil
-          {}
-        when String
-          JSON.parse(params[:options])
-        else
-          params[:options].permit!.to_h
-        end.deep_symbolize_keys
+        @_options_from_params ||= begin
+          (params[:options] || ActionController::Parameters.new).permit!
+        end
       end
 
       # This method decides if we want to raise an exception or not.

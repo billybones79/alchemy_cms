@@ -2,18 +2,19 @@ source 'https://rubygems.org'
 
 gemspec
 
+gem 'rails', '~> 5.2.0'
+
 # Profiling
 gem 'rack-mini-profiler', group: :development, require: false
 
-gem 'sqlite3' if ENV['DB'].nil? || ENV['DB'] == 'sqlite'
-gem 'mysql2', '~> 0.3.18' if ENV['DB'] == 'mysql'
-gem 'pg'      if ENV['DB'] == 'postgresql'
+gem 'sqlite3', '~> 1.3.6' if ENV['DB'].nil? || ENV['DB'] == 'sqlite'
+gem 'mysql2', '~> 0.5.1' if ENV['DB'] == 'mysql'
+gem 'pg',     '~> 1.0'   if ENV['DB'] == 'postgresql'
 gem 'sassc-rails'
 
 group :development, :test do
-  gem 'jasmine-rails',        github: 'searls/jasmine-rails'
-  gem 'jasmine-jquery-rails', github: 'travisjeffery/jasmine-jquery-rails'
   gem 'simplecov', require: false
+  gem 'bootsnap', require: false
   if ENV['TRAVIS']
     gem 'codeclimate-test-reporter', '~> 1.0', require: false
   end
@@ -24,26 +25,24 @@ group :development, :test do
     gem 'yard'
     gem 'redcarpet'
     gem 'pry-byebug'
-    gem 'spring'
-    gem 'spring-commands-rspec'
     gem 'rubocop', require: false
+    gem 'listen'
+    gem 'localeapp', '~> 3.0', require: false
+    gem 'dotenv', '~> 2.2'
+    gem 'github_fast_changelog', require: false
   end
-  gem 'capybara', '~> 2.4'
-  gem 'database_cleaner', '~> 1.3'
-  gem 'factory_girl_rails', '~> 4.5'
-  gem 'poltergeist', '~> 1.10'
+  gem 'capybara', '~> 3.0'
+  gem 'capybara-screenshot', '~> 1.0'
+  gem 'factory_bot_rails', '~> 5.0'
+  gem 'selenium-webdriver', '~> 3.8'
   gem 'rspec-activemodel-mocks', '~> 1.0'
-  gem 'rspec-rails', '~> 3.0'
-  gem 'shoulda-matchers', '~> 3.1'
-end
-
-# We need this if we want to start the dummy app in development mode
-group :development, :production do
-  gem 'quiet_assets'
+  gem 'rspec-rails', '~> 3.7'
+  gem 'shoulda-matchers', '~> 4.0'
+  gem 'rails-controller-testing', '~> 1.0'
 end
 
 # We need this if we want to start the dummy app in production, ie on Teatro.io
 group :production do
-  gem 'uglifier', '>= 1.0.3'
+  gem 'uglifier', '>= 2.7.2'
   gem 'therubyracer'
 end

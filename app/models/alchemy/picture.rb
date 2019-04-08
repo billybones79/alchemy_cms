@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_pictures
@@ -19,11 +21,12 @@
 #
 
 module Alchemy
-  class Picture < ActiveRecord::Base
+  class Picture < BaseRecord
     CONVERTIBLE_FILE_FORMATS = %w(gif jpg jpeg png).freeze
 
     include Alchemy::NameConversions
-    include Alchemy::Touching
+    include Alchemy::Taggable
+    include Alchemy::ContentTouching
     include Alchemy::Picture::Transformations
     include Alchemy::Picture::Url
 
@@ -67,8 +70,6 @@ module Alchemy
       case_sensitive: false,
       message: Alchemy.t("not a valid image")
 
-    acts_as_taggable
-
     stampable stamper_class_name: Alchemy.user_class_name
 
     scope :named, ->(name) {
@@ -84,14 +85,16 @@ module Alchemy
     }
 
     scope :without_tag, -> {
-      where("#{table_name}.cached_tag_list IS NULL OR #{table_name}.cached_tag_list = ''")
+      left_outer_joins(:taggings).where(gutentag_taggings: {id: nil})
     }
-
-    after_update :touch_contents
 
     # Class methods
 
     class << self
+      def searchable_alchemy_resource_attributes
+        %w(name image_file_name)
+      end
+
       def last_upload
         last_picture = Picture.last
         return Picture.all unless last_picture
@@ -231,7 +234,7 @@ module Alchemy
     # Returns true if picture is not assigned to any EssencePicture.
     #
     def deletable?
-      !essence_pictures.any?
+      essence_pictures.empty?
     end
 
     # A size String from original image file values.

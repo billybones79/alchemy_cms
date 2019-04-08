@@ -1,30 +1,16 @@
-<%= content_tag :div, id: content.dom_id, data: {"content-id" => content.id}, class: [
-    "essence_picture_editor",
-    options[:dragable] ? "dragable_picture" : nil,
-    options[:grouped] ? nil : "content_editor"
-  ].compact.join(" ") do %>
-  <% unless options[:grouped] %><%= content_label(content) %><% end %>
+<%= content_tag :div, id: content.dom_id, data: {"content-id" => content.id}, class: "content_editor essence_picture" do %>
+  <%= content_label(content) %>
   <div class="picture_thumbnail">
     <span class="picture_tool delete">
-      <% if options[:grouped] %>
-        <%= link_to_confirm_dialog "", Alchemy.t(:confirm_to_delete_image),
-          alchemy.admin_essence_picture_path(
-            id: content,
-            options: options
-          ), {title: Alchemy.t(:delete_image)} %>
-      <% else %>
-        <%= link_to '', '#',
-          onclick: "return Alchemy.removePicture('##{content.form_field_id(:picture_id)}');" %>
-      <% end %>
+      <%= link_to render_icon(:times), '#',
+        onclick: "return Alchemy.removePicture('##{content.form_field_id(:picture_id)}');" %>
     </span>
-    <%- if content.ingredient -%>
-      <div class="picture_handle" title="<%= Alchemy.t(:drag_to_sort) if options[:dragable] %>"></div>
-    <%- end -%>
     <div class="picture_image">
-      <div class="thumbnail_background<%= ' missing' if content.ingredient.nil? %>">
+      <div class="thumbnail_background">
         <%- if content.ingredient -%>
-        <%= essence_picture_thumbnail(content, options) %>
-        <%= hidden_field_tag content.form_field_name(:picture_id), content.ingredient.id %>
+          <%= essence_picture_thumbnail(content, options) %>
+        <% else %>
+          <%= render_icon(:image, style: 'regular') %>
         <% end %>
       </div>
     </div>
@@ -41,6 +27,8 @@
       } %>
     </div>
   </div>
+  <%= hidden_field_tag content.form_field_name(:picture_id),
+    content.ingredient.try!(:id) %>
   <%= hidden_field_tag content.form_field_name(:link),
     content.essence.link %>
   <%= hidden_field_tag content.form_field_name(:link_title),

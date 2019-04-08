@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_pages
@@ -16,8 +18,6 @@
 #  parent_id        :integer
 #  depth            :integer
 #  visible          :boolean          default(FALSE)
-#  public           :boolean          default(FALSE)
-#  locked_at        :datetime
 #  locked_by        :integer
 #  restricted       :boolean          default(FALSE)
 #  robot_index      :boolean          default(TRUE)
@@ -33,17 +33,17 @@
 #  published_at     :datetime
 #  public_on        :datetime
 #  public_until     :datetime
+#  locked_at        :datetime
 #
 
 module Alchemy
-  class Page < ActiveRecord::Base
+  class Page < BaseRecord
     include Alchemy::Hints
     include Alchemy::Logger
-    include Alchemy::Touching
+    include Alchemy::Taggable
 
     DEFAULT_ATTRIBUTES_FOR_COPY = {
-      do_not_autogenerate: true,
-      do_not_sweep: true,
+      autogenerate_elements: false,
       visible: false,
       public_on: nil,
       public_until: nil,
@@ -84,12 +84,11 @@ module Alchemy
       :short_excerpt
     ]
 
-    acts_as_taggable
     acts_as_nested_set(dependent: :destroy)
 
     stampable stamper_class_name: Alchemy.user_class_name
 
-    belongs_to :language, required: false
+    belongs_to :language, optional: true
 
     has_one :site, through: :language
     has_many :site_languages, through: :site, source: :languages
@@ -105,9 +104,6 @@ module Alchemy
     validates_presence_of :page_layout, unless: :systempage?
     validates_format_of :page_layout, with: /\A[a-z0-9_-]+\z/, unless: -> { systempage? || page_layout.blank? }
     validates_presence_of :parent_id, if: proc { Page.count > 1 }
-
-    attr_accessor :do_not_sweep
-    attr_accessor :do_not_validate_language
 
     before_save :set_language_code,
       if: -> { language.present? },
@@ -133,7 +129,7 @@ module Alchemy
       unless: :systempage?
 
     after_update :create_legacy_url,
-      if: :urlname_changed?,
+      if: :should_create_legacy_url?,
       unless: :redirects_to_external?
 
     # Concerns
@@ -141,7 +137,6 @@ module Alchemy
     include Alchemy::Page::PageNatures
     include Alchemy::Page::PageNaming
     include Alchemy::Page::PageUsers
-    include Alchemy::Page::PageCells
     include Alchemy::Page::PageElements
 
     # site_name accessor
@@ -150,6 +145,15 @@ module Alchemy
     # Class methods
     #
     class << self
+      # The root page of the page tree
+      #
+      # Internal use only. You wouldn't use this page ever.
+      #
+      # Automatically created when accessed the first time.
+      #
+      def root
+        super || create!(name: 'Root')
+      end
       alias_method :rootpage, :root
 
       # Used to store the current page previewed in the edit page template.
@@ -190,7 +194,6 @@ module Alchemy
         page = Alchemy::Page.new(attributes_from_source_for_copy(source, differences))
         page.tag_list = source.tag_list
         if page.save!
-          copy_cells(source, page)
           copy_elements(source, page)
           page
         end
@@ -208,7 +211,7 @@ module Alchemy
           name: "Layoutroot for #{language.name}",
           layoutpage: true,
           language: language,
-          do_not_autogenerate: true,
+          autogenerate_elements: false,
           parent_id: Page.root.id
         )
       end
@@ -314,6 +317,38 @@ module Alchemy
     # Instance methods
     #
 
+    # Returns elements from page.
+    #
+    # @option options [Array<String>|String] :only
+    #   Returns only elements with given names
+    # @option options [Array<String>|String] :except
+    #   Returns all elements except the ones with given names
+    # @option options [Integer] :count
+    #   Limit the count of returned elements
+    # @option options [Integer] :offset
+    #   Starts with an offset while returning elements
+    # @option options [Boolean] :include_hidden (false)
+    #   Return hidden elements as well
+    # @option options [Boolean] :random (false)
+    #   Return elements randomly shuffled
+    # @option options [Boolean] :reverse (false)
+    #   Reverse the load order
+    # @option options [Class] :finder (Alchemy::ElementsFinder)
+    #   A class that will return elements from page.
+    #   Use this for your custom element loading logic.
+    #
+    # @return [ActiveRecord::Relation]
+    def find_elements(options = {}, show_non_public = false)
+      if show_non_public
+        Alchemy::Deprecation.warn "Passing true as second argument to page#find_elements to include" \
+          " invisible elements has been removed. Please implement your own ElementsFinder" \
+          " and pass it with options[:finder]."
+      end
+
+      finder = options[:finder] || Alchemy::ElementsFinder.new(options)
+      finder.elements(page: self)
+    end
+
     # The page's view partial is dependent from its page layout
     #
     # == Define page layouts
@@ -334,19 +369,27 @@ module Alchemy
 
     # Returns the previous page on the same level or nil.
     #
-    # For options @see #next_or_previous
+    # @option options [Boolean] :restricted (false)
+    #   only restricted pages (true), skip restricted pages (false)
+    # @option options [Boolean] :public (true)
+    #   only public pages (true), skip public pages (false)
     #
     def previous(options = {})
-      next_or_previous('<', options)
+      pages = self_and_siblings.where('lft < ?', lft)
+      select_page(pages, options.merge(order: :desc))
     end
     alias_method :previous_page, :previous
 
     # Returns the next page on the same level or nil.
     #
-    # For options @see #next_or_previous
+    # @option options [Boolean] :restricted (false)
+    #   only restricted pages (true), skip restricted pages (false)
+    # @option options [Boolean] :public (true)
+    #   only public pages (true), skip public pages (false)
     #
     def next(options = {})
-      next_or_previous('>', options)
+      pages = self_and_siblings.where('lft > ?', lft)
+      select_page(pages, options.merge(order: :asc))
     end
     alias_method :next_page, :next
 
@@ -526,26 +569,10 @@ module Alchemy
       end
     end
 
-    # Returns the next or previous page on the same level or nil.
-    #
-    # @param [String]
-    #   Pass '>' for next and '<' for previous page.
-    #
-    # @option options [Boolean] :restricted (nil)
-    #   only restricted pages (true), skip restricted pages (false)
-    # @option options [Boolean] :public (true)
-    #   only public pages (true), skip public pages (false)
-    #
-    def next_or_previous(dir = '>', options = {})
-      options = {
-        restricted: false,
-        public: true
-      }.update(options)
-
-      pages = self_and_siblings.where(["#{Page.table_name}.lft #{dir} ?", lft])
-      pages = options[:public] ? pages.published : pages.not_public
-      pages.where(restricted: options[:restricted])
-        .reorder(dir == '>' ? 'lft' : 'lft DESC')
+    def select_page(pages, options = {})
+      pages = options.fetch(:public, true) ? pages.published : pages.not_public
+      pages.where(restricted: options.fetch(:restricted, false))
+        .reorder(lft: options.fetch(:order))
         .limit(1).first
     end
 
@@ -558,9 +585,22 @@ module Alchemy
       self.language_code = language.code
     end
 
+    def should_create_legacy_url?
+      if active_record_5_1?
+        saved_change_to_urlname?
+      else
+        urlname_changed?
+      end
+    end
+
     # Stores the old urlname in a LegacyPageUrl
     def create_legacy_url
-      legacy_urls.find_or_create_by(urlname: urlname_was)
+      if active_record_5_1?
+        former_urlname = urlname_before_last_save
+      else
+        former_urlname = urlname_was
+      end
+      legacy_urls.find_or_create_by(urlname: former_urlname)
     end
 
     def set_published_at

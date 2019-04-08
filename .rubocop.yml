@@ -4,20 +4,27 @@ AllCops:
   Exclude:
     - 'bin/rspec'
     - 'vendor/**/*'
-    - 'spec/dummy/**/*'
-  TargetRubyVersion: 2.1
+    - 'spec/dummy/db/**/*'
+    - 'spec/dummy/config/**/*'
+    - 'alchemy_cms.gemspec'
+    - 'Rakefile'
+
+  TargetRubyVersion: 2.3
+
+# Really, rubocop?
+Bundler/OrderedGems:
+  Enabled: false
 
 # Sometimes I believe this reads better
 # This also causes spacing issues on multi-line fixes
 Style/BracesAroundHashParameters:
   Enabled: false
 
-# We use class vars and will have to continue doing so for compatability
-Style/ClassVars:
+Style/EmptyLiteral:
   Enabled: false
 
-# We need these names for backwards compatability
-Style/PredicateName:
+# We use class vars and will have to continue doing so for compatability
+Style/ClassVars:
   Enabled: false
 
 # This has been used for customization
@@ -30,46 +37,93 @@ Style/ClassAndModuleChildren:
 Style/GuardClause:
   Enabled: false
 
+# We support older versions of Ruby (2.1) that do not have the %i syntax
+Style/SymbolArray:
+  Enabled: false
+
+Style/SymbolProc:
+  Exclude:
+    - 'lib/alchemy/permissions.rb'
+
 Style/WordArray:
   Enabled: false
 
 Style/ConditionalAssignment:
   Enabled: false
 
+Style/MixinUsage:
+  Exclude:
+    - spec/**/*
+
 Performance/Count:
   Enabled: false
 
-Lint/EndAlignment:
+Layout/AlignHash:
   Enabled: false
 
-Style/ElseAlignment:
+Layout/AlignParameters:
   Enabled: false
 
-Style/IndentationWidth:
+Layout/ClosingParenthesisIndentation:
   Enabled: false
 
-Style/AlignParameters:
+Layout/DotPosition:
+  Enabled: false
+  StyleGuide: http://relaxed.ruby.style/#styledotposition
+
+Layout/ElseAlignment:
   Enabled: false
 
-Style/ClosingParenthesisIndentation:
+Layout/EmptyLineAfterMagicComment:
   Enabled: false
+
+Layout/IndentArray:
+  Enabled: false
+
+Layout/IndentHash:
+  Enabled: false
+
+Layout/IndentHeredoc:
+  EnforcedStyle: active_support
+
+Layout/IndentationWidth:
+  Enabled: false
+
+Layout/MultilineHashBraceLayout:
+  Enabled: false
+
+Layout/MultilineMethodCallBraceLayout:
+  Enabled: false
+
+Layout/MultilineMethodCallIndentation:
+  Enabled: false
+
+Layout/MultilineOperationIndentation:
+  EnforcedStyle: indented
+
+Layout/SpaceBeforeBlockBraces:
+  Enabled: false
+  StyleGuide: http://relaxed.ruby.style/#stylespacebeforeblockbraces
+
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
+
+Layout/SpaceInsideParens:
+  Enabled: false
+  StyleGuide: http://relaxed.ruby.style/#stylespaceinsideparens
+
+Layout/EndAlignment:
+  Enabled: false
+
+Lint/HandleExceptions:
+  Exclude:
+    - 'config/initializers/mini_profiler.rb'
+
+Lint/ShadowedException:
+  Exclude:
+    - 'lib/alchemy/sass_support.rb'
 
 Style/CollectionMethods:
-  Enabled: false
-
-Style/MultilineMethodCallIndentation:
-  Enabled: false
-
-Style/IndentArray:
-  Enabled: false
-
-Style/IndentHash:
-  Enabled: false
-
-Style/AlignHash:
-  Enabled: false
-
-Style/AccessorMethodName:
   Enabled: false
 
 Style/Alias:
@@ -88,13 +142,12 @@ Style/Documentation:
   Enabled: false
   StyleGuide: http://relaxed.ruby.style/#styledocumentation
 
-Style/DotPosition:
-  Enabled: false
-  StyleGuide: http://relaxed.ruby.style/#styledotposition
-
 Style/DoubleNegation:
   Enabled: false
   StyleGuide: http://relaxed.ruby.style/#styledoublenegation
+
+Style/EmptyMethod:
+  Enabled: false
 
 Style/EndBlock:
   Enabled: false
@@ -128,6 +181,9 @@ Style/NegatedWhile:
   Enabled: false
   StyleGuide: http://relaxed.ruby.style/#stylenegatedwhile
 
+Style/NumericLiteralPrefix:
+  Enabled: false
+
 Style/ParallelAssignment:
   Enabled: false
   StyleGuide: http://relaxed.ruby.style/#styleparallelassignment
@@ -159,17 +215,6 @@ Style/SingleLineMethods:
   Enabled: false
   StyleGuide: http://relaxed.ruby.style/#stylesinglelinemethods
 
-Style/SpaceBeforeBlockBraces:
-  Enabled: false
-  StyleGuide: http://relaxed.ruby.style/#stylespacebeforeblockbraces
-
-Style/SpaceInsideHashLiteralBraces:
-  Enabled: false
-
-Style/SpaceInsideParens:
-  Enabled: false
-  StyleGuide: http://relaxed.ruby.style/#stylespaceinsideparens
-
 Style/SpecialGlobalVars:
   Enabled: false
   StyleGuide: http://relaxed.ruby.style/#stylespecialglobalvars
@@ -182,6 +227,17 @@ Style/WhileUntilModifier:
   Enabled: false
   StyleGuide: http://relaxed.ruby.style/#stylewhileuntilmodifier
 
+# We use a lot of
+#
+#     expect {
+#       something
+#     }.to { happen }
+#
+# syntax in the specs files.
+Lint/AmbiguousBlockAssociation:
+  Exclude:
+    - 'spec/**/*'
+
 Lint/AmbiguousRegexpLiteral:
   Enabled: false
   StyleGuide: http://relaxed.ruby.style/#lintambiguousregexpliteral
@@ -193,12 +249,15 @@ Lint/AssignmentInCondition:
 # We use eval to get the correct url proxy object of engines in:
 # - app/helpers/alchemy/admin/navigation_helper.rb:139
 # - lib/alchemy/resources_helper.rb:24
-Lint/Eval:
+Security/Eval:
   Exclude:
     - app/helpers/alchemy/admin/navigation_helper.rb
     - lib/alchemy/resources_helper.rb
 
 Metrics/AbcSize:
+  Enabled: false
+
+Metrics/BlockLength:
   Enabled: false
 
 Metrics/BlockNesting:
@@ -223,4 +282,21 @@ Metrics/ParameterLists:
   Enabled: false
 
 Metrics/PerceivedComplexity:
+  Enabled: false
+
+Naming/AccessorMethodName:
+  Enabled: false
+
+Naming/HeredocDelimiterNaming:
+    Enabled: false
+
+# This cop is great but has no config option to support the style `@_method_name` we are using.
+Naming/MemoizedInstanceVariableName:
+  Enabled: false
+
+# We need these names for backwards compatability
+Naming/PredicateName:
+  Enabled: false
+
+Naming/VariableNumber:
   Enabled: false

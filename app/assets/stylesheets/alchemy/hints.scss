@@ -28,7 +28,7 @@
   > .hint-bubble {
     visibility: hidden;
     background: $light_yellow;
-    @extend %rounded-border;
+    border-radius: $default-border-radius;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, .3);
     position: absolute;
     left: 50%;
@@ -41,7 +41,7 @@
     max-width: 300px;
     white-space: normal;
     text-align: left;
-    font-size: 12px;
+    font-size: $default-font-size;
     opacity: 0;
     transition: .3s;
     pointer-events: none;

@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 require 'cancan/matchers'
 
 describe Alchemy::Permissions do
@@ -31,15 +33,6 @@ describe Alchemy::Permissions do
     it "can only see not restricted attachments" do
       is_expected.to be_able_to(:show, attachment)
       is_expected.not_to be_able_to(:show, restricted_attachment)
-    end
-
-    it "can only see not restricted pictures" do
-      is_expected.to be_able_to(:show, picture)
-      is_expected.to be_able_to(:thumbnail, picture)
-      is_expected.to be_able_to(:zoom, picture)
-      is_expected.not_to be_able_to(:show, restricted_picture)
-      is_expected.not_to be_able_to(:thumbnail, restricted_picture)
-      is_expected.not_to be_able_to(:zoom, restricted_picture)
     end
 
     it "can only visit not restricted pages" do
@@ -80,15 +73,6 @@ describe Alchemy::Permissions do
     it "can see all attachments" do
       is_expected.to be_able_to(:show, attachment)
       is_expected.to be_able_to(:show, restricted_attachment)
-    end
-
-    it "can see all pictures" do
-      is_expected.to be_able_to(:show, picture)
-      is_expected.to be_able_to(:thumbnail, picture)
-      is_expected.to be_able_to(:zoom, picture)
-      is_expected.to be_able_to(:show, restricted_picture)
-      is_expected.to be_able_to(:thumbnail, restricted_picture)
-      is_expected.to be_able_to(:zoom, restricted_picture)
     end
 
     it "can visit restricted pages" do
@@ -132,10 +116,6 @@ describe Alchemy::Permissions do
     it "can visit the dashboard" do
       is_expected.to be_able_to(:index, :alchemy_admin_dashboard)
       is_expected.to be_able_to(:info, :alchemy_admin_dashboard)
-    end
-
-    it "can see picture thumbnails" do
-      is_expected.to be_able_to(:thumbnail, Alchemy::Picture)
     end
 
     it "can edit page content" do

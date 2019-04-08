@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_essence_booleans
@@ -13,7 +15,7 @@
 # Stores boolean values.
 # Provides a checkbox in the editor views.
 module Alchemy
-  class EssenceBoolean < ActiveRecord::Base
+  class EssenceBoolean < BaseRecord
     acts_as_essence ingredient_column: 'value'
   end
 end

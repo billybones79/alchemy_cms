@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Filetypes
     ARCHIVE_FILE_TYPES = ["application/zip", "application/x-rar"]
@@ -14,7 +16,8 @@ module Alchemy
       "image/jpeg",
       "image/png",
       "image/svg+xml",
-      "image/tiff"
+      "image/tiff",
+      "image/x-psd"
     ]
 
     VCARD_FILE_TYPES = ["text/x-vcard", "application/vcard"]
@@ -27,6 +30,17 @@ module Alchemy
       "video/quicktime",
       "video/x-msvideo",
       "video/x-ms-wmv"
+    ]
+
+    TEXT_FILE_TYPES = [
+      "application/rtf",
+      "text/plain"
+    ]
+
+    EXCEL_FILE_TYPES = [
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel",
+      "text/csv"
     ]
   end
 end

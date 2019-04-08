@@ -13,26 +13,26 @@
     <div class="button_group">
       <div class="button_with_label">
         <%= link_to(
-          render_icon('zoom-out'),
-          alchemy.admin_pictures_path(size: "small", q: params[:q]),
+          render_icon('search-minus'),
+          alchemy.admin_pictures_path(size: "small", q: search_filter_params[:q]),
           title: Alchemy.t(:small_thumbnails),
-          class: "icon_button please_wait"
+          class: "icon_button"
         ) %>
       </div>
       <div class="button_with_label">
         <%= link_to(
-          render_icon('zoom-equal'),
-          alchemy.admin_pictures_path(size: "medium", q: params[:q]),
+          render_icon('search'),
+          alchemy.admin_pictures_path(size: "medium", q: search_filter_params[:q]),
           title: Alchemy.t(:medium_thumbnails),
-          class: "icon_button please_wait"
+          class: "icon_button"
         ) %>
       </div>
       <div class="button_with_label">
         <%= link_to(
-          render_icon('zoom-in'),
-          alchemy.admin_pictures_path(size: "large", q: params[:q]),
+          render_icon('search-plus'),
+          alchemy.admin_pictures_path(size: "large", q: search_filter_params[:q]),
           title: Alchemy.t(:big_thumbnails),
-          class: "icon_button please_wait"
+          class: "icon_button"
         ) %>
       </div>
       <label><%= Alchemy.t('Image size') %></label>
@@ -41,8 +41,8 @@
     <div class="toolbar_spacer"></div>
     <div class="button_with_label">
       <%= link_to(
-        render_icon('select_all'),
-        '',
+        render_icon('check-square', style: 'regular'),
+        nil,
         id: 'select_all_pictures',
         class: 'icon_button',
         'data-alchemy-hotkey' => 'alt+a'
@@ -55,12 +55,14 @@
     additional_params: [:filter, :tagged_with, :size] %>
 <% end %>
 
-<div id="picture_archive">
-  <h1>
-    <%= @pictures.total_count %>
-    <%= Alchemy::Picture.model_name.human(count: @pictures.total_count) %>
-    <%= Alchemy.t("picture_library.filter.#{params[:filter]}") if params[:filter].present? %>
-  </h1>
+<div id="picture_archive" class="resources-table-wrapper with_tag_filter">
+  <div class="resources-header">
+    <h2>
+      <%= @pictures.total_count %>
+      <%= Alchemy::Picture.model_name.human(count: @pictures.total_count) %>
+      <%= Alchemy.t("picture_library.filter.#{search_filter_params[:filter]}") if search_filter_params[:filter].present? %>
+    </h2>
+  </div>
   <%= render 'archive' %>
 </div>
 

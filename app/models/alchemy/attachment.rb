@@ -1,27 +1,28 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_attachments
 #
 #  id              :integer          not null, primary key
-#  name            :string(255)
-#  file_name       :string(255)
-#  file_mime_type  :string(255)
+#  name            :string
+#  file_name       :string
+#  file_mime_type  :string
 #  file_size       :integer
 #  creator_id      :integer
 #  updater_id      :integer
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  cached_tag_list :text
-#  file_uid        :string(255)
+#  file_uid        :string
 #
 
 module Alchemy
-  class Attachment < ActiveRecord::Base
+  class Attachment < BaseRecord
     include Alchemy::Filetypes
     include Alchemy::NameConversions
-    include Alchemy::Touching
-
-    acts_as_taggable
+    include Alchemy::Taggable
+    include Alchemy::ContentTouching
 
     dragonfly_accessor :file, app: :alchemy_attachments do
       after_assign { |f| write_attribute(:file_mime_type, f.mime_type) }
@@ -36,6 +37,10 @@ module Alchemy
 
     # We need to define this method here to have it available in the validations below.
     class << self
+      def searchable_alchemy_resource_attributes
+        %w(name file_name)
+      end
+
       def allowed_filetypes
         Config.get(:uploader).fetch('allowed_filetypes', {}).fetch('alchemy/attachments', [])
       end
@@ -57,8 +62,6 @@ module Alchemy
       unless: -> { self.class.allowed_filetypes.include?('*') }
 
     before_save :set_name, if: :file_name_changed?
-
-    after_update :touch_contents
 
     scope :with_file_type, ->(file_type) { where(file_mime_type: file_type) }
 
@@ -92,30 +95,24 @@ module Alchemy
     #
     def icon_css_class
       case file_mime_type
-      when "application/x-shockwave-flash"
-        then "flash"
-      when "image/x-psd"
-        then "psd"
-      when "text/plain"
-        then "text"
-      when "application/rtf"
-        then "rtf"
       when "application/pdf"
-        then "pdf"
+        then "file-pdf"
       when "application/msword"
-        then "word"
-      when "application/vnd.ms-excel"
-        then "excel"
+        then "file-word"
+      when *TEXT_FILE_TYPES
+        then "file-alt"
+      when *EXCEL_FILE_TYPES
+        then "file-excel"
       when *VCARD_FILE_TYPES
-        then "vcard"
+        then "address-card"
       when *ARCHIVE_FILE_TYPES
-        then "archive"
+        then "file-archive"
       when *AUDIO_FILE_TYPES
-        then "audio"
+        then "file-audio"
       when *IMAGE_FILE_TYPES
-        then "image"
+        then "file-image"
       when *VIDEO_FILE_TYPES
-        then "video"
+        then "file-video"
       else
         "file"
       end

@@ -3,33 +3,27 @@ window.Alchemy = {} if typeof(window.Alchemy) is 'undefined'
 $.extend Alchemy,
 
   Datepicker: (scope) ->
-    options =
-      format: Alchemy.t('formats.datetime')
-      formatDate: Alchemy.t('formats.date')
-      formatTime: Alchemy.t('formats.time')
-      dayOfWeekStart: Alchemy.t('formats.start_of_week')
-      onSelectDate: ->
-        Alchemy.setElementDirty $(this).closest(".element-editor")
+    $datepicker_inputs = $('input[data-datepicker-type]', scope)
 
-    datepicker_options = $.extend {}, options,
-      format: options.formatDate
-      timepicker: false
-
-    timepicker_options = $.extend {}, options,
-      format: options.formatTime
-      datepicker: false
-
-    $.datetimepicker.setLocale(Alchemy.locale);
-
-    # Initializes the datepickers and disables the browsers default Datepicker
-    # unless the browser is iOS.
-    $('input[type="date"], input.date', scope)
-      .datetimepicker(datepicker_options).prop "type", "text" unless Alchemy.isiOS
-
-    $('input[type="time"], input.time', scope)
-      .datetimepicker(timepicker_options).prop "type", "text" unless Alchemy.isiOS
-
-    $('input[type="datetime"], input.datetime', scope)
-      .datetimepicker(options).prop "type", "text" unless Alchemy.isiOS
+    # Initializes the datepickers on the text inputs and sets the proper type
+    # to enable browsers default datepicker if the current OS is iOS.
+    if Alchemy.isiOS
+      $datepicker_inputs.prop "type", ->
+        return $(this).data('datepicker-type')
+    else
+      $datepicker_inputs.each ->
+        type = $(this).data('datepicker-type')
+        options =
+          # alchemy_i18n supports `zh_CN` etc., but flatpickr only has two-letter codes (`zh`)
+          locale: Alchemy.locale.slice(0, 2)
+          altInput: true
+          altFormat: Alchemy.t("formats.#{type}")
+          altInputClass: ""
+          enableTime: /time/.test(type)
+          noCalendar: type == "time"
+          time_24hr: Alchemy.t("formats.time_24hr")
+          onValueUpdate: (_selectedDates, _dateStr, instance) ->
+            Alchemy.setElementDirty $(instance.element).closest(".element-editor")
+        $(this).flatpickr(options)
 
     return

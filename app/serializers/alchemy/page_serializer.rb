@@ -1,7 +1,7 @@
+# frozen_string_literal: true
+
 module Alchemy
   class PageSerializer < ActiveModel::Serializer
-    self.root = false
-
     attributes :id,
       :name,
       :urlname,
@@ -15,14 +15,10 @@ module Alchemy
       :updated_at,
       :status
 
-    has_many :elements, :cells
+    has_many :elements
 
     def elements
-      if object.has_cells?
-        object.elements.not_in_cell.published
-      else
-        object.elements.published
-      end
+      object.elements.published
     end
   end
 end

@@ -113,6 +113,7 @@
     type: EssenceRichtext
 
 - name: slide
+  compact: true
   contents:
     - name: picture
       type: EssencePicture
@@ -123,3 +124,33 @@
 - name: slider
   nestable_elements:
     - slide
+  autogenerate:
+    - slide
+
+- name: gallery
+  nestable_elements:
+    - gallery_picture
+
+- name: gallery_picture
+  compact: true
+  contents:
+    - name: picture
+      type: EssencePicture
+
+- name: right_column
+  fixed: true
+  unique: true
+  contents:
+    - name: title
+      type: EssenceText
+  nestable_elements: [search, text]
+
+- name: left_column
+  fixed: true
+  unique: true
+  nestable_elements: [text]
+
+- name: <%= 'erb_' + 'cell' %>
+  fixed: true
+  unique: true
+  nestable_elements: [text]

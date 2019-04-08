@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   class PageLayout
     class << self
@@ -35,7 +37,7 @@ module Alchemy
       #
       def get(name)
         return {} if name.blank?
-        all.detect { |a| a['name'].casecmp(name) == 0 }
+        all.detect { |a| a['name'].casecmp(name).zero? }
       end
 
       def get_all_by_attributes(attributes)
@@ -44,7 +46,7 @@ module Alchemy
         if attributes.is_a? Hash
           layouts = []
           attributes.stringify_keys.each do |key, value|
-            result = all.select { |l| l.key?(key) && l[key].to_s.casecmp(value.to_s) == 0 }
+            result = all.select { |l| l.key?(key) && l[key].to_s.casecmp(value.to_s).zero? }
             layouts += result unless result.empty?
           end
           layouts
@@ -99,7 +101,7 @@ module Alchemy
           definition.fetch('elements', [])
         else
           Rails.logger.warn "\n+++ Warning: No layout definition for #{page_layout} found! in page_layouts.yml\n"
-          return []
+          []
         end
       end
 
@@ -136,7 +138,7 @@ module Alchemy
       # Returns true if one page already has the given layout
       #
       def page_with_layout_existing?(layout)
-        Page.where(page_layout: layout, language_id: @language_id).pluck(:id).any?
+        Alchemy::Page.where(page_layout: layout, language_id: @language_id).pluck(:id).any?
       end
 
       # Returns true if given layout is available for current site.
@@ -150,14 +152,15 @@ module Alchemy
       #     page_layouts: [default_intro]
       #
       def available_on_site?(layout)
-        Site.current.definition.blank? || Site.current.definition.fetch('page_layouts', []).include?(layout['name'])
+        Alchemy::Site.current.definition.blank? ||
+          Alchemy::Site.current.definition.fetch('page_layouts', []).include?(layout['name'])
       end
 
       # Reads the layout definitions from +config/alchemy/page_layouts.yml+.
       #
       def read_definitions_file
         if File.exist?(layouts_file_path)
-          YAML.load(ERB.new(File.read(layouts_file_path)).result) || []
+          YAML.safe_load(ERB.new(File.read(layouts_file_path)).result, YAML_WHITELIST_CLASSES, [], true) || []
         else
           raise LoadError, "Could not find page_layouts.yml file! Please run `rails generate alchemy:scaffold`"
         end

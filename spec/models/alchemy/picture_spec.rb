@@ -1,5 +1,6 @@
-# encoding: utf-8
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 module Alchemy
   describe Picture do
@@ -8,7 +9,7 @@ module Alchemy
     end
 
     let :image_file do
-      File.new(File.expand_path('../../../fixtures/image.png', __FILE__))
+      File.new(File.expand_path('../../fixtures/image.png', __dir__))
     end
 
     let(:picture) { Picture.new }
@@ -24,20 +25,20 @@ module Alchemy
     end
 
     it "is valid with capitalized image file extension" do
-      image_file = File.new(File.expand_path('../../../fixtures/image2.PNG', __FILE__))
+      image_file = File.new(File.expand_path('../../fixtures/image2.PNG', __dir__))
       picture = Picture.new(image_file: image_file)
       expect(picture).to be_valid
     end
 
     it "is valid with jpeg image file extension" do
-      image_file = File.new(File.expand_path('../../../fixtures/image3.jpeg', __FILE__))
+      image_file = File.new(File.expand_path('../../fixtures/image3.jpeg', __dir__))
       picture = Picture.new(image_file: image_file)
       expect(picture).to be_valid
     end
 
     context 'with enabled preprocess_image_resize config option' do
       let(:image_file) do
-        File.new(File.expand_path('../../../fixtures/80x60.png', __FILE__))
+        File.new(File.expand_path('../../fixtures/80x60.png', __dir__))
       end
 
       context 'with > geometry string' do
@@ -424,13 +425,7 @@ module Alchemy
 
       context "when `image_output_format` is configured to `original`" do
         before do
-          allow(Alchemy::Config).to receive(:get) do |args|
-            if args == :image_output_format
-              'original'
-            else
-              Alchemy::Config.show[args]
-            end
-          end
+          stub_alchemy_config(:image_output_format, 'original')
         end
 
         it "returns the image file format" do
@@ -440,13 +435,7 @@ module Alchemy
 
       context "when `image_output_format` is configured to an image format" do
         before do
-          allow(Alchemy::Config).to receive(:get) do |args|
-            if args == :image_output_format
-              'jpg'
-            else
-              Alchemy::Config.show[args]
-            end
-          end
+          stub_alchemy_config(:image_output_format, 'jpg')
         end
 
         context "and the format is a convertible format" do
@@ -463,6 +452,26 @@ module Alchemy
           it "returns the original file format." do
             is_expected.to eq('svg')
           end
+        end
+      end
+    end
+
+    describe 'after update' do
+      context 'assigned to contents' do
+        let(:picture) { create(:alchemy_picture) }
+
+        let(:content) do
+          create(:alchemy_content, :essence_picture).tap do |content|
+            content.update_column(:updated_at, 3.hours.ago)
+          end
+        end
+
+        before do
+          content.essence.update(picture: picture)
+        end
+
+        it 'touches contents' do
+          expect { picture.save }.to change { content.reload.updated_at }
         end
       end
     end

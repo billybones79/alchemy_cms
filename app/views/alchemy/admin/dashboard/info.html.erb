@@ -5,21 +5,20 @@
 <% if can? :update_check, :alchemy_admin_dashboard %>
 <p class="center" id="update_check">
   <span id="update_available">
-    <%= render_icon('warning') %>
+    <%= render_icon(:exclamation) %>
     <%= Alchemy.t 'Update available' %>
   </span>
   <span id="up_to_date">
-    <%= render_icon('ok') %>
+    <%= render_icon(:check) %>
     <%= Alchemy.t 'Alchemy is up to date' %>
   </span>
   <span id="error">
-    <%= render_icon('warning') %>
+    <%= render_icon(:exclamation) %>
     <%= Alchemy.t 'Update status unavailable' %>
   </span>
 </p>
 <% end %>
-<div class="info">
-  <%= render_icon('info') %>
+<%= render_message do %>
   <p><%= Alchemy.t('Alchemy is open software and itself uses open software and free resources:') %></p>
   <ul>
     <li>
@@ -38,10 +37,10 @@
       <a href="http://blueimp.github.io/jQuery-File-Upload/" target="_blank">jQuery File Upload</a>
     </li>
     <li>
-      <a href="http://p.yusukekamiyamane.com" target="_blank">Fugue Icons by Yusuke Kamiyamane</a>
+      <a href="https://fontawesome.com" target="_blank">FontAwesome Icons</a>
     </li>
   </ul>
-</div>
+<% end %>
 <% if can? :update_check, :alchemy_admin_dashboard %>
 <script type="text/javascript">
   (function() {

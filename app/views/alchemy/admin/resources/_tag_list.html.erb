@@ -1,15 +1,15 @@
-<div class="<%= params[:tagged_with].present? ? 'tag-list filtered' : 'tag-list' %>">
-  <h2><%= Alchemy.t("Filter by tag") %></h2>
+<div class="tag-list<%= ' with_filter_bar' if resource_has_filters %><%= ' filtered' if search_filter_params[:tagged_with].present? %>">
+  <h3><%= Alchemy.t("Filter by tag") %></h3>
   <%= js_filter_field '.tag-list li' %>
   <ul>
     <%= render_tag_list(resource_model.name) %>
   </ul>
-  <% if params[:tagged_with].present? %>
+  <% if search_filter_params[:tagged_with].present? %>
     <%= link_to(
-      render_icon('delete-small') + Alchemy.t('Remove tag filter'),
-      url_for(tag_list_params.delete_if { |k, v| k == "tagged_with" }.merge(action: 'index')),
+      render_icon(:times, size: 'xs') + Alchemy.t('Remove tag filter'),
+      url_for(search_filter_params.except(:tagged_with)),
       remote: request.xhr?,
-      class: 'button small with_icon please_wait'
+      class: 'secondary button small with_icon'
     ) %>
   <% end %>
 </div>

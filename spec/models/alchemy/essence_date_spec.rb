@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 module Alchemy
   describe EssenceDate do
@@ -6,21 +8,23 @@ module Alchemy
 
     it_behaves_like "an essence" do
       let(:essence)          { EssenceDate.new }
-      let(:ingredient_value) { DateTime.current }
+      let(:ingredient_value) { Time.current.iso8601 }
     end
 
     describe '#preview_text' do
+      subject { essence.preview_text }
+
       context "if no date set" do
         it "should return an empty string" do
-          expect(essence.preview_text).to eq("")
+          is_expected.to eq("")
         end
       end
 
       context "if date set" do
         it "should format the date by i18n" do
-          essence.date = DateTime.current
-          expect(::I18n).to receive(:l).with(essence.date, format: :date)
-          essence.preview_text
+          essence.date = Time.current
+          expect(::I18n).to receive(:l).with(essence.date, format: :'alchemy.essence_date')
+          subject
         end
       end
     end

@@ -20,7 +20,9 @@ Alchemy.ElementEditors =
   # Binds click events on several DOM elements from element editors
   # Uses event delegation, so it is not necessary to rebind these events.
   bindEvents: ->
-    @element_area.on "click", ".element-header", (e) =>
+    $('body').on 'click', (e) =>
+      @onClickBody(e)
+    @element_area.on "click", ".element-editor", (e) =>
       @onClickElement(e)
     @element_area.on "dblclick", ".element-header", (e) =>
       @onDoubleClickElement(e)
@@ -39,27 +41,29 @@ Alchemy.ElementEditors =
   # Selects and scrolls to element with given id in the preview window.
   #
   selectElementInPreview: (element_id) ->
-    $frame_elements = document
-                        .getElementById("alchemy_preview_window")
-                        .contentWindow
-                        .jQuery("[data-alchemy-element]")
-    $selected_element = $frame_elements.closest("[data-alchemy-element='#{element_id}']")
-    $selected_element.trigger("SelectPreviewElement.Alchemy")
+    previewElements = document
+                        .getElementById('alchemy_preview_window')
+                        .contentDocument
+                        .querySelectorAll('[data-alchemy-element]')
+    previewElement = Array.from(previewElements).find (element) ->
+      element.getAttribute('data-alchemy-element') == element_id
+    if previewElement
+      event = new Event('SelectPreviewElement.Alchemy')
+      previewElement.dispatchEvent(event)
     return
 
   # Selects element
   # Scrolls to element
   # Unfold if folded
-  # Also chooses the right cell, if necessary.
+  # Also chooses the right fixed elements tab, if necessary.
   # Can be triggered through custom event 'FocusElementEditor.Alchemy'
   # Used by the elements on click events in the preview frame.
   focusElement: ($element) ->
     element_id = $element.attr('id').replace(/\D/g, "")
-    @selectCellForElement($element)
+    @selectTabForElement($element)
     # If we have folded parents we need to unfold each of them
     # and then finally scroll to or unfold ourself
     $folded_parents = $element.parents('.element-editor.folded')
-    @selectElement($element)
     if $folded_parents.length > 0
       @unfoldParents $folded_parents, =>
         @scrollToOrUnfold(element_id)
@@ -68,20 +72,19 @@ Alchemy.ElementEditors =
       @scrollToOrUnfold(element_id)
     return
 
-  # Select cell for given element
-  selectCellForElement: ($element) ->
-    $cells = $("#cells .sortable_cell")
-    if $cells.size() > 0
-      $cell = $element.closest(".sortable_cell")
-      $("#cells").tabs("option", "active", $cells.index($cell))
+  # Selects tab for given element
+  selectTabForElement: ($element) ->
+    $tabs = $("#fixed-elements .sortable-elements")
+    if $tabs.size() > 0
+      $tab = $element.closest(".sortable-elements")
+      $("#fixed-elements").tabs("option", "active", $tabs.index($tab))
 
   # Marks an element as selected in the element window and scrolls to it.
   #
-  selectElement: ($element) ->
-    $elements = $("#element_area .element-editor")
-    $elements.removeClass("selected")
+  selectElement: ($element, scroll = false) ->
+    $("#element_area .element-editor").not($element[0]).removeClass("selected")
     $element.addClass("selected")
-    @scrollToElement($element)
+    @scrollToElement($element) if scroll
     return
 
   # Unfolds given parents until the last one is reached, then calls callback
@@ -104,17 +107,19 @@ Alchemy.ElementEditors =
   #
   scrollToOrUnfold: (element_id, callback) ->
     $el = $("#element_#{element_id}")
-    @selectElement($el)
     if $el.hasClass("folded")
       @toggleFold(element_id, callback)
+    else
+      @selectElement($el, true)
     return
 
   # Scrolls the element window to given element editor dom element.
   #
   scrollToElement: (el) ->
     $("#element_area").scrollTo el,
+      axis: 'y',
       duration: 400
-      offset: -10
+      offset: -6
 
   # Expands or folds a element editor
   #
@@ -138,7 +143,7 @@ Alchemy.ElementEditors =
   toggleFold: (id, callback) ->
     spinner = new Alchemy.Spinner('small')
     spinner.spin("#element_#{id} > .element-header .ajax-folder")
-    $("#element_#{id}_folder").hide()
+    $("#element_#{id}_folder .icon").hide()
     $.post Alchemy.routes.fold_admin_element_path(id), =>
       callback.call() if callback?
       return
@@ -168,37 +173,41 @@ Alchemy.ElementEditors =
 
   # Event handlers
 
-  # Click event handler for element head.
+  onClickBody: (e) ->
+    frameWindow = $('#alchemy_preview_window')[0].contentWindow
+    element = $(e.target).parents('.element-editor')[0]
+    $('#element_area .element-editor').not(element).removeClass('selected')
+    unless element
+      frameWindow.postMessage('blurAlchemyElements', window.location.origin)
+    return
+
+  # Click event handler for element body.
   #
   # - Focuses the element
   # - Triggers custom 'SelectPreviewElement.Alchemy' event on target element in preview frame.
   #
   onClickElement: (e) ->
-    $element = $(e.target).closest(".element-editor")
+    $target = $(e.target)
+    $element = $target.closest(".element-editor")
     element_id = $element.attr("id").replace(/\D/g, "")
-    $("#element_area .element-editor").removeClass("selected")
-    $element.addClass("selected")
     @selectElement($element)
     @selectElementInPreview(element_id)
-    e.preventDefault()
-    e.stopPropagation()
-    false
+    return
 
   # Double click event handler for element head.
   onDoubleClickElement: (e) ->
     id = $(e.target).closest('.element-editor').attr('id').replace(/\D/g, '')
     @toggle(id)
     e.preventDefault()
-    e.stopPropagation()
-    false
+    return
 
   # Click event handler for element toggle icon.
   onClickToggle: (e) ->
-    id = $(e.target).data('element-toggle')
+    id = $(e.currentTarget).data('element-toggle')
     @toggle(id)
     e.preventDefault()
     e.stopPropagation()
-    false
+    return
 
   # Handles the custom 'FocusElementEditor.Alchemy' event.
   #

@@ -7,7 +7,7 @@
     name: 'modules.dashboard'
     controller: 'alchemy/admin/dashboard'
     action: index
-    image: 'alchemy/icon.svg'
+    inline_image: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -6 32 32" class="svg-inline--fa fa-lg fa-fw"><path fill="currentColor" d="M15.7 7.9L9.9 2.2 2.1 4.3 0 12.1l5.7 5.8 7.8-2.1 2.2-7.9zm-5.3 10.3l-1.2 4.4 3.2 3.2 4.4-1.2 1.2-4.4-3.2-3.2-4.4 1.2zM23.5 7.3L17.2 9l-1.7 6.2 4.5 4.6 6.2-1.7 1.7-6.2-4.4-4.6z"/></svg>'
 
 - name: pages
   engine_name: alchemy
@@ -16,7 +16,7 @@
     name: 'modules.pages'
     controller: 'alchemy/admin/pages'
     action: index
-    icon: pages
+    icon: file-alt
     sub_navigation:
       - name: 'modules.pages'
         controller: 'alchemy/admin/pages'
@@ -35,7 +35,7 @@
     name: 'modules.languages'
     controller: 'alchemy/admin/languages'
     action: index
-    icon: languages
+    icon: flag
 
 - name: sites
   engine_name: alchemy
@@ -44,7 +44,7 @@
     name: 'modules.sites'
     controller: 'alchemy/admin/sites'
     action: index
-    icon: sites
+    icon: bullseye
 
 - name: tags
   engine_name: alchemy
@@ -62,7 +62,7 @@
     controller: 'alchemy/admin/pictures'
     action: index
     name: 'modules.library'
-    icon: library
+    icon: archive
     sub_navigation:
       - name: 'modules.pictures'
         controller: 'alchemy/admin/pictures'

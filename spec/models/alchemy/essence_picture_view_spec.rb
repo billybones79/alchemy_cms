@@ -1,10 +1,12 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 describe Alchemy::EssencePictureView, type: :model do
   include Capybara::RSpecMatchers
 
   let(:image) do
-    File.new(File.expand_path('../../../fixtures/image.png', __FILE__))
+    File.new(File.expand_path('../../fixtures/image.png', __dir__))
   end
 
   let(:picture) do
@@ -30,6 +32,13 @@ describe Alchemy::EssencePictureView, type: :model do
 
   before do
     allow(picture).to receive(:url) { picture_url }
+  end
+
+  describe 'DEFAULT_OPTIONS' do
+    it do
+      expect(Alchemy::EssencePictureView::DEFAULT_OPTIONS).
+        to be_a(HashWithIndifferentAccess)
+    end
   end
 
   context "with caption" do

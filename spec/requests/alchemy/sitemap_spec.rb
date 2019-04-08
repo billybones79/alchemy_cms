@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 RSpec.describe 'Requests for PagesController#sitemap' do
   let!(:page) { create(:alchemy_page, :public, sitemap: true) }

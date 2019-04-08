@@ -5,12 +5,8 @@ namespace :alchemy do
   desc "Upgrades your app to AlchemyCMS v#{Alchemy::VERSION}."
   task upgrade: [
     'alchemy:upgrade:prepare',
-    'alchemy:upgrade:3.0:run', 'alchemy:upgrade:3.0:todo',
-    'alchemy:upgrade:3.1:todo',
-    'alchemy:upgrade:3.2:run', 'alchemy:upgrade:3.2:todo',
-    'alchemy:upgrade:3.3:run', 'alchemy:upgrade:3.3:todo',
-    'alchemy:upgrade:3.4:run',
-    'alchemy:upgrade:3.5:run', 'alchemy:upgrade:3.5:todo'
+    'alchemy:upgrade:4.1:run', 'alchemy:upgrade:4.1:todo',
+    'alchemy:upgrade:4.2:run', 'alchemy:upgrade:4.2:todo'
   ] do
     Alchemy::Upgrader.display_todos
   end
@@ -23,14 +19,14 @@ namespace :alchemy do
     ]
 
     desc "Alchemy Upgrader: Prepares the database."
-    task :database => [
+    task database: [
       'alchemy:install:migrations',
       'db:migrate',
       'alchemy:db:seed'
     ]
 
     desc "Alchemy Upgrader: Copy configuration file."
-    task config: [:environment] do |t|
+    task config: [:environment] do
       Alchemy::Upgrader.copy_new_config_file
     end
 
@@ -40,141 +36,73 @@ namespace :alchemy do
       end
     end
 
-    desc 'Upgrade Alchemy to v3.0'
-    task '3.0' => [
+    desc 'Upgrade Alchemy to v4.1'
+    task '4.1' => [
       'alchemy:upgrade:prepare',
-      'alchemy:upgrade:3.0:run',
-      'alchemy:upgrade:3.0:todo'
+      'alchemy:upgrade:4.1:run',
+      'alchemy:upgrade:4.1:todo'
     ] do
       Alchemy::Upgrader.display_todos
     end
 
-    namespace '3.0' do
+    namespace '4.1' do
+      task run: ['alchemy:upgrade:4.1:harden_acts_as_taggable_on_migrations']
+
+      desc 'Harden acts_as_taggable_on migrations'
+      task harden_acts_as_taggable_on_migrations: [:environment] do
+        Alchemy::Upgrader::FourPointOne.harden_acts_as_taggable_on_migrations
+      end
+
+      task :todo do
+        Alchemy::Upgrader::FourPointOne.alchemy_4_1_todos
+      end
+    end
+
+    desc 'Upgrade Alchemy to v4.2'
+    task '4.2' => [
+      'alchemy:upgrade:prepare',
+      'alchemy:upgrade:4.2:run',
+      'alchemy:upgrade:4.2:todo'
+    ] do
+      Alchemy::Upgrader.display_todos
+    end
+
+    namespace '4.2' do
       task run: [
-        'alchemy:upgrade:3.0:rename_registered_role_ro_member',
-        'alchemy:upgrade:3.0:publish_unpublished_public_pages'
+        'alchemy:upgrade:4.2:convert_picture_galleries',
+        'alchemy:upgrade:4.2:migrate_picture_galleries',
+        'alchemy:upgrade:4.2:convert_cells',
+        'alchemy:upgrade:4.2:migrate_cells',
+        'alchemy:upgrade:4.2:update_element_partial_name_variable'
       ]
 
-      desc 'Rename the `registered` user role to `member`'
-      task rename_registered_role_ro_member: [:environment] do |t|
-        Alchemy::Upgrader::ThreePointZero.rename_registered_role_ro_member
+      desc 'Convert `picture_gallery` element definitions to `nestable_elements`.'
+      task convert_picture_galleries: [:environment] do
+        Alchemy::Upgrader::FourPointTwo.convert_picture_galleries
       end
 
-      desc 'Sets `published_at` of public pages without a `published_at` date set to their `updated_at` value'
-      task publish_unpublished_public_pages: [:environment] do |t|
-        Alchemy::Upgrader::ThreePointZero.publish_unpublished_public_pages
+      desc 'Migrate `picture_gallery` elements to `nestable_elements`.'
+      task migrate_picture_galleries: [:environment] do
+        Alchemy::Upgrader::FourPointTwo.migrate_picture_galleries
       end
 
-      task :todo do |t|
-        Alchemy::Upgrader::ThreePointZero.alchemy_3_0_todos
-      end
-    end
-
-    desc 'Upgrade Alchemy to v3.1'
-    task '3.1' => [
-      'alchemy:upgrade:prepare',
-      'alchemy:upgrade:3.1:todo'
-    ] do
-      Alchemy::Upgrader.display_todos
-    end
-
-    namespace '3.1' do
-      task :todo do |t|
-        Alchemy::Upgrader::ThreePointOne.alchemy_3_1_todos
-      end
-    end
-
-    desc 'Upgrade Alchemy to v3.2'
-    task '3.2' => [
-      'alchemy:upgrade:prepare',
-      'alchemy:upgrade:3.2:run',
-      'alchemy:upgrade:3.2:todo'
-    ] do
-      Alchemy::Upgrader.display_todos
-    end
-
-    namespace '3.2' do
-      task run: [
-        'alchemy:upgrade:3.2:upgrade_acts_as_taggable_on_migrations',
-        'alchemy:upgrade:3.2:inject_seeder'
-      ]
-
-      desc 'Install and patch acts_as_taggable_on migrations.'
-      task upgrade_acts_as_taggable_on_migrations: [:environment] do |t|
-        Alchemy::Upgrader::ThreePointTwo.upgrade_acts_as_taggable_on_migrations
+      desc 'Convert cells config to fixed nestable elements.'
+      task convert_cells: [:environment] do
+        Alchemy::Upgrader::FourPointTwo.convert_cells
       end
 
-      desc 'Add Alchemy seeder to `db/seeds.rb` file.'
-      task inject_seeder: [:environment] do |t|
-        Alchemy::Upgrader::ThreePointTwo.inject_seeder
+      desc 'Migrate existing cells to fixed nestable elements.'
+      task migrate_cells: ['alchemy:install:migrations', 'db:migrate'] do
+        Alchemy::Upgrader::FourPointTwo.migrate_cells
       end
 
-      task :todo do |t|
-        Alchemy::Upgrader::ThreePointTwo.alchemy_3_2_todos
-      end
-    end
-
-    desc 'Upgrade Alchemy to v3.3'
-    task '3.3' => [
-      'alchemy:upgrade:prepare',
-      'alchemy:upgrade:3.3:run',
-      'alchemy:upgrade:3.3:todo'
-    ] do
-      Alchemy::Upgrader.display_todos
-    end
-
-    namespace '3.3' do
-      task run: [
-        'alchemy:upgrade:3.3:convert_available_contents',
-        'alchemy:upgrade:3.3:migrate_existing_elements'
-      ]
-
-      desc 'Convert `available_contents` config to `nestable_elements`.'
-      task convert_available_contents: [:environment] do |t|
-        Alchemy::Upgrader::ThreePointThree.convert_available_contents
+      desc 'Update element views to use element partial name variable.'
+      task :update_element_partial_name_variable do
+        Alchemy::Upgrader::FourPointTwo.update_element_views_variable_name
       end
 
-      desc 'Migrate existing elements to `nestable_elements`.'
-      task migrate_existing_elements: [:environment] do |t|
-        Alchemy::Upgrader::ThreePointThree.migrate_existing_elements
-      end
-
-      task :todo do |t|
-        Alchemy::Upgrader::ThreePointThree.alchemy_3_3_todos
-      end
-    end
-
-    desc 'Upgrade Alchemy to v3.4'
-    task '3.4' => ['alchemy:upgrade:prepare', 'alchemy:upgrade:3.4:run']
-
-    namespace '3.4' do
-      task run: ['alchemy:upgrade:3.4:install_asset_manifests']
-
-      desc 'Install asset manifests into `vendor/assets`'
-      task install_asset_manifests: [:environment] do |t|
-        Alchemy::Upgrader::ThreePointFour.install_asset_manifests
-      end
-    end
-
-    desc 'Upgrade Alchemy to v3.5'
-    task '3.5' => [
-      'alchemy:upgrade:prepare',
-      'alchemy:upgrade:3.5:run',
-      'alchemy:upgrade:3.5:todo'
-    ] do
-      Alchemy::Upgrader.display_todos
-    end
-
-    namespace '3.5' do
-      task run: ['alchemy:upgrade:3.5:install_dragonfly_config']
-
-      desc 'Install dragonfly config into `config/initializers`'
-      task install_dragonfly_config: [:environment] do |t|
-        Alchemy::Upgrader::ThreePointFive.install_dragonfly_config
-      end
-
-      task :todo do |t|
-        Alchemy::Upgrader::ThreePointFive.alchemy_3_5_todos
+      task :todo do
+        Alchemy::Upgrader::FourPointTwo.alchemy_4_2_todos
       end
     end
   end

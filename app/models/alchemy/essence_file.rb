@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_essence_files
@@ -14,8 +16,8 @@
 #
 
 module Alchemy
-  class EssenceFile < ActiveRecord::Base
-    belongs_to :attachment, required: false
+  class EssenceFile < BaseRecord
+    belongs_to :attachment, optional: true
     acts_as_essence ingredient_column: 'attachment'
 
     def attachment_url

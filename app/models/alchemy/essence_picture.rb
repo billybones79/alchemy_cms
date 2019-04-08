@@ -1,31 +1,33 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_essence_pictures
 #
 #  id              :integer          not null, primary key
 #  picture_id      :integer
-#  caption         :string(255)
-#  title           :string(255)
-#  alt_tag         :string(255)
-#  link            :string(255)
-#  link_class_name :string(255)
-#  link_title      :string(255)
-#  css_class       :string(255)
-#  link_target     :string(255)
+#  caption         :string
+#  title           :string
+#  alt_tag         :string
+#  link            :string
+#  link_class_name :string
+#  link_title      :string
+#  css_class       :string
+#  link_target     :string
 #  creator_id      :integer
 #  updater_id      :integer
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
-#  crop_from       :string(255)
-#  crop_size       :string(255)
-#  render_size     :string(255)
+#  crop_from       :string
+#  crop_size       :string
+#  render_size     :string
 #
 
 module Alchemy
-  class EssencePicture < ActiveRecord::Base
+  class EssencePicture < BaseRecord
     acts_as_essence ingredient_column: 'picture'
 
-    belongs_to :picture, required: false
+    belongs_to :picture, optional: true
     delegate :image_file_width, :image_file_height, :image_file, to: :picture
     before_save :fix_crop_values
     before_save :replace_newlines
@@ -54,23 +56,35 @@ module Alchemy
     # @option options crop [Boolean]
     #   If set to true the picture will be cropped to fit the size value.
     #
+    # @return [String]
     def picture_url(options = {})
       return if picture.nil?
 
-      options = {
-        format: picture.default_render_format,
-        crop_from: crop_from,
-        crop_size: crop_size
-      }.merge(options)
-
-      picture.url(options)
+      picture.url picture_url_options.merge(options)
     end
 
-    # Renders a thumbnail representation of the assigned image
+    # Picture rendering options
+    #
+    # Returns the +default_render_format+ of the associated +Alchemy::Picture+
+    # together with the +crop_from+ and +crop_size+ values
+    #
+    # @return [HashWithIndifferentAccess]
+    def picture_url_options
+      return {} if picture.nil?
+
+      {
+        format: picture.default_render_format,
+        crop_from: crop_from.presence,
+        crop_size: crop_size.presence
+      }.with_indifferent_access
+    end
+
+    # Returns an url for the thumbnail representation of the assigned picture
     #
     # It takes cropping values into account, so it always represents the current
     # image displayed in the frontend.
     #
+    # @return [String]
     def thumbnail_url(options = {})
       return if picture.nil?
 
@@ -94,6 +108,7 @@ module Alchemy
     # @param max [Integer]
     #   The maximum length of the text returned.
     #
+    # @return [String]
     def preview_text(max = 30)
       return "" if picture.nil?
       picture.name.to_s[0..max - 1]
@@ -101,6 +116,7 @@ module Alchemy
 
     # A Hash of coordinates suitable for the graphical image cropper.
     #
+    # @return [Hash]
     def cropping_mask
       return if crop_from.blank? || crop_size.blank?
       crop_from = point_from_string(read_attribute(:crop_from))
@@ -110,6 +126,8 @@ module Alchemy
     end
 
     # Returns a serialized ingredient value for json api
+    #
+    # @return [String]
     def serialized_ingredient
       picture_url(content.settings)
     end
@@ -130,13 +148,15 @@ module Alchemy
     private
 
     def fix_crop_values
-      %w(crop_from crop_size).each do |crop_value|
-        write_attribute crop_value, normalize_crop_value(crop_value)
+      %i(crop_from crop_size).each do |crop_value|
+        if self[crop_value].is_a?(String)
+          write_attribute crop_value, normalize_crop_value(crop_value)
+        end
       end
     end
 
     def normalize_crop_value(crop_value)
-      send(crop_value).to_s.split('x').map { |n| normalize_number(n) }.join('x')
+      self[crop_value].split('x').map { |n| normalize_number(n) }.join('x')
     end
 
     def normalize_number(number)

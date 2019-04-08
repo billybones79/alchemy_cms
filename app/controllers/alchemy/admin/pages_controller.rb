@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     class PagesController < Alchemy::Admin::BaseController
@@ -47,7 +49,7 @@ module Alchemy
         Page.current_preview = @page
         # Setting the locale to pages language, so the page content has it's correct translations.
         ::I18n.locale = @page.language.locale
-        render layout: 'application'
+        render(layout: Alchemy::Config.get(:admin_page_preview_layout) || 'application')
       end
 
       def info
@@ -187,7 +189,7 @@ module Alchemy
         # fetching page via before filter
         @page.publish!
         flash[:notice] = Alchemy.t(:page_published, name: @page.name)
-        redirect_back_or_to_default(admin_pages_path)
+        redirect_back(fallback_location: admin_pages_path)
       end
 
       def copy_language_tree

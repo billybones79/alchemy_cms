@@ -1,60 +1,76 @@
+$medium-select-box-width: 90px;
+
 select {
-  @include button-defaults;
-  height: 29px;
+  @include button-defaults(
+    $background-color: $form-field-background-color,
+    $hover-color: $form-field-background-color,
+    $hover-border-color: darken($default-border-color, 10%),
+    $padding: 0 2*$default-padding,
+    $border: 1px solid $default-border-color,
+    $box-shadow: none,
+    $color: $text-color,
+    $margin: 0);
+  height: $form-field-height;
   padding: 0.4em 0.6em;
   max-width: 100%;
   width: auto;
+  font-weight: normal;
+  vertical-align: middle;
+
+  &.alchemy_selectbox.medium {
+    width: $medium-select-box-width;
+  }
 }
 
 .select2-container {
-
   &.alchemy_selectbox {
-
-    text-shadow: #FFF 0px 1px 0px;
-
     .select2-choice {
-      height: 27px;
-      line-height: 27px;
-      @include button-defaults($padding: 0 2*$default-padding, $margin: 0);
+      height: $form-field-height;
+      @include button-defaults(
+        $background-color: $form-field-background-color,
+        $hover-color: $form-field-background-color,
+        $hover-border-color: darken($default-border-color, 10%),
+        $padding: $form-field-padding,
+        $border: 1px solid $default-border-color,
+        $box-shadow: none,
+        $color: $text-color,
+        $margin: 0);
+      background-image: none;
       display: block;
       font-weight: normal;
       text-align: left;
 
       .select2-arrow {
-        top: 2px;
-        width: 20px;
-        height: 23px;
-        line-height: 23px;
+        top: 0;
+        width: $form-field-height;
+        height: $form-field-height;
         background: transparent;
-        border-left: 1px solid #CACACA;
+        border-left: 0 none;
 
         b {
-          @extend .icon-menu;
+          @extend .fas;
           background-image: none;
+          opacity: $addon-icon-opacity;
 
           &:before {
-            position: relative;
-            top: 5px;
-            left: 1px;
+            content: fa-content($fa-var-caret-down);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
           }
         }
       }
     }
 
-    &.select2-dropdown-open {
-      .select2-choice .select2-arrow b {
-        background-position: -17px 0px;
-      }
-    }
-
     &.medium {
-      width: 90px;
+      width: $medium-select-box-width;
     }
 
     &.select2-container-active {
 
       .select2-choice, .select2-choices {
-        @extend %blue-focus-style;
+        @include default-focus-style($box-shadow: 0 0 0 1px $focus-color);
       }
     }
 
@@ -93,7 +109,7 @@ select {
     &.select2-container-active {
 
       .select2-choices {
-        @extend %blue-focus-style;
+        @include default-focus-style($box-shadow: 0 0 0 1px $focus-color);
       }
     }
 
@@ -108,14 +124,24 @@ select {
         background-image: none;
         border: 0 none;
         box-shadow: none;
+        color: $text-color;
       }
 
       .select2-search-choice-close {
+        @extend .fas;
+        @extend .fa-fw;
         left: auto;
-        right: 4px;
-        top: 6px;
+        right: 5px;
+        top: 5px;
         background: none;
-        @extend .icon-cross;
+        font-size: $small-font-size;
+        text-decoration: none;
+
+        &:before {
+          @extend .fa-xs;
+          content: fa-content($fa-var-times);
+          opacity: $addon-icon-opacity;
+        }
 
         &:hover {
           color: $text-color;
@@ -126,18 +152,11 @@ select {
         height: 29px;
 
         input {
-          color: $text-color;
-          padding: $default-padding 6px;
+          color: $form-field-text-color;
+          padding: 3px 6px;
+          margin: 0;
         }
       }
-    }
-  }
-}
-
-.tag_list {
-  .select2-container.select2-container-multi {
-    .select2-search-choice {
-      @include tag-base($margin: 4px, $padding: 4px 24px);
     }
   }
 }
@@ -173,8 +192,8 @@ select {
       padding: 4px 0;
 
       &.select2-highlighted {
-        background: $button-hover-bg-color;
-        color: $text-color;
+        background: $select-hover-bg-color;
+        color: $select-hover-text-color;
       }
 
       &.select2-result-with-children {
@@ -198,7 +217,7 @@ select {
 
   &.select2-drop-active {
     border-radius: $default-border-radius;
-    border: 1px solid $blue;
+    border: $default-border;
   }
 }
 

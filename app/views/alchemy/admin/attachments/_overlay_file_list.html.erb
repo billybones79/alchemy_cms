@@ -1,12 +1,11 @@
 <% if @attachments.empty? %>
-  <div class="info">
-    <%= render_icon('info') %>
-    <% if params[:q].present? %>
+  <%= render_message do %>
+    <% if search_filter_params[:q].present? %>
       <%= Alchemy.t(:no_search_results) %>
     <% else %>
       <%= Alchemy.t(:no_files_in_archive) %>
     <% end %>
-  </div>
+  <% end %>
 <% else %>
   <ul class="list">
     <li class="list-header">

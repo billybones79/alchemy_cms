@@ -24,38 +24,22 @@
 }
 
 .sitemap_pagename_link {
-  background-color: #fff;
-  color: black;
   display: block;
-  padding: 0 3*$default-padding;
+  padding: 0 10px;
+  margin: 2px;
   text-decoration: none;
-  @include transition(background-color, 400ms);
 
   &.inactive {
     color: #656565;
-  }
-
-  :hover {
-    text-decoration: underline;
-
-    &:after {
-      content: '';
-      width: 16px;
-      height: 16px;
-      float: left;
-      margin-right: $default-margin;
-      background: image-url('alchemy/icons.png') -160px -168px;
-      margin-top: $default-margin;
-    }
   }
 }
 
 .redirect_url {
   float: right;
   text-align: right;
-  background-color: #fff0c4;
+  background-color: $sitemap-info-background-color;
   line-height: $sitemap-line-height;
-  font-size: 10px;
+  font-size: $small-font-size;
   padding: 0 2*$default-padding;
   max-width: 45%;
   white-space: nowrap;
@@ -63,12 +47,28 @@
   text-overflow: ellipsis;
 }
 
-#page_selector_container .sitemap_pagename_link:hover {
-  text-decoration: none;
-}
+#page_selector_container {
+  height: 230px;
+  background-color: $light-gray;
+  margin-bottom: 4px;
+  border-width: $form-field-border-width;
+  border-style: $form-field-border-style;
+  border-color: $form-field-border-color;
+  overflow: auto;
+  padding: 4px 0 0 4px;
+  border-radius: $default-border-radius;
 
-#page_selector_container .sitemap_pagename_link:hover:after {
-  display: none;
+  .sitemap_pagename_link:hover {
+    text-decoration: none;
+
+    &:after {
+      display: none;
+    }
+  }
+
+  .sitemap_right_tools {
+    width: 24px;
+  }
 }
 
 .sitemap_line_spacer {
@@ -81,29 +81,40 @@
   height: $sitemap-line-height;
   margin: 3*$default-margin 0;
   position: relative;
+  transition: background-color $transition-duration;
 
-  &.highlight .sitemap_pagename_link {
-    background-color: #FFFBA5;
+  &.highlight {
+    background-color: $sitemap-highlight-color;
   }
 
   &.no-match .sitemap_pagename_link {
     color: $medium-gray;
   }
 
-  &:hover .sitemap_pagename_link {
-    background-color: $light_yellow;
+  &:hover {
+    background-color: $sitemap-page-hover-color;
+    border-radius: $default-border-radius;
+  }
+}
+
+.sitemap_sitename {
+  @include border-left-radius($default-border-radius);
+  line-height: $sitemap-line-height - 4;
+  overflow: hidden;
+  background-color: $sitemap-page-background-color;
+
+  &.without-status {
+    @include border-right-radius($default-border-radius);
   }
 }
 
 .sitemap_left_images {
-  @extend .left-rounded-border;
   position: relative;
-  width: 16px;
-  height: $sitemap-line-height;
-  line-height: $sitemap-line-height - 2px;
+  width: 32px;
+  line-height: $sitemap-line-height;
   float: left;
   padding: 0 2*$default-padding;
-  background-color: rgba(#fff, .75);
+  text-align: center;
 }
 
 .sitemap_right_tools {
@@ -137,34 +148,25 @@
   }
 }
 
-#page_selector_container .sitemap_right_tools {
-  width: 24px;
-}
+#sitemap {
+  padding: 0 0 104px 0;
 
-ul#sitemap {
+  &.sorting {
+    padding-top: 100px;
 
-  li.legend {
-
-    span.right {
-      margin-right: 52px;
-
-      span.page_move {
-        display: inline-block;
-        vertical-align: middle;
-        width: 74px;
-        text-align: center;
-      }
-    }
+    .page_icon { cursor: move }
   }
 
   .page_folder {
-    @extend .icon;
     position: absolute;
     left: -23px;
-    top: 8px;
+    top: 0;
+  }
 
-    &.collapsed { @extend .icon.expand.small }
-    &.folded { @extend .icon.collapse.small }
+  .placeholder {
+    background-color: $medium-gray;
+    margin-bottom: 0px;
+    margin-left: 22px;
   }
 
   ul {
@@ -175,7 +177,7 @@ ul#sitemap {
   li {
     padding-left: 0;
 
-    .selected_page a {
+    .selected_page {
       background-color: $linked-color;
       color: $dark-gray;
     }
@@ -187,23 +189,9 @@ ul#sitemap {
   }
 }
 
-ul#sitemap li .sitemap_toolrow,
-ul.list li .sitemap_toolrow {
-  margin: 0;
-  overflow: auto;
-  padding: $default-padding 0;
-}
-
-ul#sitemap .sitemap_sitename,
-ul.list .sitemap_sitename {
-  height: $sitemap-line-height;
-  line-height: $sitemap-line-height;
-  overflow: hidden;
-}
-
 .page_infos {
   @extend .right-rounded-border;
-  background-color: rgba(#fff, .75);
+  background-color: $sitemap-page-background-color;
   border-left: 1px solid $light-gray;
   float: right;
   height: $sitemap-line-height;
@@ -215,89 +203,12 @@ ul.list .sitemap_sitename {
   }
 }
 
-#header .page_status_and_name .page_status {
+.page_status_and_name .page_status {
   margin-left: 2px;
-  line-height: 1;
-  vertical-align: text-bottom;
 }
 
 .page_status {
   display: inline-block;
-
-  .icon {
-    vertical-align: text-bottom;
-
-    &.restricted {
-      background-position: -256px -39px;
-    }
-
-    &.not_restricted {
-      background-position: -288px -39px;
-      opacity: 0.3;
-    }
-
-    &.visible {
-      background-position: -128px -39px;
-    }
-
-    &.not_visible {
-      background-position: -160px -39px;
-      opacity: 0.3;
-    }
-
-    &.public {
-      background-position: -192px -39px;
-    }
-
-    &.not_public {
-      background-position: -224px -39px;
-      opacity: 0.3;
-    }
-  }
-}
-
-#sitemap.list {
-
-  &.sorting {
-    padding-top: 100px;
-
-    .page.icon { cursor: move }
-  }
-
-  .locked .page.icon {
-    background-position: -32px -40px;
-  }
-
-  .page.icon.not-allowed {
-    &:after {
-      content: '';
-      position: absolute;
-      bottom: -2px;
-      right: -1px;
-      width: 8px;
-      height: 8px;
-      background: image-url('alchemy/icons.png') -5px -77px;
-    }
-  }
-
-  .page_status .icon {
-    vertical-align: middle;
-  }
-}
-
-a.folder_link {
-  text-decoration: none;
-  outline: none;
-}
-
-#create_language_tree_form {
-  width: 80%;
-  max-width: 500px;
-  margin: 2em auto;
-  padding: 4*$default-padding;
-  border: $default-border;
-  background: $medium-gray;
-  @extend %rounded-border;
 }
 
 #sitemap_heading {
@@ -322,30 +233,16 @@ a.folder_link {
   margin-left: 2*$default-margin;
 }
 
-.alchemy-dialog ul.list#sitemap {
-  margin: 0;
-  padding: 0 8px 8px 0;
-
-  .page.icon { cursor: default }
-
-  li li.selectboxit-option {
-    padding-left: 8px;
-    padding-right: 8px;
+.alchemy-dialog {
+  #sitemap-wrapper {
+    min-height: 0;
   }
 
-  .selectboxit-options {
-    right: 0;
-  }
+  #sitemap {
+    margin: 0;
+    padding: 0 24px 8px 8px;
 
-  .close_elements_from_page_selector {
-    position: absolute;
-    right: $default-padding;
-    top: 12px;
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    @extend .icon-cross;
+    .page_icon { cursor: default }
   }
 }
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   # Renders an essence picture view
   class EssencePictureView
@@ -12,18 +14,11 @@ module Alchemy
       disable_link: false,
       srcset: [],
       sizes: []
-    }
+    }.with_indifferent_access
 
     def initialize(content, options = {}, html_options = {})
       @content = content
       @options = DEFAULT_OPTIONS.merge(content.settings).merge(options)
-      if @options[:image_size].present?
-        ActiveSupport::Deprecation.warn(
-          "Passing `image_size` to EssencePicture is deprecated. Please use `size` instead.",
-          caller.unshift
-        )
-        @options[:size] = @options.delete(:image_size)
-      end
       @html_options = html_options
       @essence = content.essence
       @picture = essence.picture

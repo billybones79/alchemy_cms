@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module ResourcesHelper
     # = Alchemy::ResourceHelper
@@ -66,25 +68,33 @@ module Alchemy
     # @param [Alchemy::Resource] resource
     # @param [Hash] attribute
     # @option options [Hash] :truncate (50) The length of the value returned.
+    # @option options [Hash] :datetime_format (alchemy.default) The format of timestamps.
+    # @option options [Hash] :time_format (alchemy.time) The format of time values.
     #
     # @return [String]
     #
     def render_attribute(resource, attribute, options = {})
+      attribute_value = resource.send(attribute[:name])
+      if attribute[:relation]
+        record = resource.send(attribute[:relation][:name])
+        value = record.present? ? record.send(attribute[:relation][:attr_method]) : Alchemy.t(:not_found)
+      elsif attribute_value && (attribute[:type] == :datetime || attribute[:type] == :time)
+        localization_format = if attribute[:type] == :datetime
+          options[:datetime_format] || :'alchemy.default'
+        else
+          options[:time_format] || :'alchemy.time'
+        end
+        value = l(attribute_value, format: localization_format)
+      else
+        value = attribute_value
+      end
+
       options.reverse_merge!(truncate: 50)
-      value = resource.send(attribute[:name])
-      if (relation = attribute[:relation]) && value.present?
-        record = relation[:model_association].klass.find(value)
-        value = record.send(relation[:attr_method])
-      elsif attribute[:type] == :datetime && value.present?
-        value = l(value)
-      end
       if options[:truncate]
-        value = value.to_s.truncate(options[:truncate])
+        value.to_s.truncate(options.fetch(:truncate, 50))
+      else
+        value
       end
-      value
-    rescue ActiveRecord::RecordNotFound => e
-      warning e
-      Alchemy.t(:not_found)
     end
 
     # Returns a options hash for simple_form input fields.
@@ -112,7 +122,8 @@ module Alchemy
 
     # Renders the human model name with a count as h1 header
     def resources_header
-      content_tag :h1, "#{resources_instance_variable.total_count} #{resource_model.model_name.human(count: resources_instance_variable.total_count)}", class: 'resources-header'
+      Alchemy::Deprecation.warn "resources_header is deprecated. Render 'alchemy/admin/resources/table_header' partial instead."
+      render 'alchemy/admin/resources/table_header'
     end
 
     # Returns true if the resource contains any relations
@@ -159,18 +170,6 @@ module Alchemy
       render partial: resource_name, collection: resources_instance_variable
     rescue ActionView::MissingTemplate
       render partial: 'resource', collection: resources_instance_variable
-    end
-
-    # Returns all the params necessary to get you back from where you where
-    # before: the Ransack query and the current page.
-    #
-    def current_location_params
-      {
-        q: params[:q],
-        page: params[:page],
-        tagged_with: params[:tagged_with],
-        filter: params[:filter]
-      }
     end
 
     def resource_has_tags

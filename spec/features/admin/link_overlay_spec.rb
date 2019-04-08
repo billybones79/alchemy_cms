@@ -1,6 +1,8 @@
-require 'spec_helper'
+# frozen_string_literal: true
 
-describe "Link overlay" do
+require 'rails_helper'
+
+RSpec.describe "Link overlay", type: :system do
   before do
     authorize_user(:as_admin)
   end

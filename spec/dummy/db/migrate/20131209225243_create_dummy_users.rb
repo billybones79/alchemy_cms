@@ -1,4 +1,6 @@
-class CreateDummyUsers < ActiveRecord::Migration
+# frozen_string_literal: true
+
+class CreateDummyUsers < ActiveRecord::Migration[4.2]
   def change
     create_table :dummy_users do |t|
       t.string :email

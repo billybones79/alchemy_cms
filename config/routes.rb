@@ -128,6 +128,8 @@ Alchemy::Engine.routes.draw do
     end
 
     resources :sites
+
+    get '/styleguide' => 'styleguide#index'
   end
 
   get '/attachment/:id/download(/:name)' => 'attachments#download',

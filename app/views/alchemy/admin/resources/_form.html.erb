@@ -1,16 +1,24 @@
-<%= alchemy_form_for resource_instance_variable, url: resource_path(resource_instance_variable, current_location_params) do |f| %>
+<%= alchemy_form_for resource_instance_variable, url: resource_path(resource_instance_variable, search_filter_params) do |f| %>
   <% resource_handler.editable_attributes.each do |attribute| %>
     <% if relation = attribute[:relation] %>
       <%= f.association relation[:name].to_sym,
         label_method: relation[:attr_method],
         include_blank: Alchemy.t(:blank, scope: 'resources.relation_select'),
         input_html: {class: 'alchemy_selectbox'} %>
+    <% elsif attribute[:type] == :datetime || attribute[:type] == :time %>
+      <div class="input <%= attribute[:type] %>">
+        <label class="control-label">
+          <%= f.object.class.human_attribute_name(attribute[:name]) %>
+        </label>
+        <%= alchemy_datepicker resource_instance_variable, attribute[:name],
+          type: attribute[:type] %>
+      </div>
     <% else %>
       <%= f.input attribute[:name], resource_attribute_field_options(attribute) %>
     <% end %>
   <% end %>
   <% if f.object.respond_to?(:tag_list) %>
-    <div class="input string">
+    <div class="input string autocomplete_tag_list">
       <%= f.label :tag_list %>
       <%= render 'alchemy/admin/partials/autocomplete_tag_list', f: f %>
     </div>

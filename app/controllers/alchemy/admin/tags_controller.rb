@@ -1,33 +1,35 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     class TagsController < ResourcesController
       before_action :load_tag, only: [:edit, :update, :destroy]
 
       def index
-        @query = ActsAsTaggableOn::Tag.ransack(params[:q])
+        @query = Gutentag::Tag.ransack(search_filter_params[:q])
         @tags = @query
                   .result
                   .page(params[:page] || 1)
-                  .per(per_page_value_for_screen_size)
+                  .per(items_per_page)
                   .order("name ASC")
       end
 
       def new
-        @tag = ActsAsTaggableOn::Tag.new
+        @tag = Gutentag::Tag.new
       end
 
       def create
-        @tag = ActsAsTaggableOn::Tag.create(tag_params)
+        @tag = Gutentag::Tag.create(tag_params)
         render_errors_or_redirect @tag, admin_tags_path, Alchemy.t('New Tag Created')
       end
 
       def edit
-        @tags = ActsAsTaggableOn::Tag.order("name ASC").to_a - [@tag]
+        @tags = Gutentag::Tag.order("name ASC").to_a - [@tag]
       end
 
       def update
         if tag_params[:merge_to]
-          @new_tag = ActsAsTaggableOn::Tag.find(tag_params[:merge_to])
+          @new_tag = Gutentag::Tag.find(tag_params[:merge_to])
           Tag.replace(@tag, @new_tag)
           operation_text = Alchemy.t('Replaced Tag') % {old_tag: @tag.name, new_tag: @new_tag.name}
           @tag.destroy
@@ -55,7 +57,7 @@ module Alchemy
       private
 
       def load_tag
-        @tag = ActsAsTaggableOn::Tag.find(params[:id])
+        @tag = Gutentag::Tag.find(params[:id])
       end
 
       def tag_params
@@ -64,7 +66,7 @@ module Alchemy
 
       def tags_from_term(term)
         return [] if term.blank?
-        ActsAsTaggableOn::Tag.where(['LOWER(name) LIKE ?', "#{term.downcase}%"])
+        Gutentag::Tag.where(['LOWER(name) LIKE ?', "#{term.downcase}%"])
       end
 
       def json_for_autocomplete(items, attribute)

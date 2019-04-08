@@ -140,7 +140,7 @@ class window.Alchemy.Dialog
           error_header = "#{xhr.statusText} (#{xhr.status})"
         error_body = "Please check log and try again."
     $errorDiv = $("<div class=\"message #{error_type}\" />")
-    $errorDiv.append "<span class=\"icon #{error_type}\" />"
+    $errorDiv.append Alchemy.messageIcon(error_type)
     $errorDiv.append "<h1>#{error_header}</h1>"
     $errorDiv.append "<p>#{error_body}</p>"
     @dialog_body.html $errorDiv
@@ -171,7 +171,7 @@ class window.Alchemy.Dialog
     @dialog_body = $('<div class="alchemy-dialog-body" />')
     @dialog_header = $('<div class="alchemy-dialog-header" />')
     @dialog_title = $('<div class="alchemy-dialog-title" />')
-    @close_button = $('<a class="alchemy-dialog-close"><span class="icon close small"></span></a>')
+    @close_button = $('<a class="alchemy-dialog-close"><i class="icon fas fa-times fa-fw fa-xs"/></a>')
     @dialog_title.text(@options.title)
     @dialog_header.append(@dialog_title)
     @dialog_header.append(@close_button)
@@ -251,17 +251,19 @@ window.Alchemy.openDialog = (url, options) ->
 # See Alchemy.Dialog for further options you can add to the data attribute
 #
 window.Alchemy.watchForDialogs = (scope = '#alchemy') ->
-  $(scope).on 'click', '[data-alchemy-dialog]', (e) ->
+  $(scope).on 'click', '[data-alchemy-dialog]', (event) ->
     $this = $(this)
     url = $this.attr('href')
     options = $this.data('alchemy-dialog')
     Alchemy.openDialog(url, options)
-    false
+    event.preventDefault()
+    return
   $(scope).on 'click', '[data-alchemy-confirm-delete]', (event) ->
     $this = $(this)
     options = $this.data('alchemy-confirm-delete')
     Alchemy.confirmToDeleteDialog($this.attr('href'), options)
-    false
+    event.preventDefault()
+    return
   $(scope).on 'click', '[data-alchemy-confirm]', (event) ->
     options = $(this).data('alchemy-confirm')
     Alchemy.openConfirmDialog options.message, $.extend options,
@@ -271,4 +273,15 @@ window.Alchemy.watchForDialogs = (scope = '#alchemy') ->
         Alchemy.pleaseWaitOverlay()
         @form.submit()
         return
-    false
+    event.preventDefault()
+    return
+
+# Returns a FontAwesome icon for given message type
+#
+window.Alchemy.messageIcon = (messageType) ->
+  icon_class = switch messageType
+    when "warning", "warn", "alert" then "exclamation"
+    when "notice" then "check"
+    when "error" then "bug"
+    else messageType
+  "<i class=\"icon fas fa-#{icon_class} fa-fw\" />"

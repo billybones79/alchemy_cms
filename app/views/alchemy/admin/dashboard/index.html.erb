@@ -1,7 +1,7 @@
 <%= toolbar(
   buttons: [
     {
-      icon: 'info',
+      icon: 'info-circle',
       label: Alchemy.t(:info),
       url: alchemy.dashboard_info_path,
       title: Alchemy.t(:info),
@@ -26,7 +26,7 @@
   </h1>
   <% if @last_sign_at %>
   <p>
-    <small><%= Alchemy.t('Your last login was on', time: l(@last_sign_at)) %></small>
+    <small><%= Alchemy.t('Your last login was on', time: l(@last_sign_at, format: :'alchemy.default')) %></small>
   </p>
   <% end %>
   <div class="column left">
@@ -34,9 +34,10 @@
     <%= render 'recent_pages' %>
   </div>
   <div class="column right">
-    <% if @online_users %>
+    <% if @online_users.try(:any?) %>
       <%= render 'users' %>
     <% end %>
+
     <% if multi_site? %>
       <%= render 'sites' %>
     <% end %>

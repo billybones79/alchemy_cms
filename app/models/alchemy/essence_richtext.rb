@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_essence_richtexts
@@ -13,7 +15,7 @@
 #
 
 module Alchemy
-  class EssenceRichtext < ActiveRecord::Base
+  class EssenceRichtext < BaseRecord
     acts_as_essence preview_text_column: 'stripped_body'
 
     before_save :strip_content

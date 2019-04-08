@@ -1,5 +1,7 @@
 en:
   alchemy:
+    element_names:
+      gallery_picture: Gallery picture
     content_names:
       essence_boolean: EssenceBoolean
       essence_date: EssenceDate
@@ -22,3 +24,17 @@ en:
       essence_richtext: This content type (Essence) represents richtext
       essence_select: This content type (Essence) represents values the editor can choose from
       essence_text: This content type (Essence) represents a simple line of text
+
+  activerecord:
+    models:
+      event:
+        one: Event
+        other: Events
+      location:
+        one: Location
+        other: Locations
+    attributes:
+      event:
+        tag_names: Tags
+      location:
+        tag_names: Tags

@@ -1,93 +1,9 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 module Alchemy
   describe Admin::BaseHelper do
-    context "maximum amount of images option" do
-      subject { helper.max_image_count }
-
-      before { helper.instance_variable_set('@options', options) }
-
-      context "with max_images option set to emtpy string" do
-        let(:options) { {max_images: ""} }
-
-        it { is_expected.to eq(nil) }
-      end
-
-      context "with max_images option set to '1'" do
-        let(:options) { {max_images: "1"} }
-
-        it { is_expected.to eq(1) }
-      end
-
-      context "with maximum_amount_of_images option set to emtpy string" do
-        let(:options) { {maximum_amount_of_images: ""} }
-
-        it { is_expected.to eq(nil) }
-      end
-
-      context "with maximum_amount_of_images option set to '1'" do
-        let(:options) { {maximum_amount_of_images: "1"} }
-
-        it { is_expected.to eq(1) }
-      end
-    end
-
-    describe "#merge_params" do
-      before do
-        allow(controller).to receive(:params).and_return({first: '1', second: '2'})
-      end
-
-      it "returns a hash that contains the current params and additional params given as attributes" do
-        expect(helper.merge_params(third: '3', fourth: '4')).to eq({first: '1', second: '2', third: '3', fourth: '4'})
-      end
-    end
-
-    describe "#merge_params_without" do
-      before do
-        allow(controller).to receive(:params).and_return({first: '1', second: '2'})
-      end
-
-      it "can delete a single param" do
-        expect(helper.merge_params_without(:second)).to eq({first: '1'})
-      end
-
-      it "can delete several params" do
-        expect(helper.merge_params_without([:first, :second])).to eq({})
-      end
-
-      it "can delete a param and add new params at the same time" do
-        expect(helper.merge_params_without([:first], {third: '3'})).to eq({second: '2', third: '3'})
-      end
-
-      it "should not change params" do
-        helper.merge_params_without([:first])
-        expect(controller.params).to eq({first: '1', second: '2'})
-      end
-    end
-
-    describe "#merge_params_only" do
-      before do
-        allow(controller).to receive(:params).and_return({first: '1', second: '2', third: '3'})
-      end
-
-      it "can keep a single param" do
-        expect(helper.merge_params_only(:second)).to eq({second: '2'})
-      end
-
-      it "can keep several params" do
-        expect(helper.merge_params_only([:first, :second])).to eq({first: '1', second: '2'})
-      end
-
-      it "can keep a param and add new params at the same time" do
-        expect(helper.merge_params_only([:first], {third: '3'})).to eq({first: '1', third: '3'})
-      end
-
-      it "should not change params" do
-        helper.merge_params_only([:first])
-        expect(controller.params).to eq({first: '1', second: '2', third: '3'})
-      end
-    end
-
     describe '#toolbar_button' do
       context "with permission" do
         before { allow(helper).to receive(:can?).and_return(true) }
@@ -173,15 +89,6 @@ module Alchemy
           allow(element).to receive(:display_name_with_preview_text).and_return('Name with Preview text')
           expect(helper.clipboard_select_tag_options(clipboard_items)).to have_selector('option', text: 'Name with Preview text')
         end
-
-        context "when @page can have cells" do
-          before { allow(page).to receive(:can_have_cells?).and_return(true) }
-
-          it "should group the elements in the clipboard by cell" do
-            expect(helper).to receive(:grouped_elements_for_select).and_return({})
-            helper.clipboard_select_tag_options(clipboard_items)
-          end
-        end
       end
 
       context 'with page items' do
@@ -221,31 +128,31 @@ module Alchemy
       let(:value) { nil }
       let(:type) { nil }
 
-      it "renders a date field" do
-        is_expected.to have_selector("input[type='date']")
+      it "renders a text field with data attribute for 'date'" do
+        is_expected.to have_selector("input[type='text'][data-datepicker-type='date']")
       end
 
       context "when datetime given as type" do
         let(:type) { :datetime }
 
-        it "renders a datetime field" do
-          is_expected.to have_selector("input[type='datetime']")
+        it "renders a text field with data attribute for 'datetime'" do
+          is_expected.to have_selector("input[type='text'][data-datepicker-type='datetime']")
         end
       end
 
       context "when time given as type" do
         let(:type) { :time }
 
-        it "renders a time field" do
-          is_expected.to have_selector("input[type='time']")
+        it "renders a text field with data attribute for 'time'" do
+          is_expected.to have_selector("input[type='text'][data-datepicker-type='time']")
         end
       end
 
       context "with date given as value" do
-        let(:value) { Time.now }
+        let(:value) { Time.new(2019, 10, 1, 11, 30, 0, "+09:00") }
 
         it "sets given date as value" do
-          is_expected.to have_selector("input[value='#{::I18n.l(value, format: :datepicker)}']")
+          is_expected.to have_selector("input[value='2019-10-01T11:30:00+09:00']")
         end
       end
 
@@ -254,7 +161,7 @@ module Alchemy
         let(:essence) { EssenceDate.new(date: date) }
 
         it "sets this date as value" do
-          is_expected.to have_selector("input[value='#{::I18n.l(date, format: :datepicker)}']")
+          is_expected.to have_selector("input[value='1976-10-07T00:00:00Z']")
         end
       end
     end
@@ -289,11 +196,29 @@ module Alchemy
 
       context 'if the expression from config is nil' do
         before do
-          expect(Alchemy::Config).to receive(:get).and_return({link_url: nil})
+          stub_alchemy_config(:format_matchers, {link_url: nil})
         end
 
         it "returns the default expression" do
           expect(subject).to_not be_nil
+        end
+      end
+    end
+
+    describe '#hint_with_tooltip' do
+      subject { helper.hint_with_tooltip('My hint') }
+
+      it 'renders a warning icon with hint text wrapped in tooltip', :aggregate_failures do
+        is_expected.to have_css 'span.hint-with-icon i.fa-exclamation-triangle'
+        is_expected.to have_css 'span.hint-with-icon span.hint-bubble'
+        is_expected.to have_content 'My hint'
+      end
+
+      context 'with icon set to info' do
+        subject { helper.hint_with_tooltip('My hint', icon: 'info') }
+
+        it 'renders an info icon instead' do
+          is_expected.to have_css 'i.fa-info'
         end
       end
     end

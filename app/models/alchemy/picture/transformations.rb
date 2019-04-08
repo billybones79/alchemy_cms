@@ -1,9 +1,14 @@
+# frozen_string_literal: true
+
 module Alchemy
   # This concern can extend classes that expose image_file, image_file_width and image_file_height.
   # It provides methods for cropping and resizing.
   #
   module Picture::Transformations
     extend ActiveSupport::Concern
+
+    THUMBNAIL_WIDTH = 160
+    THUMBNAIL_HEIGHT = 120
 
     # Returns the default centered image mask for a given size.
     # If the mask is bigger than the image, the mask is scaled down
@@ -35,7 +40,7 @@ module Alchemy
         size = get_base_dimensions
       end
 
-      size = size_when_fitting({width: 111, height: 93}, size)
+      size = size_when_fitting({width: THUMBNAIL_WIDTH, height: THUMBNAIL_HEIGHT}, size)
       "#{size[:width]}x#{size[:height]}"
     end
 
@@ -109,12 +114,11 @@ module Alchemy
     end
 
     # An Image smaller than dimensions
-    # can not be cropped to string - unless upsample is true.
+    # can not be cropped to given size - unless upsample is true.
     #
     def can_be_cropped_to(string, upsample = false)
-      dimensions = sizes_from_string(string)
       return true if upsample
-      is_bigger_than(dimensions)
+      is_bigger_than sizes_from_string(string)
     end
 
     # Returns true if the class we're included in has a meaningful render_size attribute

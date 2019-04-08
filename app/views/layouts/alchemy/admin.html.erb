@@ -2,6 +2,7 @@
 <html class="no-js">
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><%= render_alchemy_title %></title>
     <link rel="shortcut icon" href="<%= asset_path('alchemy/favicon.ico') %>">
     <%= csrf_meta_tag %>
@@ -54,17 +55,17 @@
         <% end %>
         <%= yield(:alchemy_main_navigation) %>
       </div>
-      <div id="logout">
+      <div id="logout" class="main_navi_entry">
         <% if current_alchemy_user %>
           <%= link_to_dialog(
-            "#{render_icon('exit module')}<label>#{Alchemy.t(:leave)}</label>".html_safe,
+            "#{render_icon('sign-out-alt', size: 'lg', class: 'module')}<label>#{Alchemy.t(:leave)}</label>".html_safe,
             alchemy.leave_admin_path, {
               size: "300x155",
               title: Alchemy.t("Leave Alchemy")
           }, {'data-alchemy-hotkey' => 'alt+q'}) %>
         <% else %>
           <%= link_to(alchemy.root_path) do %>
-            <span class="module icon exit"></span>
+            <i class="icon fas fa-sign-out-alt fa-fw fa-lg"></i>
             <label><%= Alchemy.t(:leave) %></label>
           <% end %>
         <% end %>
@@ -80,9 +81,11 @@
         <% end %>
         <div id="user_info">
           <%= current_alchemy_user_name %>
-          <%= select_tag 'change_locale',
-            options_for_select(translations_for_select, ::I18n.locale),
-            class: 'alchemy_selectbox tiny' %>
+          <% if Alchemy::I18n.available_locales.length > 1 %>
+            <%= select_tag 'change_locale',
+              options_for_select(translations_for_select, ::I18n.locale),
+              class: 'alchemy_selectbox tiny' %>
+          <% end %>
         </div>
       </div>
       <div id="toolbar">
@@ -90,7 +93,7 @@
       </div>
     </div>
     <% end %>
-    <%= render :partial => 'alchemy/admin/partials/flash_notices' %>
+    <%= render 'alchemy/admin/partials/flash_notices' %>
     <div id="main_content">
       <%= yield %>
     </div>

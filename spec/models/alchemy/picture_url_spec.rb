@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'rails_helper'
 
 module Alchemy
   describe "Picture::Url" do
@@ -12,7 +14,7 @@ module Alchemy
 
     let(:image) do
       fixture_file_upload(
-        File.expand_path('../../../fixtures/500x500.png', __FILE__),
+        File.expand_path('../../fixtures/500x500.png', __dir__),
         'image/png'
       )
     end
@@ -35,8 +37,13 @@ module Alchemy
           expect(picture).to receive(:image_file) { nil }
         end
 
-        it 'raises error' do
-          expect { url }.to raise_error(Alchemy::MissingImageFileError)
+        it 'returns nil' do
+          expect(url).to be_nil
+        end
+
+        it "logs warning" do
+          expect(Alchemy::Logger).to receive(:warn)
+          url
         end
       end
 
@@ -64,21 +71,6 @@ module Alchemy
           end
         end
 
-        context "and crop_from and crop_size is passed in" do
-          let(:options) do
-            {
-              crop_size: '123x44',
-              crop_from: '0x0',
-              size: '160x120'
-            }
-          end
-
-          it "crops and resizes the picture" do
-            job = decode_dragon_fly_job(url)
-            expect(job[1]).to include("-crop 123x44+0+0 -resize 160x120>")
-          end
-        end
-
         context "and crop is set to true" do
           let(:options) do
             {
@@ -90,6 +82,52 @@ module Alchemy
           it "crops from center and resizes the picture" do
             job = decode_dragon_fly_job(url)
             expect(job[1]).to include("160x120#")
+          end
+
+          context "and crop_from and crop_size is passed in" do
+            let(:options) do
+              {
+                crop_size: '123x44',
+                crop_from: '0x0',
+                size: '160x120',
+                crop: true
+              }
+            end
+
+            it "crops and resizes the picture" do
+              job = decode_dragon_fly_job(url)
+              expect(job[1]).to include("-crop 123x44+0+0 -resize 160x120>")
+            end
+          end
+        end
+
+        context "and crop is set to false" do
+          let(:options) do
+            {
+              size: '160x120',
+              crop: false
+            }
+          end
+
+          it "does not crop the picture" do
+            job = decode_dragon_fly_job(url)
+            expect(job[1]).to_not include("160x120#")
+          end
+
+          context "and crop_from and crop_size is passed in" do
+            let(:options) do
+              {
+                crop_size: '123x44',
+                crop_from: '0x0',
+                size: '160x120',
+                crop: false
+              }
+            end
+
+            it "does not crop the picture" do
+              job = decode_dragon_fly_job(url)
+              expect(job[1]).to_not include("-crop 123x44+0+0")
+            end
           end
         end
 
@@ -136,7 +174,7 @@ module Alchemy
         context "but image has not a convertible format (svg)" do
           let(:image) do
             fixture_file_upload(
-              File.expand_path('../../../fixtures/icon.svg', __FILE__),
+              File.expand_path('../../fixtures/icon.svg', __dir__),
               'image/svg+xml'
             )
           end
@@ -154,7 +192,7 @@ module Alchemy
 
           let(:image) do
             fixture_file_upload(
-              File.expand_path('../../../fixtures/animated.gif', __FILE__),
+              File.expand_path('../../fixtures/animated.gif', __dir__),
               'image/gif'
             )
           end
@@ -171,8 +209,13 @@ module Alchemy
           {format: 'zip'}
         end
 
-        it "raises error" do
-          expect { url }.to raise_error(Alchemy::WrongImageFormatError)
+        it "returns nil" do
+          expect(url).to be_nil
+        end
+
+        it "logs warning" do
+          expect(Alchemy::Logger).to receive(:warn)
+          url
         end
       end
 
