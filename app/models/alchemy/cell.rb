@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_cells
 #
 #  id         :integer          not null, primary key
-#  page_id    :integer
-#  name       :string(255)
+#  page_id    :integer          not null
+#  name       :string
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #
@@ -56,7 +58,7 @@ module Alchemy
       private
 
       def read_yml_file
-        ::YAML.load(ERB.new(File.read(yml_file_path)).result) || []
+        ::YAML.safe_load(ERB.new(File.read(yml_file_path)).result, [], [], true) || []
       end
 
       def yml_file_path

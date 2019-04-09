@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     # This module contains helper methods for rendering dialogs, toolbar buttons and confirmation windows.
@@ -312,9 +314,9 @@ module Alchemy
         }
         options = defaults.merge(options)
         content_for(:toolbar) do
-          content = <<-CONTENT
-#{options[:buttons].map { |button_options| toolbar_button(button_options) }.join}
-          #{render('alchemy/admin/partials/search_form', url: options[:search_url]) if options[:search]}
+          content = <<-CONTENT.strip_heredoc
+            #{options[:buttons].map { |button_options| toolbar_button(button_options) }.join}
+            #{render('alchemy/admin/partials/search_form', url: options[:search_url]) if options[:search]}
           CONTENT
           content.html_safe
         end
@@ -332,12 +334,17 @@ module Alchemy
 
       # Renders a textfield ready to display a datepicker
       #
-      # Uses a HTML5 +<input type="date">+ field.
       # A Javascript observer converts this into a fancy Datepicker.
       # If you pass +'datetime'+ as +:type+ the datepicker will also have a Time select.
+      # If you pass +'time'+ as +:type+ the datepicker will only have a Time select.
       #
-      # The date value gets localized via +I18n.l+. The format on Time and Date is +datepicker+
+      # The date value gets localized via +I18n.l+. The format on Time and Date is +datepicker+, +timepicker+
       # or +datetimepicker+, if you pass another +type+.
+      #
+      # This helper always renders "text" as input type because:
+      # HTML5 supports input types like 'date' but Browsers are using the users OS settings
+      # to validate the input format. Since Alchemy is localized in the backend the date formats
+      # should be aligned with the users locale setting in the backend but not the OS settings.
       #
       # === Date Example
       #
@@ -347,13 +354,17 @@ module Alchemy
       #
       #   <%= alchemy_datepicker(@page, :public_on, type: 'datetime') %>
       #
+      # === Time Example
+      #
+      #   <%= alchemy_datepicker(@meeting, :starts_at, type: 'time') %>
+      #
       # @param [ActiveModel::Base] object
       #   An instance of a model
       # @param [String or Symbol] method
       #   The attribute method to be called for the date value
       #
-      # @option html_options [String] :type (date)
-      #   The type of text field
+      # @option html_options [String] :data-datepicker-type (type)
+      #   The value of the data attribute for the type
       # @option html_options [String] :class (type)
       #   CSS classes of the input field
       # @option html_options [String] :value (value of method on object)
@@ -366,35 +377,7 @@ module Alchemy
         value = date ? l(date, format: "#{type}picker".to_sym) : nil
 
         text_field object.class.name.demodulize.underscore.to_sym,
-          method.to_sym, {type: type, class: type, value: value}.merge(html_options)
-      end
-
-      # Merges the params-hash with the given hash
-      def merge_params(p = {})
-        params.merge(p).delete_if { |_k, v| v.blank? }
-      end
-
-      # Deletes one or several params from the params-hash and merges some new params in
-      def merge_params_without(excludes, p = {})
-        current_params = params.clone.symbolize_keys
-        if excludes.is_a?(Array)
-          excludes.map { |i| current_params.delete(i.to_sym) }
-        else
-          current_params.delete(excludes.to_sym)
-        end
-        current_params.merge(p).delete_if { |_k, v| v.blank? }
-      end
-
-      # Deletes all params from the params-hash except the given ones and merges some new params in
-      def merge_params_only(includes, p = {})
-        current_params = params.clone.symbolize_keys
-        if includes.is_a?(Array)
-          symbolized_includes = includes.map(&:to_sym)
-          current_params.delete_if { |k, _v| !symbolized_includes.include?(k) }
-        else
-          current_params.delete_if { |k, _v| k != includes.to_sym }
-        end
-        current_params.merge(p).delete_if { |_k, v| v.blank? }
+          method.to_sym, {type: "text", class: type, "data-datepicker-type" => type, value: value}.merge(html_options)
       end
 
       # Render a hint icon with tooltip for given object.

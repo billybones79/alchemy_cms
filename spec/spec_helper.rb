@@ -14,7 +14,6 @@ ENV["RAILS_ENV"] = "test"
 
 require File.expand_path("../dummy/config/environment.rb", __FILE__)
 require 'rspec/rails'
-require 'rails/test_help'
 require 'capybara/poltergeist'
 require 'capybara/rails'
 require 'database_cleaner'
@@ -22,6 +21,7 @@ require 'rspec-activemodel-mocks'
 
 require 'alchemy/seeder'
 require 'alchemy/test_support/controller_requests'
+require 'alchemy/test_support/config_stubbing'
 require 'alchemy/test_support/essence_shared_examples'
 require 'alchemy/test_support/integration_helpers'
 require 'alchemy/test_support/factories'
@@ -36,9 +36,16 @@ ActionMailer::Base.delivery_method = :test
 ActionMailer::Base.perform_deliveries = true
 ActionMailer::Base.default_url_options[:host] = "test.com"
 
+ActiveSupport::Deprecation.silenced = false
+
 Rails.backtrace_cleaner.remove_silencers!
 # Disable rails loggin for faster IO. Remove this if you want to have a test.log
 Rails.logger.level = 4
+
+# Fix for MySQL with ActsAsTaggableOn 5
+if ENV['DB'] == 'mysql'
+  ActsAsTaggableOn.force_binary_collation = true
+end
 
 # Configure capybara for integration testing
 Capybara.default_driver = :rack_test
@@ -63,7 +70,7 @@ RSpec.configure do |config|
   config.filter_run :focus
   config.include ActiveSupport::Testing::TimeHelpers
   config.include Alchemy::Engine.routes.url_helpers
-  config.include Alchemy::TestSupport::ControllerRequests, type: :controller
+  config.include Alchemy::TestSupport::ConfigStubbing
   [:controller, :feature, :request].each do |type|
     config.include Alchemy::TestSupport::IntegrationHelpers, type: type
   end
@@ -73,8 +80,6 @@ RSpec.configure do |config|
   # Make sure the database is clean and ready for test
   config.before(:suite) do
     DatabaseCleaner.clean_with(:truncation)
-    Alchemy::Shell.silence!
-    Alchemy::Seeder.seed!
   end
 
   # All specs are running in transactions, but feature specs not.
@@ -93,9 +98,5 @@ RSpec.configure do |config|
   # After every feature spec the database gets seeded so the next spec can rely on that data.
   config.append_after(:each) do
     DatabaseCleaner.clean
-    if RSpec.current_example.metadata[:type] == :feature
-      allow(Alchemy::Seeder).to receive(:puts)
-      Alchemy::Seeder.seed!
-    end
   end
 end

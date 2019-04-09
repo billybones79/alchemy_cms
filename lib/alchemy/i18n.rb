@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   class << self
     # Alchemy shortcut translation method
@@ -17,11 +19,6 @@ module Alchemy
 
   module I18n
     class << self
-      def t(msg, *args)
-        ActiveSupport::Deprecation.warn('`Alchemy::I18n.t` is deprecated! Use `Alchemy.t` instead.', caller.unshift)
-        Alchemy::I18n.translate(msg, *args)
-      end
-
       # Alchemy translation methods
       #
       # Instead of having to translate strings and defining a default value:
@@ -82,7 +79,7 @@ module Alchemy
         default_scope = ['alchemy']
         case options[:scope]
         when Array
-          default_scope += options[:scope]
+          default_scope + options[:scope]
         when String
           default_scope << options[:scope]
         when Symbol

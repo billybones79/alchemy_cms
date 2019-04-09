@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Logger
     # Logs a debug message to the Rails standard logger and adds some nicer formatting
@@ -7,7 +9,7 @@ module Alchemy
     end
 
     def log_warning(message)
-      Alchemy::Logger.warn(message, caller.first)
+      Alchemy::Logger.warn(message, caller(1..1))
     end
   end
 end

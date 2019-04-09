@@ -1,6 +1,74 @@
 # Change Log
 
-## 3.5.0 (unreleased)
+## 4.0.0.rc2 (2017-08-18)
+
+* Removed deprecated `:image_size` option from `EssencePicture`
+  Use `:size` instead.
+* Remove deprecated `take_me_for_preview` content definition option
+  Use `as_element_title` instead.
+* Removed deprecated picture url helpers `show_alchemy_picture_path` and `show_alchemy_picture_url`
+  Use `picture.url` instead.
+* Removed deprecated pages helper module.
+* Removed deprecated translation methods `_t` and `Alchemy::I18n.t`.
+  Use `Alchemy.t` instead.
+* Removed deprecated `redirect_index` configuration
+  Use `redirect_to_public_child` configuration instead.
+
+## 4.0.0.rc1 (2017-08-17)
+
+* Removed `merge_params` from `Alchemy::Admin::BaseHelper`
+  Use `ActionController::Parameters#merge` instead
+* Removed `merge_params_only` from `Alchemy::Admin::BaseHelper`
+  Use methods from `ActionController::Parameters` instead
+* Removed `merge_params_without` from `Alchemy::Admin::BaseHelper`
+  Use `ActionController::Parameters#delete_if` instead
+* Removed `tag_list_tag_active?` from `Alchemy::Admin::TagsHelper`
+  Use `filtered_by_tag?` instead
+* Removed `add_to_tag_filter` and `remove_from_tag_filter` from `Alchemy::Admin::TagsHelper`
+  Use `tags_for_filter` and pass the `current` tag instead
+* Removes the possibility to pass options param as JSON string. [#1291](https://github.com/AlchemyCMS/alchemy_cms/pull/1291) by [tvdeyen](https://github.com/tvdeyen)
+  Pass normal params instead.
+* Removed `redirect_back_or_to_default` from `Alchemy::Admin::BaseController`
+  Use Rails' `redirect_back` with a `fallback_location` instead
+* Deprecated controller requests test helpers [#1284](https://github.com/AlchemyCMS/alchemy_cms/pull/1284) by [tvdeyen](https://github.com/tvdeyen)
+
+## 4.0.0.beta (2017-06-20)
+
+* Rails 5
+
+## 3.6.2 (unreleased)
+
+* Handle custom errors in `Alchemy::Picture#url` [#1305](https://github.com/AlchemyCMS/alchemy_cms/pull/1305) by [tvdeyen](https://github.com/tvdeyen)
+
+## 3.6.1 (2017-08-16)
+
+* Do not ask `systempage?` everytime we load the page definition [#1239](https://github.com/AlchemyCMS/alchemy_cms/pull/1283) by [tvdeyen](https://github.com/tvdeyen)
+  This speeds up rendering large sitemaps by about 6 times.
+
+## 3.6.0 (2017-06-20)
+
+__Notable Changes__
+
+* The seeder does not generate default site and root page anymore (#1239) by tvdeyen
+  Alchemy handles this auto-magically now. No need to run `Alchemy::Seeder.seed!` any more |o/
+* Security: Sanitize ActiveRecord queries in `Alchemy::Element`, `Alchemy::Page` and
+  `Alchemy::PagesHelper` (#1257) by jessedoyle
+* Remove post install message reference to the `alchemy` standalone installer (#1256) by jessedoyle
+* Fixes tag filtering for pictures and attachments in overlay (#1266) by robinboening
+* Fix js error on page#update with single quote in page name (#1263) by robinboening
+* Change meta charset from 'utf8' to 'utf-8' (#1253) by rbjoern84
+* Render "text" as type for datepicker input fields (#1246) by robinboening
+* Remove unused Page attr_accessors (#1240) by tvdeyen
+* Permit search params while redirecting in library (#1236) by tvdeyen
+* Only allow floats and ints as fixed ratio for crop (#1234) by tvdeyen
+* Use at least dragonfly 1.0.7 (#1225) by tvdeyen
+* Add handlebars-assets gem (#1203) by tvdeyen
+* Add a new spinner animation (#1202) by tvdeyen
+* Re-color the Turbolinks progressbar (#1199) by tvdeyen
+* Use normal view for pages sort action (#1197) by tvdeyen
+* Add srcset and sizes support for EssencePicture (#1193) by tvdeyen
+
+## 3.5.0 (2016-12-22)
 
 __New Features__
 
@@ -44,7 +112,7 @@ __Fixed Bugs__
 * Presence validation of EssenceFile is not working (#1096)
 * Allow to define unique nestable elements (#852)
 
-## 3.4.2 (unreleased)
+## 3.4.2 (2016-12-22)
 
 __Notable Changes__
 

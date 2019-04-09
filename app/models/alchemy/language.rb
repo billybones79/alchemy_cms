@@ -1,20 +1,23 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_languages
 #
 #  id             :integer          not null, primary key
-#  name           :string(255)
-#  language_code  :string(255)
-#  frontpage_name :string(255)
-#  page_layout    :string(255)      default("intro")
+#  name           :string
+#  language_code  :string
+#  frontpage_name :string
+#  page_layout    :string           default("intro")
 #  public         :boolean          default(FALSE)
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  creator_id     :integer
 #  updater_id     :integer
 #  default        :boolean          default(FALSE)
-#  country_code   :string(255)      default(""), not null
-#  site_id        :integer
+#  country_code   :string           default(""), not null
+#  site_id        :integer          not null
+#  locale         :string
 #
 
 module Alchemy
@@ -128,18 +131,18 @@ module Alchemy
     def publicity_of_default_language
       if default? && !public?
         errors.add(:public, Alchemy.t("Default language has to be public"))
-        return false
+        false
       else
-        return true
+        true
       end
     end
 
     def presence_of_default_language
       if Language.default == self && default_changed?
         errors.add(:default, Alchemy.t("We need at least one default."))
-        return false
+        false
       else
-        return true
+        true
       end
     end
 

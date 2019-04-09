@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_pages
@@ -16,8 +18,6 @@
 #  parent_id        :integer
 #  depth            :integer
 #  visible          :boolean          default(FALSE)
-#  public           :boolean          default(FALSE)
-#  locked_at        :datetime
 #  locked_by        :integer
 #  restricted       :boolean          default(FALSE)
 #  robot_index      :boolean          default(TRUE)
@@ -33,6 +33,7 @@
 #  published_at     :datetime
 #  public_on        :datetime
 #  public_until     :datetime
+#  locked_at        :datetime
 #
 
 module Alchemy
@@ -43,7 +44,6 @@ module Alchemy
 
     DEFAULT_ATTRIBUTES_FOR_COPY = {
       do_not_autogenerate: true,
-      do_not_sweep: true,
       visible: false,
       public_on: nil,
       public_until: nil,
@@ -106,9 +106,6 @@ module Alchemy
     validates_format_of :page_layout, with: /\A[a-z0-9_-]+\z/, unless: -> { systempage? || page_layout.blank? }
     validates_presence_of :parent_id, if: proc { Page.count > 1 }
 
-    attr_accessor :do_not_sweep
-    attr_accessor :do_not_validate_language
-
     before_save :set_language_code,
       if: -> { language.present? },
       unless: :systempage?
@@ -150,6 +147,15 @@ module Alchemy
     # Class methods
     #
     class << self
+      # The root page of the page tree
+      #
+      # Internal use only. You wouldn't use this page ever.
+      #
+      # Automatically created when accessed the first time.
+      #
+      def root
+        super || create!(name: 'Root')
+      end
       alias_method :rootpage, :root
 
       # Used to store the current page previewed in the edit page template.
@@ -334,19 +340,27 @@ module Alchemy
 
     # Returns the previous page on the same level or nil.
     #
-    # For options @see #next_or_previous
+    # @option options [Boolean] :restricted (false)
+    #   only restricted pages (true), skip restricted pages (false)
+    # @option options [Boolean] :public (true)
+    #   only public pages (true), skip public pages (false)
     #
     def previous(options = {})
-      next_or_previous('<', options)
+      pages = self_and_siblings.where('lft < ?', lft)
+      select_page(pages, options.merge(order: :desc))
     end
     alias_method :previous_page, :previous
 
     # Returns the next page on the same level or nil.
     #
-    # For options @see #next_or_previous
+    # @option options [Boolean] :restricted (false)
+    #   only restricted pages (true), skip restricted pages (false)
+    # @option options [Boolean] :public (true)
+    #   only public pages (true), skip public pages (false)
     #
     def next(options = {})
-      next_or_previous('>', options)
+      pages = self_and_siblings.where('lft > ?', lft)
+      select_page(pages, options.merge(order: :asc))
     end
     alias_method :next_page, :next
 
@@ -526,26 +540,10 @@ module Alchemy
       end
     end
 
-    # Returns the next or previous page on the same level or nil.
-    #
-    # @param [String]
-    #   Pass '>' for next and '<' for previous page.
-    #
-    # @option options [Boolean] :restricted (nil)
-    #   only restricted pages (true), skip restricted pages (false)
-    # @option options [Boolean] :public (true)
-    #   only public pages (true), skip public pages (false)
-    #
-    def next_or_previous(dir = '>', options = {})
-      options = {
-        restricted: false,
-        public: true
-      }.update(options)
-
-      pages = self_and_siblings.where(["#{Page.table_name}.lft #{dir} ?", lft])
-      pages = options[:public] ? pages.published : pages.not_public
-      pages.where(restricted: options[:restricted])
-        .reorder(dir == '>' ? 'lft' : 'lft DESC')
+    def select_page(pages, options = {})
+      pages = options.fetch(:public, true) ? pages.published : pages.not_public
+      pages.where(restricted: options.fetch(:restricted, false))
+        .reorder(lft: options.fetch(:order))
         .limit(1).first
     end
 

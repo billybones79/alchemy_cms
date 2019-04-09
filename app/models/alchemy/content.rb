@@ -1,12 +1,14 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_contents
 #
 #  id           :integer          not null, primary key
-#  name         :string(255)
-#  essence_type :string(255)
-#  essence_id   :integer
-#  element_id   :integer
+#  name         :string
+#  essence_type :string           not null
+#  essence_id   :integer          not null
+#  element_id   :integer          not null
 #  position     :integer
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
@@ -105,7 +107,7 @@ module Alchemy
     # Settings from the elements.yml definition
     def settings
       return {} if definition.blank?
-      @settings ||= definition.fetch('settings', {}).symbolize_keys
+      @settings ||= definition.fetch(:settings, {})
     end
 
     # Fetches value from settings
@@ -217,10 +219,7 @@ module Alchemy
 
     # Returns true if this content should be taken for element preview.
     def preview_content?
-      if definition['take_me_for_preview']
-        ActiveSupport::Deprecation.warn("Content definition's `take_me_for_preview` key is deprecated. Please use `as_element_title` instead.")
-      end
-      !!definition['take_me_for_preview'] || !!definition['as_element_title']
+      !!definition['as_element_title']
     end
 
     # Proxy method that returns the preview text from essence.

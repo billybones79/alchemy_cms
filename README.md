@@ -4,12 +4,12 @@
 [![Test Coverage](https://codeclimate.com/github/AlchemyCMS/alchemy_cms/badges/coverage.svg)](https://codeclimate.com/github/AlchemyCMS/alchemy_cms)
 [![Slack Status](http://slack.alchemy-cms.com/badge.svg)](http://slack.alchemy-cms.com)
 
-**CAUTION: This master branch is a development branch that *can* contain bugs. For productive environments you should use the [current Ruby gem version](https://rubygems.org/gems/alchemy_cms), or the [latest stable branch (3.4-stable)](https://github.com/AlchemyCMS/alchemy_cms/tree/3.4-stable).**
+**CAUTION: This master branch is a development branch that *can* contain bugs. For productive environments you should use the [current Ruby gem version](https://rubygems.org/gems/alchemy_cms), or the [latest stable branch (3.6-stable)](https://github.com/AlchemyCMS/alchemy_cms/tree/3.6-stable).**
 
 
 ## About
 
-![Alchemy CMS](app/assets/images/alchemy/alchemy-logo.svg)
+![Alchemy CMS](app/assets/images/alchemy/alchemy-logo.png)
 
 Alchemy is a powerful, flexible and user centric Rails CMS.
 
@@ -34,8 +34,9 @@ Read more about Alchemy on the [website](https://alchemy-cms.com) and in the [gu
 
 ## Rails Version
 
-**This version of Alchemy CMS runs with Rails 4.2**
+**This version of Alchemy CMS runs with Rails 5.0 only**
 
+* For a Rails 4.2 compatible version use the [`3.6-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/3.6-stable).
 * For a Rails 4.0/4.1 compatible version use the [`3.1-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/3.1-stable).
 * For a Rails 3.2 compatible version use the [`2.8-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/2.8-stable).
 * For a Rails 3.1 compatible version use the [`2.1-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/2.1-stable).
@@ -45,7 +46,11 @@ Read more about Alchemy on the [website](https://alchemy-cms.com) and in the [gu
 
 ## Ruby Version
 
-Alchemy runs with Ruby >= 2.0.0.
+Alchemy runs with Ruby >= 2.2.2.
+
+For a Ruby 2.1 compatible version use the [`3.6-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/3.6-stable).
+
+For a Ruby 2.0.0 compatible version use the [`3.2-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/3.2-stable).
 
 For a Ruby 1.9.3 compatible version use the [`3.1-stable` branch](https://github.com/AlchemyCMS/alchemy_cms/tree/3.1-stable).
 
@@ -62,7 +67,7 @@ Put this into your `Gemfile`:
 gem 'alchemy_cms', github: 'AlchemyCMS/alchemy_cms', branch: 'master'
 ```
 
-**NOTE:** You normally want to use a stable branch, like `3.4-stable`.
+**NOTE:** You normally want to use a stable branch, like `3.6-stable`.
 
 If you want to use Russian translation and have better i18n support, you should put:
 
@@ -91,7 +96,7 @@ If you don't have your own user class, you can use the Alchemy user model. Just 
 gem 'alchemy-devise', github: 'AlchemyCMS/alchemy-devise', branch: 'master'
 ```
 
-**NOTE:** You normally want to use a stable branch, like `3.4-stable`.
+**NOTE:** You normally want to use a stable branch, like `3.6-stable`.
 
 Then run:
 
@@ -183,7 +188,7 @@ something like S3.
 
 Please follow the guidelines about picture caching on the Dragonfly homepage for further instructions:
 
-http://markevans.github.io/dragonfly/cache/
+http://markevans.github.io/dragonfly/cache
 
 
 ## Upgrading

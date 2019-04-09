@@ -1,10 +1,7 @@
+# frozen_string_literal: true
+
 module Alchemy
   module BaseHelper
-    def _t(key, *args)
-      ActiveSupport::Deprecation.warn("Alchemys `_t` method is deprecated! Use `Alchemy.t` instead.", caller.unshift)
-      Alchemy.t(key, *args)
-    end
-
     # An alias for truncate.
     # Left here for downwards compatibilty.
     def shorten(text, length)
@@ -14,7 +11,7 @@ module Alchemy
     # Logs a message in the Rails logger (warn level)
     # and optionally displays an error message to the user.
     def warning(message, text = nil)
-      Logger.warn(message, caller.first)
+      Logger.warn(message, caller(0..0))
       unless text.nil?
         warning = content_tag('p', class: 'content_editor_error') do
           render_icon('warning') + text

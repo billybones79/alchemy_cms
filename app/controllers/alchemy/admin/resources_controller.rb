@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'csv'
 require 'alchemy/resource'
 require 'alchemy/resources_helper'
@@ -5,17 +7,17 @@ require 'alchemy/resources_helper'
 module Alchemy
   module Admin
     class ResourcesController < Alchemy::Admin::BaseController
+      COMMON_SEARCH_FILTER_EXCLUDES = [:id, :utf8, :_method, :_].freeze
+
       include Alchemy::ResourcesHelper
 
       helper Alchemy::ResourcesHelper, TagsHelper
-      helper_method :resource_handler
+      helper_method :resource_handler, :search_filter_params
 
       before_action :load_resource,
         only: [:show, :edit, :update, :destroy]
 
-      before_action do
-        authorize!(action_name.to_sym, resource_instance_variable || resource_handler.model)
-      end
+      before_action :authorize_resource
 
       def index
         @query = resource_handler.model.ransack(params[:q])
@@ -112,6 +114,10 @@ module Alchemy
         instance_variable_set("@#{resource_handler.resource_name}", resource_handler.model.find(params[:id]))
       end
 
+      def authorize_resource
+        authorize!(action_name.to_sym, resource_instance_variable || resource_handler.model)
+      end
+
       # Permits all parameters as default!
       #
       # THIS IS INSECURE! Although only signed in admin users can send requests anyway, but we should change this.
@@ -128,6 +134,21 @@ module Alchemy
         resource_model.alchemy_resource_filters.detect do |filter|
           filter == params[:filter]
         end || :all
+      end
+
+      def search_filter_params
+        params.except(*COMMON_SEARCH_FILTER_EXCLUDES).permit(*common_search_filter_includes)
+      end
+
+      def common_search_filter_includes
+        [
+          # contrary to Rails' documentation passing an empty hash to permit all keys does not work
+          {options: options_from_params.keys},
+          {q: resource_handler.search_field_name},
+          :tagged_with,
+          :filter,
+          :page
+        ].freeze
       end
     end
   end

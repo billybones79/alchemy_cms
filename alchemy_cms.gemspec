@@ -13,27 +13,29 @@ Gem::Specification.new do |gem|
   gem.summary               = 'A powerful, userfriendly and flexible CMS for Rails 4'
   gem.description           = 'Alchemy is a powerful, userfriendly and flexible Rails 4 CMS.'
   gem.requirements << 'ImageMagick (libmagick), v6.6 or greater.'
-  gem.required_ruby_version = '>= 2.0.0'
+  gem.required_ruby_version = '>= 2.2.2'
   gem.license               = 'BSD New'
   gem.files                 = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^spec/}) }
   gem.require_paths         = ['lib']
 
   gem.add_runtime_dependency 'active_model_serializers',         ['~> 0.9.0']
   gem.add_runtime_dependency 'acts_as_list',                     ['~> 0.3']
-  gem.add_runtime_dependency 'acts-as-taggable-on',              ['~> 4.0']
+  gem.add_runtime_dependency 'acts-as-taggable-on',              ['~> 5.0']
   gem.add_runtime_dependency 'awesome_nested_set',               ['~> 3.1']
   gem.add_runtime_dependency 'bourbon',                          ['~> 4.2']
   gem.add_runtime_dependency 'cancancan',                        ['~> 1.9']
   gem.add_runtime_dependency 'coffee-rails',                     ['~> 4.0']
-  gem.add_runtime_dependency 'dragonfly',                        ['~> 1.0.1']
+  gem.add_runtime_dependency 'dragonfly',                        ['~> 1.0.7']
   gem.add_runtime_dependency 'dragonfly_svg',                    ['~> 0.0.4']
   gem.add_runtime_dependency 'handlebars_assets',                ['~> 0.23']
   gem.add_runtime_dependency 'jquery-rails',                     ['~> 4.0']
   gem.add_runtime_dependency 'jquery-ui-rails',                  ['~> 5.0.0']
   gem.add_runtime_dependency 'kaminari',                         ['~> 0.15']
-  gem.add_runtime_dependency 'magiclabs-userstamp',              ['~> 3.0']
+  gem.add_runtime_dependency 'originator',                       ['~> 3.0']
   gem.add_runtime_dependency 'non-stupid-digest-assets',         ['~> 1.0.8']
-  gem.add_runtime_dependency 'rails',                            ['>= 4.2.0']
+
+  gem.add_runtime_dependency 'rails',                            ['~> 5.0', '< 6.0']
+
   gem.add_runtime_dependency 'ransack',                          ['~> 1.4']
   gem.add_runtime_dependency 'request_store',                    ['~> 1.2']
   gem.add_runtime_dependency 'responders',                       ['~> 2.0']
@@ -45,10 +47,6 @@ Gem::Specification.new do |gem|
 -------------------------------------------------------------
             Thank you for installing Alchemy CMS
 -------------------------------------------------------------
-
-- Create a new standalone Alchemy project:
-
-  $ alchemy new my_project_name
 
 - Complete the installation in an existing Rails application:
 

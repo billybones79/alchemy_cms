@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_pictures
@@ -92,6 +94,10 @@ module Alchemy
     # Class methods
 
     class << self
+      def searchable_alchemy_resource_attributes
+        %w(name image_file_name)
+      end
+
       def last_upload
         last_picture = Picture.last
         return Picture.all unless last_picture
@@ -231,7 +237,7 @@ module Alchemy
     # Returns true if picture is not assigned to any EssencePicture.
     #
     def deletable?
-      !essence_pictures.any?
+      essence_pictures.empty?
     end
 
     # A size String from original image file values.

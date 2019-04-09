@@ -10,35 +10,23 @@ describe Alchemy::Admin::BaseController do
       end
     end
 
-    context "params[:options] is a JSON string" do
-      let(:options) { '{"hallo":"World"}' }
-
-      it "parses the string into an object" do
-        expect(subject).to eq({hallo: 'World'})
-      end
-    end
-
     context "params[:options] are Rails parameters" do
       let(:options) do
-        ActionController::Parameters.new('hallo' => {'great' => 'World'})
+        ActionController::Parameters.new('hello' => 'world')
       end
 
-      it "returns the options as hash with permitted and deeply symbolized keys" do
-        expect(subject).to be_an_instance_of(Hash)
-        expect(subject).to eq({hallo: {great: 'World'}})
+      it "returns the options as permitted parameters with indifferent access" do
+        expect(subject).to be_permitted
+        expect(subject[:hello]).to eq('world')
       end
-    end
-
-    context "params[:options] is an empty string" do
-      let(:options) { '' }
-
-      it { is_expected.to eq({}) }
     end
 
     context "params[:options] is nil" do
       let(:options) { nil }
 
-      it { is_expected.to eq({}) }
+      it "returns an empty permitted parameters hash" do
+        is_expected.to eq(ActionController::Parameters.new.permit!)
+      end
     end
   end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     class AttachmentsController < ResourcesController
@@ -21,7 +23,6 @@ module Alchemy
           .page(params[:page] || 1)
           .per(15)
 
-        @options = options_from_params
         if in_overlay?
           archive_overlay
         end
@@ -44,11 +45,7 @@ module Alchemy
         else
           render_errors_or_redirect(
             @attachment,
-            admin_attachments_path(
-              per_page: params[:per_page],
-              page: params[:page],
-              q: params[:q]
-            ),
+            admin_attachments_path(search_filter_params),
             Alchemy.t("File successfully updated")
           )
         end
@@ -57,11 +54,7 @@ module Alchemy
       def destroy
         name = @attachment.name
         @attachment.destroy
-        @url = admin_attachments_url(
-          per_page: params[:per_page],
-          page: params[:page],
-          q: params[:q]
-        )
+        @url = admin_attachments_url(search_filter_params)
         flash[:notice] = Alchemy.t('File deleted successfully', name: name)
       end
 
@@ -74,6 +67,15 @@ module Alchemy
       end
 
       private
+
+      def search_filter_params
+        params.except(*COMMON_SEARCH_FILTER_EXCLUDES + [:attachment]).permit(
+          *common_search_filter_includes + [
+            :file_type,
+            :content_id
+          ]
+        )
+      end
 
       def handle_uploader_response(status:)
         if @attachment.valid?
@@ -89,7 +91,6 @@ module Alchemy
 
       def archive_overlay
         @content = Content.find_by(id: params[:content_id])
-        @options = options_from_params
         respond_to do |format|
           format.html { render partial: 'archive_overlay' }
           format.js   { render action:  'archive_overlay' }

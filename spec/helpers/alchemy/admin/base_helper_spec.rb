@@ -32,62 +32,6 @@ module Alchemy
       end
     end
 
-    describe "#merge_params" do
-      before do
-        allow(controller).to receive(:params).and_return({first: '1', second: '2'})
-      end
-
-      it "returns a hash that contains the current params and additional params given as attributes" do
-        expect(helper.merge_params(third: '3', fourth: '4')).to eq({first: '1', second: '2', third: '3', fourth: '4'})
-      end
-    end
-
-    describe "#merge_params_without" do
-      before do
-        allow(controller).to receive(:params).and_return({first: '1', second: '2'})
-      end
-
-      it "can delete a single param" do
-        expect(helper.merge_params_without(:second)).to eq({first: '1'})
-      end
-
-      it "can delete several params" do
-        expect(helper.merge_params_without([:first, :second])).to eq({})
-      end
-
-      it "can delete a param and add new params at the same time" do
-        expect(helper.merge_params_without([:first], {third: '3'})).to eq({second: '2', third: '3'})
-      end
-
-      it "should not change params" do
-        helper.merge_params_without([:first])
-        expect(controller.params).to eq({first: '1', second: '2'})
-      end
-    end
-
-    describe "#merge_params_only" do
-      before do
-        allow(controller).to receive(:params).and_return({first: '1', second: '2', third: '3'})
-      end
-
-      it "can keep a single param" do
-        expect(helper.merge_params_only(:second)).to eq({second: '2'})
-      end
-
-      it "can keep several params" do
-        expect(helper.merge_params_only([:first, :second])).to eq({first: '1', second: '2'})
-      end
-
-      it "can keep a param and add new params at the same time" do
-        expect(helper.merge_params_only([:first], {third: '3'})).to eq({first: '1', third: '3'})
-      end
-
-      it "should not change params" do
-        helper.merge_params_only([:first])
-        expect(controller.params).to eq({first: '1', second: '2', third: '3'})
-      end
-    end
-
     describe '#toolbar_button' do
       context "with permission" do
         before { allow(helper).to receive(:can?).and_return(true) }
@@ -221,23 +165,23 @@ module Alchemy
       let(:value) { nil }
       let(:type) { nil }
 
-      it "renders a date field" do
-        is_expected.to have_selector("input[type='date']")
+      it "renders a text field with data attribute for 'date'" do
+        is_expected.to have_selector("input[type='text'][data-datepicker-type='date']")
       end
 
       context "when datetime given as type" do
         let(:type) { :datetime }
 
-        it "renders a datetime field" do
-          is_expected.to have_selector("input[type='datetime']")
+        it "renders a text field with data attribute for 'datetime'" do
+          is_expected.to have_selector("input[type='text'][data-datepicker-type='datetime']")
         end
       end
 
       context "when time given as type" do
         let(:type) { :time }
 
-        it "renders a time field" do
-          is_expected.to have_selector("input[type='time']")
+        it "renders a text field with data attribute for 'time'" do
+          is_expected.to have_selector("input[type='text'][data-datepicker-type='time']")
         end
       end
 
@@ -289,7 +233,7 @@ module Alchemy
 
       context 'if the expression from config is nil' do
         before do
-          expect(Alchemy::Config).to receive(:get).and_return({link_url: nil})
+          stub_alchemy_config(:format_matchers, {link_url: nil})
         end
 
         it "returns the default expression" do

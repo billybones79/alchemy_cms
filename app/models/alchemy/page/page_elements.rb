@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Page::PageElements
     extend ActiveSupport::Concern
@@ -17,7 +19,7 @@ module Alchemy
         through: :descendent_elements,
         class_name: 'Alchemy::Content',
         source: :contents
-      has_and_belongs_to_many :to_be_swept_elements, -> { uniq },
+      has_and_belongs_to_many :to_be_swept_elements, -> { distinct },
         class_name: 'Alchemy::Element',
         join_table: ElementToPage.table_name
 
@@ -310,7 +312,7 @@ module Alchemy
       if cell = cells.find_by_name(name)
         cell.elements
       else
-        Alchemy::Logger.warn("Cell with name `#{name}` could not be found!", caller.first)
+        Alchemy::Logger.warn("Cell with name `#{name}` could not be found!", caller(0..0))
         Element.none
       end
     end

@@ -1,20 +1,23 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: alchemy_elements
 #
-#  id              :integer          not null, primary key
-#  name            :string(255)
-#  position        :integer
-#  page_id         :integer
-#  public          :boolean          default(TRUE)
-#  folded          :boolean          default(FALSE)
-#  unique          :boolean          default(FALSE)
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  creator_id      :integer
-#  updater_id      :integer
-#  cell_id         :integer
-#  cached_tag_list :text
+#  id                :integer          not null, primary key
+#  name              :string
+#  position          :integer
+#  page_id           :integer          not null
+#  public            :boolean          default(TRUE)
+#  folded            :boolean          default(FALSE)
+#  unique            :boolean          default(FALSE)
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  creator_id        :integer
+#  updater_id        :integer
+#  cell_id           :integer
+#  cached_tag_list   :text
+#  parent_element_id :integer
 #
 
 module Alchemy
@@ -77,7 +80,7 @@ module Alchemy
       required: false,
       touch: true
 
-    has_and_belongs_to_many :touchable_pages, -> { uniq },
+    has_and_belongs_to_many :touchable_pages, -> { distinct },
       class_name: 'Alchemy::Page',
       join_table: ElementToPage.table_name
 
@@ -121,9 +124,7 @@ module Alchemy
       #   could be found
       #
       def new_from_scratch(attributes = {})
-        attributes = attributes.dup.symbolize_keys
         return new if attributes[:name].blank?
-
         new_element_from_definition_by(attributes) || raise(ElementDefinitionError, attributes)
       end
 
@@ -152,10 +153,7 @@ module Alchemy
       #   @copy.public? # => false
       #
       def copy(source_element, differences = {})
-        source_element.attributes.stringify_keys!
-        differences.stringify_keys!
-
-        attributes = source_element.attributes
+        attributes = source_element.attributes.with_indifferent_access
                        .except(*SKIPPED_ATTRIBUTES_ON_COPY)
                        .merge(differences)
                        .merge({
@@ -193,16 +191,11 @@ module Alchemy
       private
 
       def new_element_from_definition_by(attributes)
-        remove_cell_name_from_element_name!(attributes)
-
-        element_definition = Element.definition_by_name(attributes[:name])
+        element_attributes = attributes.to_h.merge(name: attributes[:name].split('#').first)
+        element_definition = Element.definition_by_name(element_attributes[:name])
         return if element_definition.nil?
 
-        new(element_definition.merge(attributes).except(*FORBIDDEN_DEFINITION_ATTRIBUTES))
-      end
-
-      def remove_cell_name_from_element_name!(attributes)
-        attributes[:name] = attributes[:name].split('#').first
+        new(element_definition.merge(element_attributes).except(*FORBIDDEN_DEFINITION_ATTRIBUTES))
       end
     end
 
@@ -211,7 +204,8 @@ module Alchemy
     # Pass an element name to get next of this kind.
     #
     def next(name = nil)
-      previous_or_next('>', name)
+      elements = page.elements.published.where('position > ?', position)
+      select_element(elements, name, :asc)
     end
 
     # Returns previous public element from same page.
@@ -219,7 +213,8 @@ module Alchemy
     # Pass an element name to get previous of this kind.
     #
     def prev(name = nil)
-      previous_or_next('<', name)
+      elements = page.elements.published.where('position < ?', position)
+      select_element(elements, name, :desc)
     end
 
     # Stores the page into +touchable_pages+ (Pages that have to be touched after updating the element).
@@ -313,17 +308,9 @@ module Alchemy
 
     private
 
-    # Returns previous or next public element from same page.
-    #
-    # @param [String]
-    #   Pass '>' or '<' to find next or previous public element.
-    # @param [String]
-    #   Pass an element name to get previous of this kind.
-    #
-    def previous_or_next(dir, name = nil)
-      elements = page.elements.published.where("#{self.class.table_name}.position #{dir} #{position}")
+    def select_element(elements, name, order)
       elements = elements.named(name) if name.present?
-      elements.reorder("position #{dir == '>' ? 'ASC' : 'DESC'}").limit(1).first
+      elements.reorder(position: order).limit(1).first
     end
 
     # Returns all cells from given page this element could be placed in.

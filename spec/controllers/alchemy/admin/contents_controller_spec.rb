@@ -2,29 +2,30 @@ require 'spec_helper'
 
 module Alchemy
   describe Admin::ContentsController do
-    let(:element) { build_stubbed(:alchemy_element) }
-    let(:content) { build_stubbed(:alchemy_content, element: element) }
+    routes { Alchemy::Engine.routes }
 
     before do
       authorize_user(:as_admin)
     end
 
     context 'with element_id parameter' do
-      before do
-        expect(Element).to receive(:find).and_return(element)
-      end
-
       describe '#create' do
-        let(:element) { build_stubbed(:alchemy_element, name: 'headline') }
+        let(:element) { create(:alchemy_element, name: 'headline') }
 
         it "creates a content from name" do
-          expect(Content).to receive(:create_from_scratch).and_return(content)
-          alchemy_xhr :post, :create, {content: {element_id: element.id, name: 'headline'}}
+          expect {
+            post :create, params: {content: {element_id: element.id, name: 'headline'}}, xhr: true
+          }.to change { Alchemy::Content.count }.by(1)
         end
 
         it "creates a content from essence_type" do
-          expect(Content).to receive(:create_from_scratch).and_return(content)
-          alchemy_xhr :post, :create, {content: {element_id: element.id, essence_type: 'EssencePicture'}}
+          expect {
+            post :create, params: {
+              content: {
+                element_id: element.id, essence_type: 'EssencePicture'
+              }
+            }, xhr: true
+          }.to change { Alchemy::Content.count }.by(1)
         end
       end
 
@@ -44,27 +45,30 @@ module Alchemy
         end
 
         it "adds it into the gallery editor" do
-          alchemy_xhr :post, :create, attributes
+          post :create, params: attributes, xhr: true
           expect(assigns(:content_dom_id)).to eq("#add_picture_#{element.id}")
         end
 
         context 'with picture_id given' do
-          it "assigns the picture" do
-            expect_any_instance_of(Content).to receive(:update_essence).with(picture_id: '1')
-            alchemy_xhr :post, :create, attributes.merge(picture_id: '1')
+          it "assigns the picture to the essence" do
+            post :create, params: attributes.merge(picture_id: '1'), xhr: true
+            expect(Alchemy::Content.last.essence.picture_id).to eq(1)
           end
         end
       end
     end
 
     describe '#update' do
+      let(:content) { create(:alchemy_content) }
+
       before do
         expect(Content).to receive(:find).and_return(content)
       end
 
       it "should update a content via ajax" do
-        expect(content.essence).to receive(:update).with('ingredient' => 'Peters Petshop')
-        alchemy_xhr :post, :update, {id: content.id, content: {ingredient: 'Peters Petshop'}}
+        expect {
+          post :update, params: {id: content.id, content: {ingredient: 'Peters Petshop'}}, xhr: true
+        }.to change { content.ingredient }.to 'Peters Petshop'
       end
     end
 
@@ -77,10 +81,10 @@ module Alchemy
         let(:content_ids) { element.contents.pluck(:id).shuffle }
 
         it "should reorder the contents" do
-          alchemy_xhr :post, :order, {content_ids: content_ids}
+          post :order, params: {content_ids: content_ids}, xhr: true
 
           expect(response.status).to eq(200)
-          expect(element.contents(true).pluck(:id)).to eq(content_ids)
+          expect(element.contents.reload.pluck(:id)).to eq(content_ids)
         end
       end
     end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     class ElementsController < Alchemy::Admin::BaseController
@@ -39,7 +41,7 @@ module Alchemy
             @element = paste_element_from_clipboard
             @cell = @element.cell
           else
-            @element = Element.new_from_scratch(params[:element])
+            @element = Element.new_from_scratch(create_element_params)
             if @page.can_have_cells?
               @cell = find_or_create_cell
               @element.cell = @cell
@@ -172,6 +174,10 @@ module Alchemy
         else
           params.fetch(:element, {})
         end
+      end
+
+      def create_element_params
+        params.require(:element).permit(:name, :page_id, :parent_element_id)
       end
     end
   end

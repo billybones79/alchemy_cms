@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     class PicturesController < Alchemy::Admin::ResourcesController
@@ -127,7 +129,6 @@ module Alchemy
       def archive_overlay
         @content = Content.select('id').find_by(id: params[:content_id])
         @element = Element.select('id').find_by(id: params[:element_id])
-        @options = options_from_params
 
         respond_to do |format|
           format.html { render partial: 'archive_overlay' }
@@ -136,12 +137,17 @@ module Alchemy
       end
 
       def redirect_to_index
-        do_redirect_to admin_pictures_path(
-          filter: params[:filter].presence,
-          page: params[:page].presence,
-          q: params[:q].presence,
-          size: params[:size].presence,
-          tagged_with: params[:tagged_with].presence
+        do_redirect_to admin_pictures_path(search_filter_params)
+      end
+
+      def search_filter_params
+        params.except(*COMMON_SEARCH_FILTER_EXCLUDES + [:picture_ids]).permit(
+          *common_search_filter_includes + [
+            :size,
+            :element_id,
+            :swap,
+            :content_id
+          ]
         )
       end
 

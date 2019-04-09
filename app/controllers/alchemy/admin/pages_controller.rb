@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   module Admin
     class PagesController < Alchemy::Admin::BaseController
@@ -187,7 +189,7 @@ module Alchemy
         # fetching page via before filter
         @page.publish!
         flash[:notice] = Alchemy.t(:page_published, name: @page.name)
-        redirect_back_or_to_default(admin_pages_path)
+        redirect_back(fallback_location: admin_pages_path)
       end
 
       def copy_language_tree

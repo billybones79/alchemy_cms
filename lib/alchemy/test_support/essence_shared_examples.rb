@@ -7,13 +7,13 @@ shared_examples_for "an essence" do
 
   it "touches the content after update" do
     element = create(:alchemy_element)
-    content = create(:alchemy_content, element: element)
-    essence.save
-    content.update(essence: essence, essence_type: essence.class.name)
-    date = content.updated_at
-    content.essence.update(essence.ingredient_column.to_sym => ingredient_value)
+    content = create(:alchemy_content, element: element, essence: essence, essence_type: essence.class.name)
+
+    content.update_column(:updated_at, 3.days.ago)
+    content.essence.update_attributes(essence.ingredient_column.to_sym => ingredient_value)
+
     content.reload
-    expect(content.updated_at).not_to eq(date)
+    expect(content.updated_at).to be_within(3.seconds).of(Time.current)
   end
 
   it "should have correct partial path" do
@@ -250,27 +250,9 @@ shared_examples_for "an essence" do
   end
 
   context 'delegations' do
-    let(:page)    { create(:alchemy_page, :restricted) }
-    let(:element) { create(:alchemy_element, name: 'headline', create_contents_after_create: true, page: page) }
-    let(:content) { element.contents.find_by(essence_type: 'Alchemy::EssenceText') }
-    let(:essence) { content.essence }
-
-    it "delegates restricted? to page" do
-      expect(page.restricted?).to be(true)
-      expect(essence.restricted?).to be(true)
-    end
-
-    it "delegates trashed? to element" do
-      element.update!(position: nil)
-      expect(element.trashed?).to be true
-      expect(essence.trashed?).to be true
-    end
-
-    it "delegates public? to element" do
-      element.update!(public: false)
-      expect(element.public?).to be false
-      expect(essence.public?).to be false
-    end
+    it { should delegate_method(:restricted?).to(:page) }
+    it { should delegate_method(:trashed?).to(:element) }
+    it { should delegate_method(:public?).to(:element)  }
   end
 
   describe 'essence relations' do

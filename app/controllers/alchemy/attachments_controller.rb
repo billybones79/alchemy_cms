@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Alchemy
   class AttachmentsController < BaseController
     before_action :load_attachment
@@ -5,6 +7,7 @@ module Alchemy
 
     # sends file inline. i.e. for viewing pdfs/movies in browser
     def show
+      response.headers['Content-Length'] = @attachment.file.size.to_s
       send_file(
         @attachment.file.path,
         {
@@ -17,6 +20,7 @@ module Alchemy
 
     # sends file as attachment. aka download
     def download
+      response.headers['Content-Length'] = @attachment.file.size.to_s
       send_file(
         @attachment.file.path, {
           filename: @attachment.file_name,

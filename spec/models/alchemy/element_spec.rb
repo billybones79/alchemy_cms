@@ -117,6 +117,18 @@ module Alchemy
         expect(Element.definitions.collect { |el| el['name'] }).to include('erb_element')
       end
 
+      context "with a YAML file including a symbol" do
+        let(:yaml) { '- name: :symbol' }
+        before do
+          expect(File).to receive(:exist?).and_return(true)
+          expect(File).to receive(:read).and_return(yaml)
+        end
+
+        it "returns the definition without error" do
+          expect { Element.definitions }.to_not raise_error
+        end
+      end
+
       context "without existing yml files" do
         before { allow(File).to receive(:exist?).and_return(false) }
 
@@ -126,8 +138,7 @@ module Alchemy
       end
 
       context "without any definitions in elements.yml" do
-        # Yes, YAML.load returns false if an empty file exists.
-        before { allow(YAML).to receive(:load).and_return(false) }
+        before { expect(YAML).to receive(:safe_load).and_return(false) }
 
         it "should return an empty array" do
           expect(Element.definitions).to eq([])
@@ -861,6 +872,7 @@ module Alchemy
       let!(:element)        { create(:alchemy_element, name: 'slide', parent_element: parent_element) }
 
       it "touches parent after update" do
+        parent_element.update_column(:updated_at, 3.days.ago)
         expect { element.update!(public: false) }.to change(parent_element, :updated_at)
       end
     end
