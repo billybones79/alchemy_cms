@@ -12,7 +12,7 @@ module Alchemy
 
       before_action :load_page,
         only: [:show, :info, :unlock, :visit, :publish, :configure, :edit, :update, :destroy, :fold,
-               :tree]
+               :tree, :create_translation]
 
       before_action :set_root_page,
         only: [:index, :show, :sort, :order]
@@ -193,7 +193,7 @@ module Alchemy
       end
 
       def copy_language_tree
-        language_root_to_copy_from.copy_children_to(copy_of_language_root)
+        language_root_to_copy_from.copy_children_to(copy_of_language_root, translate: true)
         flash[:notice] = Alchemy.t(:language_pages_copied)
         redirect_to admin_pages_path
       end
@@ -232,6 +232,7 @@ module Alchemy
         Language.current.pages.flushable_layoutpages.update_all(published_at: Time.current)
         respond_to { |format| format.js }
       end
+
 
       private
 
@@ -397,6 +398,8 @@ module Alchemy
                                       user: current_alchemy_user,
                                       full: params[:full] == 'true')
       end
+
+
     end
   end
 end

@@ -9,7 +9,6 @@ module Alchemy
   # Situations we don't want a locale prefix:
   #
   # 1. If only one language is published
-  # 2. If the requested locale is the current default locale
   #
   module LocaleRedirects
     extend ActiveSupport::Concern
@@ -33,8 +32,7 @@ module Alchemy
     # then we want to redirect to a non prefixed url.
     #
     def locale_prefix_not_allowed?
-      params[:locale].present? && !multi_language? ||
-        params[:locale].presence == ::I18n.default_locale.to_s
+      params[:locale].present? && !multi_language?
     end
   end
 end

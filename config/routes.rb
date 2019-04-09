@@ -15,11 +15,19 @@ Alchemy::Engine.routes.draw do
   end
 
   namespace :admin, {path: Alchemy.admin_path, constraints: Alchemy.admin_constraints} do
+
+
+    #translation stuff
+    post "create_translation/:id", to: "translations#create", as: :create_translation
+    get "unlink_translation/:id/:to", to: "translations#unlink", as: :unlink_translation
+    get :reload_page_select,  to: "translations#reload_page_select", as: :reload_page_select
+
     resources :contents do
       collection do
         post :order
       end
     end
+
 
     resources :pages do
       resources :elements
@@ -38,6 +46,9 @@ Alchemy::Engine.routes.draw do
         post :publish
         post :fold
         post :visit
+
+
+
         get :configure
         get :preview
         get :info

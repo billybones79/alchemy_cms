@@ -2,15 +2,25 @@
   <ul>
     <li><a href="#page_properties"><%= Alchemy.t('Properties') %></a></li>
     <li>
+      <a href="#translations" id="translations_label">
+        <%= Alchemy.t('Translations') %>
+      </a>
+    </li>
+    <li>
       <a href="#legacy_urls" id="legacy_urls_label">
         <%= render 'alchemy/admin/legacy_page_urls/label', count: @page.legacy_urls.size %>
       </a>
     </li>
+
   </ul>
   <div id="page_properties">
     <%= render 'form' %>
   </div>
+  <div id="translations">
+    <%= render 'translations' %>
+  </div>
   <div id="legacy_urls">
     <%= render 'legacy_urls' %>
   </div>
+
 </div>

@@ -292,6 +292,8 @@ module Alchemy
       "#{@page.robot_index? ? '' : 'no'}index, #{@page.robot_follow? ? '' : 'no'}follow"
     end
 
+
+
     # Renders the partial for the cell with the given name of the current page.
     # Cell partials are located in +app/views/cells/+ of your project.
     #

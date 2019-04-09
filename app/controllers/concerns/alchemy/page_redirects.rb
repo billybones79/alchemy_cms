@@ -28,7 +28,7 @@ module Alchemy
     #
     def redirect_url
       @_redirect_url ||= public_child_redirect_url || controller_and_action_url ||
-                         locale_prefixed_url || nil
+                          nil
     end
 
     def locale_prefixed_url

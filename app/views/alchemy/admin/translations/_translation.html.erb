@@ -1,0 +1,13 @@
+<tr class="even" >
+  <td class="name">
+    <%= link_to translation.to.name, alchemy.edit_admin_page_path(translation.to)  %>
+  </td>
+  <td class="locale"><%= Alchemy::Language::find(translation.language_id).code %></td>
+  <td class="tools">
+    <%= link_to admin_unlink_translation_path id: @page.id, to: translation.to do %>
+        <span class="icon close"></span>
+    <% end %>
+  </td>
+
+
+</tr>
