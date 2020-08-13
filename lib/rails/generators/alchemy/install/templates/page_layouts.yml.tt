@@ -3,8 +3,13 @@
 # For further information please see http://guides.alchemy-cms.com/stable/page_layouts.html
 
 <%- unless @options[:skip_demo_files] -%>
-- name: <%= Alchemy::Config.get(:default_language)['page_layout'] %>
-  unique: true
-  elements: [article]
-  autogenerate: [article]
+- name: blog_index
+  unique: false
+  elements: [featured_article, blog_previews]
+  autogenerate: [blog_previews]
+
+- name: blog_page
+  unique: false
+  elements: [blog_info, blog_header, blog_content]
+  autogenerate: [blog_info, blog_header, blog_content]
 <%- end -%>

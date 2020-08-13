@@ -48,7 +48,7 @@ module Alchemy
         Page.current_preview = @page
         # Setting the locale to pages language, so the page content has it's correct translations.
         ::I18n.locale = @page.language.locale
-        render(layout: Alchemy::Config.get(:admin_page_preview_layout) || 'application')
+        render(layout:  'spree/layouts/spree_application')
       end
 
       def info

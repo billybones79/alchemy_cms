@@ -2,6 +2,8 @@
 
 module Alchemy
   class PagesController < Alchemy::BaseController
+    layout 'spree_application'
+
     SHOW_PAGE_PARAMS_KEYS = [
       'action',
       'controller',

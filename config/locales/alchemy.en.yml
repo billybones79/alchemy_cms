@@ -1,5 +1,6 @@
 en:
 
+
   # = Alchemy Translations
   # All translations used in Alchemy CMS are inside this alchemy namespace.
   alchemy:
@@ -599,7 +600,7 @@ en:
     "Successfully updated": "Successfully updated"
     "Successfully removed": "Successfully removed"
     "Nothing found": "Nothing found."
-    complete: 'Abgeschlossen'
+    complete: 'Complete'
     "Update available": 'Update available'
     "Update status unavailable": 'Update status unavailable'
     "Uploading": "Uploading"
@@ -636,6 +637,12 @@ en:
   # Alchemy time formats
   time:
     formats:
+      schedule_date: "%B %d %I:%M%p"
+      hour: "%I:%M%p"
+      sortable_hour: "%e %p %I:%M"
+      day: "%B %e %Y"
+      day_and_time: "%B %e - %I:%M%p"
+      time: "%I:%M%p"
       alchemy:
         default: "%a, %d %b %Y %H:%M:%S %z"
         essence_date: "%Y-%m-%d"

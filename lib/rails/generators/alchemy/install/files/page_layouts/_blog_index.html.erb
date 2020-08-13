@@ -1,0 +1,82 @@
+<% news_per_page = 8 %>
+<%= render_elements %>
+
+<section class="section_news_list">
+
+  <div class="categories-news">
+
+    <div class="bordered_list">
+      <% Alchemy::Tag::where(name: [t('alchemy.news_tag.news'), t('alchemy.news_tag.youth'), t('alchemy.news_tag.professionals')]).order(:name).each do |t| %>
+        <a href="?tag=<%= t.name %>" class="<%= params[:tag] == t.name ? "selected" : "" %>"><%= t.name %></a>
+      <% end %>
+    </div>
+
+  </div>
+  <div class="section_name"><%= t('blog.news') %></div>
+
+  <%if params[:tag] %>
+    <% children = @page.children.reorder(public_on: :desc).page(params[:page] || 1).published.tagged_with(params[:tag]).order(public_on: :desc).per(news_per_page)%>
+  <%else%>
+    <% children = @page.children.reorder(public_on: :desc).page(params[:page] || 1).published.order(public_on: :desc).per(news_per_page)%>
+  <%end%>
+
+  <% if  children.any? %>
+    <div class="news_list animate">
+
+      <ul class="clear fixed-width">
+
+
+        <% children.each do |c| %>
+          <% blog_info =  c.elements.where(name: "blog_info").first %>
+          <% if blog_info %>
+            <% image = blog_info.content_by_name("image") %>
+
+            <li>
+
+              <div class="photo-holder">
+                <div class="date"><%= c.published_at.strftime("%Y-%m-%d") %></div>
+                <div class="photo grayscale" style="background-image:url('<%=  image.ingredient ? alchemy.show_attachment_path(image.ingredient) : "" %>');">
+                  <%= link_to '', show_alchemy_page_path(c) %>
+                </div>
+
+              </div>
+
+
+              <div class="content">
+
+                <h1 class="title">
+                  <%= link_to blog_info.content_by_name("header").ingredient, alchemy.show_attachment_path(c) %>
+                </h1>
+
+                <div class="text">
+                  <p>
+                    <%= blog_info.content_by_name("preview_text").ingredient.html_safe %>
+                  </p>
+                </div>
+              </div>
+
+              <div class="bottom_bar">
+
+                <%= link_to t("blog.read_more"), show_alchemy_page_path(c), {class:"news_link" } %>
+
+                <div class="socials">
+                  <ul>
+                    <li><a href="#main_socials_menu_link" class="facebook"><i class="icon-facebook-circular"></i></a></li>
+                    <li><a href="#main_socials_menu_link" class="twitter"><i class="icon-twitter-circular"></i></a></li>
+                  </ul>
+
+                </div>
+              </div>
+
+            </li>
+          <% end %>
+        <% end %>
+      </ul>
+    </div><!-- news_list end -->
+    <%= paginate children %>
+  <% end %>
+
+</section>
+
+
+

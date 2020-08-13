@@ -30,7 +30,6 @@ module Alchemy
       def copy_demo_views
         return if @options[:skip_demo_files]
 
-        copy_file "application.html.erb", "app/views/layouts/application.html.erb"
         copy_file "article.scss", "app/assets/stylesheets/alchemy/elements/article.scss"
 
         stylesheet_require = " *= require_tree ./alchemy/elements\n"
@@ -40,9 +39,9 @@ module Alchemy
         else
           create_file "app/assets/stylesheets/application.css", "/*\n#{stylesheet_require} */\n"
         end
+        directory "elements", "app/views/alchemy/elements"
+        directory "page_layouts", "app/views/alchemy/page_layouts"
 
-        copy_file "_article.html.erb", "app/views/alchemy/elements/_article.html.erb"
-        copy_file "_standard.html.erb", "app/views/alchemy/page_layouts/_standard.html.erb"
         copy_file "alchemy.en.yml", "config/locales/alchemy.en.yml"
       end
 
