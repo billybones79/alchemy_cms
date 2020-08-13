@@ -1,0 +1,20 @@
+<%= render_message do %>
+    <p><%== Alchemy.t(:translation_info_text) %></p>
+<% end %>
+
+<table class="list" id="legacy_page_urls">
+  <tr>
+
+    <th class=""><%= t("name")%></th>
+    <th class="name">
+      <%= t("language") %>
+    </th>
+  </tr>
+  <%= render partial: 'alchemy/admin/translations/translation',
+             collection: @page.translations_relation %>
+</table>
+
+<fieldset>
+  <legend><%= Alchemy.t('Add page link') %></legend>
+  <%= render 'alchemy/admin/translations/new' %>
+</fieldset>

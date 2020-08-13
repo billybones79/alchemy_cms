@@ -1,0 +1,5 @@
+$("#page_select").html("<%= j render partial: "alchemy/admin/translations/page_select", locals:{language:@language} %>");
+
+$("#page_select select").select2({
+minimumResultsForSearch: 7,
+dropdownAutoWidth: true});

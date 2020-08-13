@@ -3,12 +3,13 @@
 
 <div class="essence_text content_editor<%= options[:display_inline].to_s == 'true' ? ' display_inline' : '' %>" id="<%= content.dom_id %>">
   <%= content_label(content) %>
+  <% html_options[:class] = ["thin_border #{content.settings[:linkable] ? ' text_with_icon' : ''}", html_options[:class]].join(' ') %>
   <%= text_field_tag(
     content.form_field_name,
     content.ingredient,
-    class: ["thin_border #{content.settings[:linkable] ? ' text_with_icon' : ''}", html_options[:class]].join(' '),
-    style: html_options[:style],
-    type: content.settings_value(:input_type) || "text"
+    {
+      type: content.settings_value(:input_type) || "text"
+    }.merge(html_options)
   ) %>
   <% if content.settings[:linkable] %>
     <%= hidden_field_tag content.form_field_name(:link), content.essence.link %>

@@ -16,12 +16,18 @@ module Alchemy
     # Redirecting concerns. Order is important here!
     include SiteRedirects
     include LocaleRedirects
+    #set alchemy current locale
+    before_action :set_locale
 
     before_action :load_index_page, only: [:index]
     before_action :load_page, only: [:show]
 
     # Legacy page redirects need to run after the page was loaded and before we render 404.
     include LegacyPageRedirects
+
+
+    # we'll try finding a page with this slug on an other locale and see if it is translated
+    before_action :try_another_locale, if: -> { @page.blank? }, only:  [:show]
 
     # From here on, we need a +@page+ to work with!
     before_action :page_not_found!, if: -> { @page.blank? }, only: [:index, :show]
@@ -69,6 +75,7 @@ module Alchemy
     #
     def show
       if redirect_url.present?
+        puts "c'est quand meme gossant ce redirect la"
         redirect_permanently_to redirect_url
       else
         authorize! :show, @page
@@ -86,6 +93,12 @@ module Alchemy
 
     private
 
+    def set_locale
+      unless params[:locale].blank?
+        Language.current = Language.find_by!(locale: params[:locale])
+      end
+    end
+
     # == Loads index page
     #
     # Loads the current public language root page.
@@ -102,6 +115,25 @@ module Alchemy
 
     # == Loads page by urlname
     #
+    # will try to find a page with no specific locale
+    # and see if this page has translations in the current locale
+    #
+    # @return Alchemy::Page
+    # @return redirect
+    #
+    def try_another_locale
+      page ||= Page::contentpages.joins(:translations).where(translations_alchemy_pages: {urlname: params[:urlname]}).find_by(
+        language_code: Language.current.code
+      )
+      unless page.blank?
+        redirect_to show_page_path(
+                      urlname: page.urlname
+                    )
+      end
+    end
+
+    # == Loads page by urlname
+    #
     # If a locale is specified in the request parameters,
     # scope pages to it to make sure we can raise a 404 if the urlname
     # is not available in that language.
@@ -112,7 +144,7 @@ module Alchemy
     def load_page
       @page ||= Language.current.pages.contentpages.find_by(
         urlname: params[:urlname],
-        language_code: params[:locale] || Language.current.code
+        language_code: Language.current.code
       )
     end
 

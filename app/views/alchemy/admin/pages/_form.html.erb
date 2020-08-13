@@ -30,6 +30,12 @@
     </div>
   </div>
 
+    <%= f.input :short_excerpt,
+                as: 'text' %>
+
+    <%= f.input :long_excerpt,
+                as: 'text' %>
+
   <%= f.input :meta_description,
     as: 'text',
     input_html: {'data-alchemy-char-counter' => 160} %>

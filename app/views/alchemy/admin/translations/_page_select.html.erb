@@ -1,0 +1,6 @@
+<%= select_tag(
+            'page_id',
+            options_from_collection_for_select(Alchemy::Page.where(language_id: language ), "id", "name"),
+            include_blank: t("create_new"),
+            class: 'alchemy_selectbox short'
+    ) %>
