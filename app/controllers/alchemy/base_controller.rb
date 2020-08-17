@@ -9,6 +9,14 @@ module Alchemy
     include Alchemy::ControllerActions
     include Alchemy::Modules
 
+
+    include CanCan::ControllerAdditions
+    include Spree::Core::ControllerHelpers::CurrentHost
+    include Spree::Core::ControllerHelpers::Store
+    include Spree::Core::ControllerHelpers::Pricing
+    include Spree::Core::ControllerHelpers::StrongParameters
+
+
     protect_from_forgery
 
     before_action :mailer_set_url_options

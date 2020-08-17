@@ -9,6 +9,14 @@ module Alchemy
       content.try(:essence).try(:caption)
     end
 
+    def title
+      @page.title
+    end
+
+    def canonical_tag a
+      return ""
+    end
+
     # Renders links to language root pages of all published languages.
     #
     # @option options linkname [String] ('name')
