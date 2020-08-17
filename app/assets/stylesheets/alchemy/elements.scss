@@ -121,7 +121,6 @@
 .element-editor {
   position: relative;
   border: 1px solid $default-border-color;
-  @extend %rounded-border;
   background-color: rgb(239, 219, 225);
   .element-editor {
     background-color: rgb(247, 202, 202);
