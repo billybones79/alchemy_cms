@@ -6,7 +6,6 @@
     page_layout: readonly
     public_on: ~
     public_until: ~
-    visible: false
     restricted: false
     name: false
     urlname: false
@@ -38,11 +37,9 @@
   elements: [headline, text, contactform]
   autogenerate: [headline, text, contactform]
 
-- name: external
-  unique: false
-  redirects_to_external: true
-
 - name: footer
+  elements:
+  - menu
   layoutpage: true
 
 - name: <%= 'erb_' + 'layout' %>

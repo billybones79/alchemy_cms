@@ -1,23 +1,23 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+require "rails_helper"
 
 RSpec.describe "Resources", type: :system do
   let(:event)        { create(:event) }
-  let(:second_event) { create(:event, name: 'My second Event', entrance_fee: 12.32) }
+  let(:second_event) { create(:event, name: "My second Event", entrance_fee: 12.32) }
 
   before { authorize_user(:as_admin) }
 
   describe "index view" do
     it "should have a button for creating a new resource items" do
-      visit '/admin/events'
-      expect(page).to have_selector('#toolbar div.button_with_label a.icon_button .icon.fa-plus')
+      visit "/admin/events"
+      expect(page).to have_selector("#toolbar div.button_with_label a.icon_button .icon.fa-plus")
     end
 
     it "should list existing items" do
       event
       second_event
-      visit '/admin/events'
+      visit "/admin/events"
       expect(page).to have_content("My Event")
       expect(page).to have_content("something fancy")
       expect(page).to have_content("12.32")
@@ -25,27 +25,49 @@ RSpec.describe "Resources", type: :system do
 
     it "should list existing resource-items nicely formatted" do
       event
-      visit '/admin/events'
-      expect(page).to have_selector('div#archive_all table.list')
+      visit "/admin/events"
+      expect(page).to have_selector("div#archive_all table.list")
+    end
+
+    describe "date fields" do
+      let(:yesterday) { Date.yesterday }
+      let(:tomorrow) { Date.tomorrow }
+
+      before do
+        Booking.create(from: yesterday, until: tomorrow)
+      end
+
+      it "displays date values" do
+        visit "/admin/bookings"
+        expect(page).to have_content(yesterday)
+        expect(page).to have_content(tomorrow)
+      end
     end
   end
 
   describe "form for creating and updating items" do
     it "renders an input field according to the attribute's type" do
-      visit '/admin/events/new'
+      visit "/admin/events/new"
       expect(page).to have_selector('input#event_name[type="text"]')
       expect(page).to have_selector('input#event_starts_at[data-datepicker-type="datetime"]')
       expect(page).to have_selector('input#event_ends_at[data-datepicker-type="datetime"]')
-      expect(page).to have_selector('textarea#event_description')
+      expect(page).to have_selector("textarea#event_description")
       expect(page).to have_selector('input#event_published[type="checkbox"]')
       expect(page).to have_selector('input#event_lunch_starts_at[data-datepicker-type="time"]')
       expect(page).to have_selector('input#event_lunch_ends_at[data-datepicker-type="time"]')
     end
 
     it "should have a select box for associated models" do
-      visit '/admin/events/new'
-      within('form') do
-        expect(page).to have_selector('select')
+      visit "/admin/events/new"
+      within("form") do
+        expect(page).to have_selector("select")
+      end
+    end
+
+    describe "date fields" do
+      it "have date picker" do
+        visit "/admin/bookings/new"
+        expect(page).to have_selector('input#booking_from[data-datepicker-type="date"]')
       end
     end
   end
@@ -53,18 +75,19 @@ RSpec.describe "Resources", type: :system do
   describe "create resource item" do
     context "when form filled with valid data" do
       let!(:location) { create(:location) }
+      let(:start_date) { 1.week.from_now }
 
       before do
-        visit '/admin/events/new'
-        fill_in 'event_name', with: 'My second event'
-        fill_in 'event_starts_at', with: Time.local(2012, 03, 03, 20, 00)
-        select location.name, from: 'Location'
-        click_on 'Save'
+        visit "/admin/events/new"
+        fill_in "event_name", with: "My second event"
+        fill_in "event_starts_at", with: start_date
+        select location.name, from: "Location"
+        click_on "Save"
       end
 
       it "lists the new item" do
         expect(page).to have_content "My second event"
-        expect(page).to have_content "03 Mar 2012"
+        expect(page).to have_content I18n.l(start_date, format: :'alchemy.default')
       end
 
       it "shows a success message" do
@@ -74,9 +97,9 @@ RSpec.describe "Resources", type: :system do
 
     context "when form filled with invalid data" do
       before do
-        visit '/admin/events/new'
-        fill_in 'event_name', with: '' # invalid!
-        click_on 'Save'
+        visit "/admin/events/new"
+        fill_in "event_name", with: "" # invalid!
+        click_on "Save"
       end
 
       it "shows the form again" do
@@ -96,8 +119,8 @@ RSpec.describe "Resources", type: :system do
   describe "updating an item" do
     before do
       visit("/admin/events/#{event.id}/edit")
-      fill_in 'event_name', with: 'New event name'
-      click_on 'Save'
+      fill_in "event_name", with: "New event name"
+      click_on "Save"
     end
 
     it "shows the updated value" do
@@ -113,9 +136,9 @@ RSpec.describe "Resources", type: :system do
     before do
       event
       second_event
-      visit '/admin/events'
-      within('tr', text: 'My second Event') do
-        click_on 'Delete'
+      visit "/admin/events"
+      within("tr", text: "My second Event") do
+        click_on "Delete"
       end
     end
 
@@ -198,6 +221,23 @@ RSpec.describe "Resources", type: :system do
       expect(page).to have_content("Car Expo")
       expect(page).to have_content("Hovercar Expo")
       expect(page).to have_content("Horse Expo")
+    end
+
+    context "full text search" do
+      it "should respect filters" do
+        visit "/admin/events?filter=future"
+
+        expect(page).to have_content("Hovercar Expo")
+        expect(page).to_not have_content("Car Expo")
+        expect(page).to_not have_content("Horse Expo")
+
+        page.find(".search_input_field").set("Horse")
+        page.find(".search_field button").click
+
+        expect(page).to_not have_content("Hovercar Expo")
+        expect(page).to_not have_content("Car Expo")
+        expect(page).to_not have_content("Horse Expo")
+      end
     end
   end
 end

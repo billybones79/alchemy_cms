@@ -23,7 +23,7 @@ module Alchemy
       # If no translation is found a humanized name is used.
       #
       def display_name_for(name)
-        Alchemy.t(name, scope: 'element_names', default: name.to_s.humanize)
+        Alchemy.t(name, scope: "element_names", default: name.to_s.humanize)
       end
     end
 
@@ -32,7 +32,7 @@ module Alchemy
     # @see Alchemy::Element::Presenters#display_name_for
     #
     def display_name
-      self.class.display_name_for(definition['name'] || name)
+      self.class.display_name_for(definition["name"] || name)
     end
 
     # Returns a preview text for element.
@@ -96,8 +96,9 @@ module Alchemy
     private
 
     def preview_text_from_nested_elements(maxlength)
-      return unless nested_elements.present?
-      nested_elements.first.preview_text(maxlength)
+      return if all_nested_elements.empty?
+
+      all_nested_elements.first.preview_text(maxlength)
     end
 
     def preview_text_from_preview_content(maxlength)

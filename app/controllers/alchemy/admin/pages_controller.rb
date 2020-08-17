@@ -5,7 +5,17 @@ module Alchemy
     class PagesController < Alchemy::Admin::BaseController
       include OnPageLayout::CallbacksRunner
 
-      helper 'alchemy/pages'
+      helper "alchemy/pages"
+
+      before_action :load_page, except: [:index, :flush, :new, :order, :create, :copy_language_tree, :link, :sort]
+
+      authorize_resource class: Alchemy::Page, except: [:index, :tree]
+
+      before_action only: [:index, :tree, :flush, :new, :order, :create, :copy_language_tree] do
+        authorize! :index, :alchemy_admin_pages
+      end
+
+      include Alchemy::Admin::CurrentLanguage
 
       before_action :set_translation,
         except: [:show]
@@ -17,18 +27,13 @@ module Alchemy
       before_action :set_root_page,
         only: [:index, :show, :sort, :order]
 
-      authorize_resource class: Alchemy::Page, except: [:index, :tree]
-
       before_action :run_on_page_layout_callbacks,
         if: :run_on_page_layout_callbacks?,
         only: [:show]
 
       def index
-        authorize! :index, :alchemy_admin_pages
-
-        @languages = Language.on_current_site
         if !@page_root
-          @language = Language.current
+          @language = @current_language
           @languages_with_page_tree = Language.on_current_site.with_root_page
           @page_layouts = PageLayout.layouts_for_select(@language.id)
         end
@@ -37,8 +42,6 @@ module Alchemy
       # Returns all pages as a tree from the root given by the id parameter
       #
       def tree
-        authorize! :tree, :alchemy_admin_pages
-
         render json: serialized_page_tree
       end
 
@@ -49,7 +52,7 @@ module Alchemy
         Page.current_preview = @page
         # Setting the locale to pages language, so the page content has it's correct translations.
         ::I18n.locale = @page.language.locale
-        render(layout: Alchemy::Config.get(:admin_page_preview_layout) || 'application')
+        render(layout: Alchemy::Config.get(:admin_page_preview_layout) || "application")
       end
 
       def info
@@ -57,10 +60,10 @@ module Alchemy
       end
 
       def new
-        @page = Page.new(layoutpage: params[:layoutpage] == 'true', parent_id: params[:parent_id])
-        @page_layouts = PageLayout.layouts_for_select(Language.current.id, @page.layoutpage?)
-        @clipboard = get_clipboard('pages')
-        @clipboard_items = Page.all_from_clipboard_for_select(@clipboard, Language.current.id, @page.layoutpage?)
+        @page ||= Page.new(layoutpage: params[:layoutpage] == "true", parent_id: params[:parent_id])
+        @page_layouts = PageLayout.layouts_for_select(@current_language.id, @page.layoutpage?)
+        @clipboard = get_clipboard("pages")
+        @clipboard_items = Page.all_from_clipboard_for_select(@clipboard, @current_language.id, @page.layoutpage?)
       end
 
       def create
@@ -69,9 +72,7 @@ module Alchemy
           flash[:notice] = Alchemy.t("Page created", name: @page.name)
           do_redirect_to(redirect_path_after_create_page)
         else
-          @page_layouts = PageLayout.layouts_for_select(Language.current.id, @page.layoutpage?)
-          @clipboard = get_clipboard('pages')
-          @clipboard_items = Page.all_from_clipboard_for_select(@clipboard, Language.current.id, @page.layoutpage?)
+          new
           render :new
         end
       end
@@ -83,18 +84,18 @@ module Alchemy
       def edit
         # fetching page via before filter
         if page_is_locked?
-          flash[:warning] = Alchemy.t('This page is locked', name: @page.locker_name)
+          flash[:warning] = Alchemy.t("This page is locked", name: @page.locker_name)
           redirect_to admin_pages_path
         elsif page_needs_lock?
           @page.lock_to!(current_alchemy_user)
         end
+        @preview_url = Alchemy::Admin::PREVIEW_URL.url_for(@page)
         @layoutpage = @page.layoutpage?
       end
 
       # Set page configuration like page names, meta tags and states.
       def configure
-        @page_layouts = PageLayout.layouts_with_own_for_select(@page.page_layout, Language.current.id, @page.layoutpage?)
-        render @page.redirects_to_external? ? 'configure_external' : 'configure'
+        @page_layouts = PageLayout.layouts_with_own_for_select(@page.page_layout, @current_language.id, @page.layoutpage?)
       end
 
       # Updates page
@@ -104,9 +105,9 @@ module Alchemy
       def update
         # stores old page_layout value, because unfurtunally rails @page.changes does not work here.
         @old_page_layout = @page.page_layout
-        if @page.update_attributes(page_params)
+        if @page.update(page_params)
           @notice = Alchemy.t("Page saved", name: @page.name)
-          @while_page_edit = request.referer.include?('edit')
+          @while_page_edit = request.referer.include?("edit")
 
           unless @while_page_edit
             @tree = serialized_page_tree
@@ -122,17 +123,17 @@ module Alchemy
           flash[:notice] = Alchemy.t("Page deleted", name: @page.name)
 
           # Remove page from clipboard
-          clipboard = get_clipboard('pages')
-          clipboard.delete_if { |item| item['id'] == @page.id.to_s }
+          clipboard = get_clipboard("pages")
+          clipboard.delete_if { |item| item["id"] == @page.id.to_s }
         end
 
         respond_to do |format|
           format.js do
             @redirect_url = if @page.layoutpage?
-                              alchemy.admin_layoutpages_path
-                            else
-                              alchemy.admin_pages_path
-                            end
+                alchemy.admin_layoutpages_path
+              else
+                alchemy.admin_pages_path
+              end
 
             render :redirect
           end
@@ -140,16 +141,9 @@ module Alchemy
       end
 
       def link
-        if configuration(:show_real_root)
-          @page_root = Page.root
-        else
-          set_root_page
-        end
-        @content_id = params[:content_id]
         @attachments = Attachment.all.collect { |f|
-          [f.name, download_attachment_path(id: f.id, name: f.urlname)]
+          [f.name, download_attachment_path(id: f.id, name: f.slug)]
         }
-        @url_prefix = prefix_locale? ? "#{Language.current.code}/" : ""
       end
 
       def fold
@@ -179,7 +173,7 @@ module Alchemy
         redirect_to show_page_url(
           urlname: @page.urlname,
           locale: prefix_locale? ? @page.language_code : nil,
-          host: @page.site.host == "*" ? request.host : @page.site.host
+          host: @page.site.host == "*" ? request.host : @page.site.host,
         )
       end
 
@@ -219,17 +213,12 @@ module Alchemy
         do_redirect_to admin_pages_path
       end
 
-      def switch_language
-        set_alchemy_language(params[:language_id])
-        do_redirect_to redirect_path_for_switch_language
-      end
-
       def flush
-        Language.current.pages.flushables.update_all(published_at: Time.current)
+        @current_language.pages.flushables.update_all(published_at: Time.current)
         # We need to ensure, that also all layoutpages get the +published_at+ timestamp set,
         # but not set to public true, because the cache_key for an element is +published_at+
         # and we don't want the layout pages to be present in +Page.published+ scope.
-        Language.current.pages.flushable_layoutpages.update_all(published_at: Time.current)
+        @current_language.pages.flushable_layoutpages.update_all(published_at: Time.current)
         respond_to { |format| format.js }
       end
 
@@ -237,13 +226,11 @@ module Alchemy
       private
 
       def copy_of_language_root
-        page_copy = Page.copy(
+        Page.copy(
           language_root_to_copy_from,
           language_id: params[:languages][:new_lang_id],
-          language_code: Language.current.code
+          language_code: @current_language.code,
         )
-        page_copy.move_to_child_of Page.root
-        page_copy
       end
 
       def language_root_to_copy_from
@@ -273,14 +260,14 @@ module Alchemy
       def visit_nodes(nodes, my_left, parent, depth, tree, url, restricted)
         nodes.each do |item|
           my_right = my_left + 1
-          my_restricted = item['restricted'] || restricted
+          my_restricted = item["restricted"] || restricted
           urls = process_url(url, item)
 
-          if item['children']
-            my_right, tree = visit_nodes(item['children'], my_left + 1, item['id'], depth + 1, tree, urls[:children_path], my_restricted)
+          if item["children"]
+            my_right, tree = visit_nodes(item["children"], my_left + 1, item["id"], depth + 1, tree, urls[:children_path], my_restricted)
           end
 
-          tree[item['id']] = TreeNode.new(my_left, my_right, parent, depth, urls[:my_urlname], my_restricted)
+          tree[item["id"]] = TreeNode.new(my_left, my_right, parent, depth, urls[:my_urlname], my_restricted)
           my_left = my_right + 1
         end
 
@@ -309,24 +296,14 @@ module Alchemy
       # This function will add a node's own slug into their ancestor's path
       # in order to create the full URL of a node
       #
-      # NOTE: external and invisible pages are not part of the full path of their children
-      #
       # @param [String]
       #   The node's ancestors path
       # @param [Hash]
       #   A children node
       #
       def process_url(ancestors_path, item)
-        default_urlname = (ancestors_path.blank? ? "" : "#{ancestors_path}/") + item['slug'].to_s
-
-        pair = {my_urlname: default_urlname, children_path: default_urlname}
-
-        if item['external'] == true || item['visible'] == false
-          # children ignore an ancestor in their path if external or invisible
-          pair[:children_path] = ancestors_path
-        end
-
-        pair
+        default_urlname = (ancestors_path.blank? ? "" : "#{ancestors_path}/") + item["slug"].to_s
+        { my_urlname: default_urlname, children_path: default_urlname }
       end
 
       def load_page
@@ -334,27 +311,19 @@ module Alchemy
       end
 
       def pages_from_raw_request
-        request.raw_post.split('&').map do |i|
-          parts = i.split('=')
+        request.raw_post.split("&").map do |i|
+          parts = i.split("=")
           {
-            parts[0].gsub(/[^0-9]/, '') => parts[1]
+            parts[0].gsub(/[^0-9]/, "") => parts[1],
           }
         end
       end
 
-      def redirect_path_for_switch_language
-        if request.referer && request.referer.include?('admin/layoutpages')
-          admin_layoutpages_path
-        else
-          admin_pages_path
-        end
-      end
-
       def redirect_path_after_create_page
-        if @page.redirects_to_external? || !@page.editable_by?(current_alchemy_user)
-          admin_pages_path
-        else
+        if @page.editable_by?(current_alchemy_user)
           params[:redirect_to] || edit_admin_page_path(@page)
+        else
+          admin_pages_path
         end
       end
 
@@ -373,30 +342,32 @@ module Alchemy
       def page_is_locked?
         return false if !@page.locker.try(:logged_in?)
         return false if !current_alchemy_user.respond_to?(:id)
+
         @page.locked? && @page.locker.id != current_alchemy_user.id
       end
 
       def page_needs_lock?
         return true unless @page.locker
+
         @page.locker.try!(:id) != current_alchemy_user.try!(:id)
       end
 
       def paste_from_clipboard
         if params[:paste_from_clipboard]
           source = Page.find(params[:paste_from_clipboard])
-          parent = Page.find_by(id: params[:page][:parent_id]) || Page.root
+          parent = Page.find_by(id: params[:page][:parent_id])
           Page.copy_and_paste(source, parent, params[:page][:name])
         end
       end
 
       def set_root_page
-        @page_root = Language.current_root_page
+        @page_root = @current_language.root_page
       end
 
       def serialized_page_tree
         PageTreeSerializer.new(@page, ability: current_ability,
                                       user: current_alchemy_user,
-                                      full: params[:full] == 'true')
+                                      full: params[:full] == "true")
       end
 
 

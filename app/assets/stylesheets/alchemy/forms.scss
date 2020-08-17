@@ -25,6 +25,7 @@ form {
     @include clearfix;
 
     > input[type="url"],
+    > input[type="number"],
     > input[type="text"],
     > input[type="email"],
     > input[type="password"],
@@ -35,6 +36,10 @@ form {
     > .with-hint {
       width: $form-right-width;
       float: right;
+    }
+
+    .input > .select2-container {
+      width: 100%;
     }
 
     > .autocomplete_tag_list {
@@ -48,11 +53,8 @@ form {
       line-height: 16px;
     }
 
-    &.select, &.grouped_select {
-
-      .select2-container {
-        margin: 4px 0;
-      }
+    .select2-container {
+      margin: 4px 0;
     }
 
     &.boolean {
@@ -171,6 +173,11 @@ form {
   .input .hint {
     @include form-hint;
     margin-left: $form-left-width;
+
+    a[href] {
+      color: $very-dark-gray;
+      text-decoration: underline;
+    }
   }
 
   .submit {

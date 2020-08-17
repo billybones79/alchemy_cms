@@ -11,12 +11,11 @@ module Alchemy
     # Logs a message in the Rails logger (warn level)
     # and optionally displays an error message to the user.
     def warning(message, text = nil)
-      Logger.warn(message, caller(0..0))
+      Logger.warn(message, caller(1..1))
       unless text.nil?
-        warning = content_tag('p', class: 'content_editor_error') do
-          render_icon('warning') + text
+        render_message(:warning) do
+          text.html_safe
         end
-        return warning
       end
     end
 
@@ -28,16 +27,16 @@ module Alchemy
     #
     # @return [String]
     def render_icon(icon_class, options = {})
-      options = {style: 'solid'}.merge(options)
+      options = {style: "solid"}.merge(options)
       classes = [
         "icon fa-fw",
         "fa-#{icon_class}",
         "fa#{options[:style].first}",
         options[:size] ? "fa-#{options[:size]}" : nil,
         options[:transform] ? "fa-#{options[:transform]}" : nil,
-        options[:class]
+        options[:class],
       ].compact
-      content_tag('i', nil, class: classes)
+      content_tag("i", nil, class: classes)
     end
 
     # Returns a div with an icon and the passed content
@@ -65,19 +64,24 @@ module Alchemy
     # @param [Symbol] style The style of this flash. Valid values are +:notice+ (default), +:warn+ and +:error+
     #
     def render_flash_notice(notice, style = :notice)
-      render('alchemy/admin/partials/flash', flash_type: style, message: notice)
+      render("alchemy/admin/partials/flash", flash_type: style, message: notice)
     end
 
     # Checks if the given argument is a String or a Page object.
     # If a String is given, it tries to find the page via page_layout
     # Logs a warning if no page is given.
     def page_or_find(page)
+      unless Language.current
+        warning("No default language set up")
+        return nil
+      end
+
       if page.is_a?(String)
         page = Language.current.pages.find_by(page_layout: page)
       end
       if page.blank?
         warning("No Page found for #{page.inspect}")
-        return
+        nil
       else
         page
       end
@@ -89,9 +93,9 @@ module Alchemy
     # @return [String] The FontAwesome icon name
     def message_icon_class(message_type)
       case message_type.to_s
-      when 'warning', 'warn', 'alert' then 'exclamation'
-      when 'notice' then 'check'
-      when 'error' then 'bug'
+      when "warning", "warn", "alert" then "exclamation"
+      when "notice" then "check"
+      when "error" then "bug"
       else
         message_type
       end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+require "rails_helper"
 
 module Alchemy
   class ModulesTestController < ApplicationController
@@ -10,33 +10,97 @@ module Alchemy
   describe Modules do
     let(:controller) { ModulesTestController.new }
 
-    let(:alchemy_modules) do
-      YAML.load_file(File.expand_path('../../config/alchemy/modules.yml', __dir__))
-    end
+    describe "#module_definition_for" do
+      subject { controller.module_definition_for(params_or_name) }
 
-    describe '#module_definition_for' do
-      subject { controller.module_definition_for(name) }
+      before do
+        allow(controller).to receive(:alchemy_modules) { [dashboard_module] }
+      end
 
-      let(:dashboard_module) { alchemy_modules.first }
+      let(:dashboard_module) do
+        {
+          "engine_name" => "alchemy",
+          "name" => "dashboard",
+          "navigation" => {
+            "controller" => "alchemy/admin/dashboard",
+            "action" => "index",
+          },
+        }
+      end
 
-      context 'with a string given as name' do
-        let(:name) { 'dashboard' }
+      context "with a string given as name" do
+        let(:params_or_name) { "dashboard" }
 
         it "returns the module definition" do
           is_expected.to eq(dashboard_module)
         end
       end
 
-      context 'with a hash given as name' do
-        let(:controller_name) { 'alchemy/admin/dashboard' }
-        let(:name)            { {controller: controller_name, action: 'index'} }
+      context "with a hash given as name" do
+        let(:params_or_name) do
+          {
+            controller: "alchemy/admin/dashboard",
+            action: "index",
+          }
+        end
 
         it "returns the module definition" do
           is_expected.to eq(dashboard_module)
         end
 
-        context 'with leading slash in controller name' do
-          let(:controller_name) { '/alchemy/admin/dashboard' }
+        context "with leading slash in controller name" do
+          let(:params_or_name) do
+            {
+              controller: "/alchemy/admin/dashboard",
+              action: "index",
+            }
+          end
+
+          it "returns the module definition" do
+            is_expected.to eq(dashboard_module)
+          end
+        end
+
+        context "with controller name in subnavigation" do
+          let(:dashboard_module) do
+            {
+              "engine_name" => "alchemy",
+              "name" => "dashboard",
+              "navigation" => {
+                "controller" => "some/thing",
+                "action" => "foo",
+                "sub_navigation" => [
+                  {
+                    "controller" => "alchemy/admin/dashboard",
+                    "action" => "index",
+                  },
+                ],
+              },
+            }
+          end
+
+          it "returns the module definition" do
+            is_expected.to eq(dashboard_module)
+          end
+        end
+
+        context "with controller name in nested" do
+          let(:dashboard_module) do
+            {
+              "engine_name" => "alchemy",
+              "name" => "dashboard",
+              "navigation" => {
+                "controller" => "some/thing",
+                "action" => "foo",
+                "nested" => [
+                  {
+                    "controller" => "alchemy/admin/dashboard",
+                    "action" => "index",
+                  },
+                ],
+              },
+            }
+          end
 
           it "returns the module definition" do
             is_expected.to eq(dashboard_module)
@@ -44,46 +108,47 @@ module Alchemy
         end
       end
 
-      context 'with nil given as name' do
-        let(:name) { nil }
-        it 'raises an error' do
+      context "with nil given as name" do
+        let(:params_or_name) { nil }
+
+        it do
           expect { subject }.to raise_error(ArgumentError)
         end
       end
     end
 
-    describe '.register_module' do
+    describe ".register_module" do
       let(:alchemy_module) do
         {
-          'name' => 'module',
-          'navigation' => {
-            'controller' => 'register_module_dummy',
-            'action' => 'index'
-          }
+          "name" => "module",
+          "navigation" => {
+            "controller" => "register_module_dummy",
+            "action" => "index",
+          },
         }
       end
 
       let(:bad_alchemy_module_a) do
         {
-          'name' => 'bad_module_a',
-          'navigation' => {
-            'controller' => 'bad_module',
-            'action' => 'index'
-          }
+          "name" => "bad_module_a",
+          "navigation" => {
+            "controller" => "bad_module",
+            "action" => "index",
+          },
         }
       end
 
       let(:bad_alchemy_module_b) do
         {
-          'name' => 'bad_module_b',
-          'navigation' => {
-            'controller' => 'register_module_dummy',
-            'action' => 'index',
-            'sub_navigation' => [{
-              'controller' => 'bad_module',
-              'action' => 'index'
-            }]
-          }
+          "name" => "bad_module_b",
+          "navigation" => {
+            "controller" => "register_module_dummy",
+            "action" => "index",
+            "sub_navigation" => [{
+              "controller" => "bad_module",
+              "action" => "index",
+            }],
+          },
         }
       end
 

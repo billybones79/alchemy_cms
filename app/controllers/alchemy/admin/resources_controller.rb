@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'csv'
-require 'alchemy/resource'
-require 'alchemy/resources_helper'
+require "csv"
+require "alchemy/resource"
+require "alchemy/resources_helper"
 
 module Alchemy
   module Admin
@@ -22,6 +22,7 @@ module Alchemy
 
       def index
         @query = resource_handler.model.ransack(search_filter_params[:q])
+        @query.sorts = default_sort_order if @query.sorts.empty?
         items = @query.result
 
         if contains_relations?
@@ -52,7 +53,7 @@ module Alchemy
       end
 
       def show
-        render action: 'edit'
+        render action: "edit"
       end
 
       def edit; end
@@ -63,23 +64,26 @@ module Alchemy
         render_errors_or_redirect(
           resource_instance_variable,
           resources_path(resource_instance_variable.class, search_filter_params),
-          flash_notice_for_resource_action
+          flash_notice_for_resource_action,
         )
       end
 
       def update
-        resource_instance_variable.update_attributes(resource_params)
+        resource_instance_variable.update(resource_params)
         render_errors_or_redirect(
           resource_instance_variable,
           resources_path(resource_instance_variable.class, search_filter_params),
-          flash_notice_for_resource_action
+          flash_notice_for_resource_action,
         )
       end
 
       def destroy
         resource_instance_variable.destroy
+        if resource_instance_variable.errors.any?
+          flash[:error] = resource_instance_variable.errors.full_messages.join(", ")
+        end
         flash_notice_for_resource_action
-        do_redirect_to resource_url_proxy.url_for(search_filter_params.merge(action: 'index'))
+        do_redirect_to resource_url_proxy.url_for(search_filter_params.merge(action: "index"))
       end
 
       def resource_handler
@@ -92,6 +96,7 @@ module Alchemy
       # The key should look like "Modelname successfully created|updated|destroyed."
       def flash_notice_for_resource_action(action = params[:action])
         return if resource_instance_variable.errors.any?
+
         case action.to_sym
         when :create
           verb = "created"
@@ -104,11 +109,11 @@ module Alchemy
       end
 
       def is_alchemy_module?
-        !alchemy_module.nil? && !alchemy_module['engine_name'].nil?
+        !alchemy_module.nil? && !alchemy_module["engine_name"].nil?
       end
 
       def alchemy_module
-        @alchemy_module ||= module_definition_for(controller: params[:controller], action: 'index')
+        @alchemy_module ||= module_definition_for(controller: params[:controller], action: "index")
       end
 
       def load_resource
@@ -143,17 +148,15 @@ module Alchemy
 
       def common_search_filter_includes
         [
-          # contrary to Rails' documentation passing an empty hash to permit all keys does not work
-          {options: options_from_params.keys},
-          {q: [
+          { q: [
             resource_handler.search_field_name,
-            :s
-          ]},
+            :s,
+          ] },
           :tagged_with,
           :filter,
           :page,
-          :per_page
-        ].freeze
+          :per_page,
+        ]
       end
 
       def items_per_page
@@ -163,6 +166,11 @@ module Alchemy
       def items_per_page_options
         per_page = Alchemy::Config.get(:items_per_page)
         [per_page, per_page * 2, per_page * 4]
+      end
+
+      def default_sort_order
+        name = resource_handler.attributes.detect { |attr| attr[:name] == "name" }
+        name ? "name asc" : "#{resource_handler.attributes.first[:name]} asc"
       end
     end
   end

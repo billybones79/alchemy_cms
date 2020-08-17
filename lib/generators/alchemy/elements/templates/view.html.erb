@@ -1,0 +1,16 @@
+<%%- cache(<%= @element_name %>) do -%>
+  <%%= element_view_for(<%= @element_name %>) do |el| -%>
+  <%- @contents.each do |content| -%>
+    <%- if @contents.length > 1 -%>
+    <div class="<%= content["name"] %>">
+      <%%= el.render :<%= content["name"] %> %>
+    </div>
+    <%- else -%>
+    <%%= el.render :<%= content["name"] %> %>
+    <%- end -%>
+  <%- end -%>
+  <%- if @element['nestable_elements'].present? -%>
+    <%%= render <%= @element_name %>.nested_elements.available %>
+  <%- end -%>
+  <%%- end -%>
+<%%- end -%>

@@ -1,28 +1,27 @@
-require 'alchemy/upgrader'
-require 'alchemy/version'
+# frozen_string_literal: true
+require "alchemy/upgrader"
+require "alchemy/version"
 
 namespace :alchemy do
   desc "Upgrades your app to AlchemyCMS v#{Alchemy::VERSION}."
   task upgrade: [
-    'alchemy:upgrade:prepare',
-    'alchemy:upgrade:4.1:run', 'alchemy:upgrade:4.1:todo',
-    'alchemy:upgrade:4.2:run', 'alchemy:upgrade:4.2:todo'
+    "alchemy:upgrade:prepare",
+    "alchemy:upgrade:5.0:run",
   ] do
     Alchemy::Upgrader.display_todos
   end
 
   namespace :upgrade do
-    desc 'Alchemy Upgrader: Prepares the database and updates Alchemys configuration file.'
+    desc "Alchemy Upgrader: Prepares the database and updates Alchemys configuration file."
     task prepare: [
-      'alchemy:upgrade:database',
-      'alchemy:upgrade:config'
+      "alchemy:upgrade:database",
+      "alchemy:upgrade:config",
     ]
 
     desc "Alchemy Upgrader: Prepares the database."
     task database: [
-      'alchemy:install:migrations',
-      'db:migrate',
-      'alchemy:db:seed'
+      "alchemy:install:migrations",
+      "db:migrate",
     ]
 
     desc "Alchemy Upgrader: Copy configuration file."
@@ -30,79 +29,34 @@ namespace :alchemy do
       Alchemy::Upgrader.copy_new_config_file
     end
 
-    task fix_picture_format: [:environment] do
-      Alchemy::Picture.find_each do |picture|
-        picture.update_column(:image_file_format, picture.image_file_format.to_s.chomp)
-      end
-    end
-
-    desc 'Upgrade Alchemy to v4.1'
-    task '4.1' => [
-      'alchemy:upgrade:prepare',
-      'alchemy:upgrade:4.1:run',
-      'alchemy:upgrade:4.1:todo'
+    desc "Upgrade Alchemy to v5.0"
+    task "5.0" => [
+      "alchemy:upgrade:prepare",
+      "alchemy:upgrade:5.0:run",
     ] do
       Alchemy::Upgrader.display_todos
     end
 
-    namespace '4.1' do
-      task run: ['alchemy:upgrade:4.1:harden_acts_as_taggable_on_migrations']
-
-      desc 'Harden acts_as_taggable_on migrations'
-      task harden_acts_as_taggable_on_migrations: [:environment] do
-        Alchemy::Upgrader::FourPointOne.harden_acts_as_taggable_on_migrations
-      end
-
-      task :todo do
-        Alchemy::Upgrader::FourPointOne.alchemy_4_1_todos
-      end
-    end
-
-    desc 'Upgrade Alchemy to v4.2'
-    task '4.2' => [
-      'alchemy:upgrade:prepare',
-      'alchemy:upgrade:4.2:run',
-      'alchemy:upgrade:4.2:todo'
-    ] do
-      Alchemy::Upgrader.display_todos
-    end
-
-    namespace '4.2' do
-      task run: [
-        'alchemy:upgrade:4.2:convert_picture_galleries',
-        'alchemy:upgrade:4.2:migrate_picture_galleries',
-        'alchemy:upgrade:4.2:convert_cells',
-        'alchemy:upgrade:4.2:migrate_cells',
-        'alchemy:upgrade:4.2:update_element_partial_name_variable'
+    namespace "5.0" do
+      task "run" => [
+        "alchemy:upgrade:5.0:install_gutentag_migrations",
+        "alchemy:upgrade:5.0:remove_layout_roots",
+        "alchemy:upgrade:5.0:remove_root_page",
       ]
 
-      desc 'Convert `picture_gallery` element definitions to `nestable_elements`.'
-      task convert_picture_galleries: [:environment] do
-        Alchemy::Upgrader::FourPointTwo.convert_picture_galleries
+      desc "Install Gutentag migrations"
+      task install_gutentag_migrations: [:environment] do
+        Alchemy::Upgrader::FivePointZero.install_gutentag_migrations
       end
 
-      desc 'Migrate `picture_gallery` elements to `nestable_elements`.'
-      task migrate_picture_galleries: [:environment] do
-        Alchemy::Upgrader::FourPointTwo.migrate_picture_galleries
+      desc "Remove layout root pages"
+      task remove_layout_roots: [:environment] do
+        Alchemy::Upgrader::FivePointZero.remove_layout_roots
       end
 
-      desc 'Convert cells config to fixed nestable elements.'
-      task convert_cells: [:environment] do
-        Alchemy::Upgrader::FourPointTwo.convert_cells
-      end
-
-      desc 'Migrate existing cells to fixed nestable elements.'
-      task migrate_cells: ['alchemy:install:migrations', 'db:migrate'] do
-        Alchemy::Upgrader::FourPointTwo.migrate_cells
-      end
-
-      desc 'Update element views to use element partial name variable.'
-      task :update_element_partial_name_variable do
-        Alchemy::Upgrader::FourPointTwo.update_element_views_variable_name
-      end
-
-      task :todo do
-        Alchemy::Upgrader::FourPointTwo.alchemy_4_2_todos
+      desc "Remove root page"
+      task remove_root_page: [:environment] do
+        Alchemy::Upgrader::FivePointZero.remove_root_page
       end
     end
   end

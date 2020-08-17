@@ -6,7 +6,6 @@ module Alchemy
   # The most important helper for frontend developers is the {#render_elements} helper.
   #
   module ElementsHelper
-    include Alchemy::EssencesHelper
     include Alchemy::UrlHelper
     include Alchemy::ElementsBlockHelper
 
@@ -51,7 +50,7 @@ module Alchemy
     #
     #   class MyCustomNewsArchive
     #     def elements(page:)
-    #       news_page.elements.available.named('news').order(created_at: :desc)
+    #       news_page.elements.named('news').order(created_at: :desc)
     #     end
     #
     #     private
@@ -92,18 +91,8 @@ module Alchemy
     def render_elements(options = {})
       options = {
         from_page: @page,
-        render_format: 'html'
+        render_format: "html",
       }.update(options)
-
-      if options[:sort_by]
-        Alchemy::Deprecation.warn "options[:sort_by] has been removed without replacement. " \
-          "Please implement your own element sorting by passing a custom finder instance to options[:finder]."
-      end
-
-      if options[:from_cell]
-        Alchemy::Deprecation.warn "options[:from_cell] has been removed without replacement. " \
-          "Please `render element.nested_elements.available` instead."
-      end
 
       finder = options[:finder] || Alchemy::ElementsFinder.new(options)
       elements = finder.elements(page: options[:from_page])
@@ -123,7 +112,7 @@ module Alchemy
     #
     # == View partial naming
     #
-    # The partial has to be named after the name of the element as defined in the <tt>elements.yml</tt> file and has to be suffixed with <tt>_view</tt>.
+    # The partial has to be named after the name of the element as defined in the <tt>elements.yml</tt> file.
     #
     # === Example
     #
@@ -137,7 +126,7 @@ module Alchemy
     #
     # Then your element view partial has to be named like:
     #
-    #   app/views/alchemy/elements/_headline_view.html.{erb|haml|slim}
+    #   app/views/alchemy/elements/_headline.html.{erb|haml|slim}
     #
     # === Element partials generator
     #
@@ -147,7 +136,7 @@ module Alchemy
     #
     # == Usage
     #
-    #   <%= render_element(Alchemy::Element.published.named(:headline).first) %>
+    #   <%= render_element(Alchemy::Element.available.named(:headline).first) %>
     #
     # @param [Alchemy::Element] element
     #   The element you want to render the view for
@@ -159,21 +148,10 @@ module Alchemy
     # @note If the view partial is not found
     #   <tt>alchemy/elements/_view_not_found.html.erb</tt> gets rendered.
     #
-    def render_element(*args)
-      if args.length == 4
-        element, _part, options, counter = *args
-        Alchemy::Deprecation.warn "passing a `part` parameter as second argument to `render_element` has been removed without replacement. " \
-          "You can safely remove it."
-      else
-        element, options, counter = *args
-      end
-
-      options ||= {}
-      counter ||= 1
-
+    def render_element(element, options = {}, counter = 1)
       if element.nil?
-        warning('Element is nil')
-        render "alchemy/elements/view_not_found", {name: 'nil'}
+        warning("Element is nil")
+        render "alchemy/elements/view_not_found", {name: "nil"}
         return
       end
 
@@ -182,7 +160,7 @@ module Alchemy
       render element, {
         element: element,
         counter: counter,
-        options: options
+        options: options,
       }.merge(options.delete(:locals) || {})
     rescue ActionView::MissingTemplate => e
       warning(%(
@@ -195,23 +173,20 @@ module Alchemy
     # Returns a string for the id attribute of a html element for the given element
     def element_dom_id(element)
       return "" if element.nil?
+
       "#{element.name}_#{element.id}".html_safe
     end
 
     # Renders the HTML tag attributes required for preview mode.
     def element_preview_code(element)
-      if respond_to?(:tag_options)
-        tag_options(element_preview_code_attributes(element))
-      else
-        # Rails 5.1 uses TagBuilder
-        tag_builder.tag_options(element_preview_code_attributes(element))
-      end
+      tag_builder.tag_options(element_preview_code_attributes(element))
     end
 
     # Returns a hash containing the HTML tag attributes required for preview mode.
     def element_preview_code_attributes(element)
       return {} unless element.present? && @preview_mode && element.page == @page
-      { 'data-alchemy-element' => element.id }
+
+      { "data-alchemy-element" => element.id }
     end
 
     # Returns the element's tags information as a string. Parameters and options
@@ -223,12 +198,7 @@ module Alchemy
     #   HTML tag attributes containing the element's tag information.
     #
     def element_tags(element, options = {})
-      if respond_to?(:tag_options)
-        tag_options(element_tags_attributes(element, options))
-      else
-        # Rails 5.1 uses TagBuilder
-        tag_builder.tag_options(element_tags_attributes(element, options))
-      end
+      tag_builder.tag_options(element_tags_attributes(element, options))
     end
 
     # Returns the element's tags information as an attribute hash.
@@ -244,28 +214,12 @@ module Alchemy
     #
     def element_tags_attributes(element, options = {})
       options = {
-        formatter: lambda { |tags| tags.join(' ') }
+        formatter: lambda { |tags| tags.join(" ") },
       }.merge(options)
 
       return {} if !element.taggable? || element.tag_list.blank?
-      { 'data-element-tags' => options[:formatter].call(element.tag_list) }
-    end
 
-    # Sort given elements by content.
-    # @deprecated
-    # @param [Array] elements - The elements you want to sort
-    # @param [String] content_name - The name of the content you want to sort by
-    # @param [Boolean] reverse - Reverse the sorted elements order
-    #
-    # @return [Array]
-    def sort_elements_by_content(elements, content_name, reverse = false)
-      Alchemy::Deprecation.warn "options[:sort_by] is deprecated. Please implement your own element sorting."
-      sorted_elements = elements.sort_by do |element|
-        content = element.content_by_name(content_name)
-        content ? content.ingredient.to_s : ''
-      end
-
-      reverse ? sorted_elements.reverse : sorted_elements
+      { "data-element-tags" => options[:formatter].call(element.tag_list) }
     end
   end
 end

@@ -22,18 +22,40 @@
 
 module Alchemy
   class Picture < BaseRecord
+    THUMBNAIL_SIZES = {
+      small: "80x60",
+      medium: "160x120",
+      large: "240x180",
+    }.with_indifferent_access.freeze
+
     CONVERTIBLE_FILE_FORMATS = %w(gif jpg jpeg png).freeze
 
+    TRANSFORMATION_OPTIONS = [
+      :crop,
+      :crop_from,
+      :crop_size,
+      :flatten,
+      :format,
+      :quality,
+      :size,
+      :upsample,
+    ]
+
+    include Alchemy::Logger
     include Alchemy::NameConversions
     include Alchemy::Taggable
-    include Alchemy::ContentTouching
-    include Alchemy::Picture::Transformations
-    include Alchemy::Picture::Url
+    include Alchemy::TouchElements
+    include Calculations
 
-    has_many :essence_pictures, class_name: 'Alchemy::EssencePicture', foreign_key: 'picture_id'
+    has_many :essence_pictures,
+      class_name: "Alchemy::EssencePicture",
+      foreign_key: "picture_id",
+      inverse_of: :ingredient_association
+
     has_many :contents, through: :essence_pictures
     has_many :elements, through: :contents
     has_many :pages, through: :elements
+    has_many :thumbs, class_name: "Alchemy::PictureThumb", dependent: :destroy
 
     # Raise error, if picture is in use (aka. assigned to an EssencePicture)
     #
@@ -46,24 +68,40 @@ module Alchemy
       raise PictureInUseError, Alchemy.t(:cannot_delete_picture_notice) % { name: name }
     end
 
+    # Image preprocessing class
+    def self.preprocessor_class
+      @_preprocessor_class ||= Preprocessor
+    end
+
+    # Set a image preprocessing class
+    #
+    #     # config/initializers/alchemy.rb
+    #     Alchemy::Picture.preprocessor_class = My::ImagePreprocessor
+    #
+    def self.preprocessor_class=(klass)
+      @_preprocessor_class = klass
+    end
+
     # Enables Dragonfly image processing
     dragonfly_accessor :image_file, app: :alchemy_pictures do
       # Preprocess after uploading the picture
-      after_assign do |p|
-        resize = Config.get(:preprocess_image_resize)
-        p.thumb!(resize) if resize.present?
+      after_assign do |image|
+        self.class.preprocessor_class.new(image).call
       end
     end
+
+    # Create important thumbnails upfront
+    after_create -> { PictureThumb.generate_thumbs!(self) }
 
     # We need to define this method here to have it available in the validations below.
     class << self
       def allowed_filetypes
-        Config.get(:uploader).fetch('allowed_filetypes', {}).fetch('alchemy/pictures', [])
+        Config.get(:uploader).fetch("allowed_filetypes", {}).fetch("alchemy/pictures", [])
       end
     end
 
     validates_presence_of :image_file
-    validates_size_of :image_file, maximum: Config.get(:uploader)['file_size_limit'].megabytes
+    validates_size_of :image_file, maximum: Config.get(:uploader)["file_size_limit"].megabytes
     validates_property :format,
       of: :image_file,
       in: allowed_filetypes,
@@ -72,25 +110,28 @@ module Alchemy
 
     stampable stamper_class_name: Alchemy.user_class_name
 
-    scope :named, ->(name) {
-      where("#{table_name}.name LIKE ?", "%#{name}%")
-    }
-
-    scope :recent, -> {
-      where("#{table_name}.created_at > ?", Time.current - 24.hours).order(:created_at)
-    }
-
-    scope :deletable, -> {
-      where("#{table_name}.id NOT IN (SELECT picture_id FROM #{EssencePicture.table_name})")
-    }
-
-    scope :without_tag, -> {
-      left_outer_joins(:taggings).where(gutentag_taggings: {id: nil})
-    }
+    scope :named, ->(name) { where("#{table_name}.name LIKE ?", "%#{name}%") }
+    scope :recent, -> { where("#{table_name}.created_at > ?", Time.current - 24.hours).order(:created_at) }
+    scope :deletable, -> { where("#{table_name}.id NOT IN (SELECT picture_id FROM #{EssencePicture.table_name})") }
+    scope :without_tag, -> { left_outer_joins(:taggings).where(gutentag_taggings: { id: nil }) }
 
     # Class methods
 
     class << self
+      # The class used to generate URLs for pictures
+      #
+      # @see Alchemy::Picture::Url
+      def url_class
+        @_url_class ||= Alchemy::Picture::Url
+      end
+
+      # Set a different picture url class
+      #
+      # @see Alchemy::Picture::Url
+      def url_class=(klass)
+        @_url_class = klass
+      end
+
       def searchable_alchemy_resource_attributes
         %w(name image_file_name)
       end
@@ -98,6 +139,7 @@ module Alchemy
       def last_upload
         last_picture = Picture.last
         return Picture.all unless last_picture
+
         Picture.where(upload_hash: last_picture.upload_hash)
       end
 
@@ -119,11 +161,11 @@ module Alchemy
         pictures.order(:name)
       end
 
-      def filtered_by(filter = '')
+      def filtered_by(filter = "")
         case filter
-        when 'recent'      then recent
-        when 'last_upload' then last_upload
-        when 'without_tag' then without_tag
+        when "recent" then recent
+        when "last_upload" then last_upload
+        when "without_tag" then without_tag
         else
           all
         end
@@ -131,6 +173,33 @@ module Alchemy
     end
 
     # Instance methods
+
+    # Returns an url (or relative path) to a processed image for use inside an image_tag helper.
+    #
+    # Any additional options are passed to the url method, so you can add params to your url.
+    #
+    # Example:
+    #
+    #   <%= image_tag picture.url(size: '320x200', format: 'png') %>
+    #
+    # @see Alchemy::PictureVariant#call for transformation options
+    # @see Alchemy::Picture::Url#call for url options
+    # @return [String|Nil]
+    def url(options = {})
+      return unless image_file
+
+      variant = PictureVariant.new(self, options.slice(*TRANSFORMATION_OPTIONS))
+      self.class.url_class.new(variant).call(
+        options.except(*TRANSFORMATION_OPTIONS).merge(
+          basename: name,
+          ext: variant.render_format,
+          name: name,
+        )
+      )
+    rescue ::Dragonfly::Job::Fetch::NotFound => e
+      log_warning(e.message)
+      nil
+    end
 
     def previous(params = {})
       query = Picture.ransack(params[:q])
@@ -162,7 +231,7 @@ module Alchemy
       {
         name: image_file_name,
         size: image_file_size,
-        error: errors[:image_file].join
+        error: errors[:image_file].join,
       }
     end
 
@@ -172,7 +241,7 @@ module Alchemy
       if name.blank?
         "image_#{id}"
       else
-        ::CGI.escape(name.gsub(/\.(gif|png|jpe?g|tiff?)/i, '').tr('.', ' '))
+        ::CGI.escape(name.gsub(/\.(gif|png|jpe?g|tiff?)/i, "").tr(".", " "))
       end
     end
 
@@ -186,6 +255,7 @@ module Alchemy
     #
     def humanized_name
       return "" if image_file_name.blank?
+
       convert_to_humanized_name(image_file_name, suffix)
     end
 
@@ -209,7 +279,7 @@ module Alchemy
     #
     def convertible?
       Config.get(:image_output_format) &&
-        Config.get(:image_output_format) != 'original' &&
+        Config.get(:image_output_format) != "original" &&
         has_convertible_format?
     end
 
@@ -245,27 +315,6 @@ module Alchemy
     #
     def image_file_dimensions
       "#{image_file_width}x#{image_file_height}"
-    end
-
-    # Returns a security token for signed picture rendering requests.
-    #
-    # Pass a params hash containing:
-    #
-    #   size       [String]  (Optional)
-    #   crop       [Boolean] (Optional)
-    #   crop_from  [String]  (Optional)
-    #   crop_size  [String]  (Optional)
-    #   quality    [Integer] (Optional)
-    #
-    # to sign them.
-    #
-    def security_token(params = {})
-      params = params.dup.stringify_keys
-      params.update({
-        'crop' => params['crop'] ? 'crop' : nil,
-        'id' => id
-      })
-      PictureAttributes.secure(params)
     end
   end
 end

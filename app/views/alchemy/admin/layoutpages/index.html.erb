@@ -4,7 +4,7 @@
   <%= render 'alchemy/admin/partials/language_tree_select' %>
   <%= toolbar_button(
     icon: :plus,
-    url: alchemy.new_admin_page_path(parent_id: @layout_root.id, layoutpage: true),
+    url: alchemy.new_admin_page_path(language: @current_language, layoutpage: true),
     hotkey: 'alt+n',
     dialog_options: {
       title: Alchemy.t('Add global page'),
@@ -30,6 +30,10 @@
 </div>
 <% end %>
 
+<h4 id="sitemap_heading">
+  <span class="page_name"><%= Alchemy::Page.human_attribute_name(:name) %></span>
+</h4>
+
 <ul class="list" id="layoutpages">
-  <%= render partial: "layoutpage", collection: @layout_root.children %>
+  <%= render partial: "layoutpage", collection: @layout_pages %>
 </ul>

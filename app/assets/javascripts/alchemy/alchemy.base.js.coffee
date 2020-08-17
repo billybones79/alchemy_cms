@@ -62,30 +62,19 @@ $.extend Alchemy,
   removePicture: (selector) ->
     $form_field = $(selector)
     $element = $form_field.closest(".element-editor")
+    $content = $form_field.closest(".content_editor")
     if $form_field[0]
       $form_field.val ""
-      $element.find(".thumbnail_background").html('<i class="icon far fa-image fa-fw"/>')
+      $content.find(".thumbnail_background").html('<i class="icon far fa-image fa-fw"/>')
       Alchemy.setElementDirty $element
     false
 
-  # Initializes all select tag with .alchemy_selectbox class as selectBoxIt instance
+  # Initializes all select tag with .alchemy_selectbox class as select2 instance
   # Pass a jQuery scope to only init a subset of selectboxes.
   SelectBox: (scope) ->
     $("select.alchemy_selectbox", scope).select2
       minimumResultsForSearch: 7
       dropdownAutoWidth: true
-    return
-
-  # Logs exception to js console, if present.
-  debug: (e) ->
-    if window["console"]
-      console.warn(e)
-    return
-
-  # Logs errors to js console, if present.
-  log_error: (e) ->
-    if window["console"]
-      console.error e
     return
 
   getUrlParam: (name) ->

@@ -39,23 +39,27 @@ namespace :alchemy do
   namespace :spec do
     desc "Prepares database for testing Alchemy"
     task :prepare do
-      system <<-BASH
-cd spec/dummy
-export RAILS_ENV=test
-bin/rake db:environment:set
-bin/rake db:migrate:reset
-cd -
-BASH
+      system(
+        <<~BASH
+          cd spec/dummy && \
+          export RAILS_ENV=test && \
+          bin/rake db:create && \
+          bin/rake db:environment:set && \
+          bin/rake db:migrate:reset && \
+          bin/rails g alchemy:install --skip --skip-demo-files --auto-accept && \
+          cd -
+        BASH
+      ) || fail
     end
   end
 
   namespace :changelog do
-    desc "Update changelog"
+    desc "Update CHANGELOG from GitHub (Set GITHUB_ACCESS_TOKEN and PREVIOUS_VERSION to a version you want to write changelog changes for)"
     task :update do
       original_file = './CHANGELOG.md'
       new_file = original_file + '.new'
       backup = original_file + '.old'
-      changes = `git rev-list v#{ENV['PREVIOUS_VERSION']}...master | bundle exec github_fast_changelog AlchemyCMS/alchemy_cms`
+      changes = `git rev-list v#{ENV['PREVIOUS_VERSION']}..HEAD | bundle exec github_fast_changelog AlchemyCMS/alchemy_cms`
       File.open(new_file, 'w') do |fo|
         fo.puts changes
         File.foreach(original_file) do |li|

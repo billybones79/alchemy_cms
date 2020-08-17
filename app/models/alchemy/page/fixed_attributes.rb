@@ -15,7 +15,6 @@ module Alchemy
   #       fixed_attributes:
   #         - public_on: nil
   #         - public_until: nil
-  #         - visible: false
   #
   class Page::FixedAttributes
     attr_reader :page
@@ -31,7 +30,7 @@ module Alchemy
     # @return Hash
     #
     def attributes
-      @_attributes ||= page.definition.fetch('fixed_attributes', {}).symbolize_keys
+      @_attributes ||= page.definition.fetch("fixed_attributes", {}).symbolize_keys
     end
     alias_method :all, :attributes
 
@@ -52,6 +51,7 @@ module Alchemy
     #
     def fixed?(name)
       return false if name.nil?
+
       attributes.key?(name.to_sym)
     end
 
@@ -59,6 +59,7 @@ module Alchemy
     #
     def [](name)
       return nil if name.nil?
+
       attributes[name.to_sym]
     end
   end

@@ -1,34 +1,33 @@
-require 'factory_bot'
-require 'alchemy/test_support/factories/language_factory'
+# frozen_string_literal: true
+
+require "factory_bot"
+require "alchemy/test_support/factories/language_factory"
 
 FactoryBot.define do
-  factory :alchemy_page, class: 'Alchemy::Page' do
-    language { Alchemy::Language.default || FactoryBot.create(:alchemy_language) }
+  factory :alchemy_page, class: "Alchemy::Page" do
+    language do
+      @cached_attributes[:parent]&.language ||
+        Alchemy::Language.default ||
+        FactoryBot.create(:alchemy_language)
+    end
     sequence(:name) { |n| "A Page #{n}" }
     page_layout { "standard" }
 
-    parent_id do
-      (Alchemy::Page.find_by(language_root: true) ||
-        FactoryBot.create(:alchemy_page, :language_root)).id
+    parent do
+      Alchemy::Page.find_by(language_root: true, language: language) ||
+        FactoryBot.create(:alchemy_page, :language_root, language: language)
     end
 
     # This speeds up creating of pages dramatically.
     # Pass autogenerate_elements: true to generate elements
     autogenerate_elements { false }
 
-    trait :root do
-      name { 'Root' }
-      language { nil }
-      parent_id { nil }
-      page_layout { nil }
-    end
-
     trait :language_root do
-      name { 'Startseite' }
-      page_layout { language.page_layout }
+      name { language&.frontpage_name || "Intro" }
+      page_layout { language&.page_layout || "index" }
       language_root { true }
       public_on { Time.current }
-      parent_id { Alchemy::Page.root.id }
+      parent { nil }
     end
 
     trait :public do
@@ -36,17 +35,8 @@ FactoryBot.define do
       public_on { Time.current }
     end
 
-    trait :system do
-      name { "Systempage" }
-      parent_id { Alchemy::Page.root.id }
-      language_root { false }
-      page_layout { nil }
-      language { nil }
-    end
-
     trait :layoutpage do
-      name { "Footer" }
-      parent_id { Alchemy::Page.find_or_create_layout_root_for(Alchemy::Language.current.id).id }
+      parent { nil }
       layoutpage { true }
       page_layout { "footer" }
     end

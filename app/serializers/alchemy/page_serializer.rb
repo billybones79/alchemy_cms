@@ -13,12 +13,9 @@ module Alchemy
       :tag_list,
       :created_at,
       :updated_at,
-      :status
+      :status,
+      :url_path
 
     has_many :elements
-
-    def elements
-      object.elements.published
-    end
   end
 end

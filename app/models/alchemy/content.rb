@@ -24,39 +24,29 @@ module Alchemy
     # Concerns
     include Alchemy::Content::Factory
 
-    belongs_to :essence, polymorphic: true, dependent: :destroy
+    belongs_to :essence, polymorphic: true, dependent: :destroy, inverse_of: :content
     belongs_to :element, touch: true, inverse_of: :contents
     has_one :page, through: :element
 
-    stampable stamper_class_name: Alchemy.user_class_name
-
-    acts_as_list
-
-    # ActsAsList scope
-    def scope_condition
-      # Fixes a bug with postgresql having a wrong element_id value, if element_id is nil.
-      "element_id = #{element_id || 'null'} AND essence_type = '#{essence_type}'"
-    end
-
     # Essence scopes
-    scope :essence_booleans,  -> { where(essence_type: "Alchemy::EssenceBoolean") }
-    scope :essence_dates,     -> { where(essence_type: "Alchemy::EssenceDate") }
-    scope :essence_files,     -> { where(essence_type: "Alchemy::EssenceFile") }
-    scope :essence_htmls,     -> { where(essence_type: "Alchemy::EssenceHtml") }
-    scope :essence_links,     -> { where(essence_type: "Alchemy::EssenceLink") }
-    scope :essence_pictures,  -> { where(essence_type: "Alchemy::EssencePicture") }
+    scope :essence_booleans, -> { where(essence_type: "Alchemy::EssenceBoolean") }
+    scope :essence_dates, -> { where(essence_type: "Alchemy::EssenceDate") }
+    scope :essence_files, -> { where(essence_type: "Alchemy::EssenceFile") }
+    scope :essence_htmls, -> { where(essence_type: "Alchemy::EssenceHtml") }
+    scope :essence_links, -> { where(essence_type: "Alchemy::EssenceLink") }
+    scope :essence_pictures, -> { where(essence_type: "Alchemy::EssencePicture") }
     scope :essence_richtexts, -> { where(essence_type: "Alchemy::EssenceRichtext") }
-    scope :essence_selects,   -> { where(essence_type: "Alchemy::EssenceSelect") }
-    scope :essence_texts,     -> { where(essence_type: "Alchemy::EssenceText") }
-    scope :named,             ->(name) { where(name: name) }
-    scope :available,         -> { published.not_trashed }
-    scope :published,         -> { joins(:element).merge(Element.published) }
-    scope :not_trashed,       -> { joins(:element).merge(Element.not_trashed) }
-    scope :not_restricted,    -> { joins(:element).merge(Element.not_restricted) }
+    scope :essence_selects, -> { where(essence_type: "Alchemy::EssenceSelect") }
+    scope :essence_texts, -> { where(essence_type: "Alchemy::EssenceText") }
+    scope :named, ->(name) { where(name: name) }
+    scope :available, -> { published.not_trashed }
+    scope :published, -> { joins(:element).merge(Element.published) }
+    scope :not_trashed, -> { joins(:element).merge(Element.not_trashed) }
+    scope :not_restricted, -> { joins(:element).merge(Element.not_restricted) }
 
-    delegate :restricted?, to: :page,    allow_nil: true
-    delegate :trashed?,    to: :element, allow_nil: true
-    delegate :public?,     to: :element, allow_nil: true
+    delegate :restricted?, to: :page, allow_nil: true
+    delegate :trashed?, to: :element, allow_nil: true
+    delegate :public?, to: :element, allow_nil: true
 
     class << self
       # Returns the translated label for a content name.
@@ -78,7 +68,7 @@ module Alchemy
         Alchemy.t(
           content_name,
           scope: "content_names.#{element_name}",
-          default: Alchemy.t("content_names.#{content_name}", default: content_name.humanize)
+          default: Alchemy.t("content_names.#{content_name}", default: content_name.humanize),
         )
       end
     end
@@ -105,6 +95,7 @@ module Alchemy
     # Settings from the elements.yml definition
     def settings
       return {} if definition.blank?
+
       @settings ||= definition.fetch(:settings, {})
     end
 
@@ -120,12 +111,14 @@ module Alchemy
 
     def siblings
       return [] if !element
+
       element.contents
     end
 
     # Gets the ingredient from essence
     def ingredient
       return nil if essence.nil?
+
       essence.ingredient
     end
 
@@ -135,7 +128,7 @@ module Alchemy
       {
         name: name,
         value: serialized_ingredient,
-        link: essence.try(:link)
+        link: essence.try(:link),
       }.delete_if { |_k, v| v.blank? }
     end
 
@@ -151,6 +144,7 @@ module Alchemy
     # Sets the ingredient from essence
     def ingredient=(value)
       raise EssenceMissingError if essence.nil?
+
       essence.ingredient = value
     end
 
@@ -162,11 +156,12 @@ module Alchemy
     #
     def update_essence(params = {})
       raise EssenceMissingError if essence.nil?
+
       if essence.update(params)
-        return true
+        true
       else
         errors.add(:essence, :validation_failed)
-        return false
+        false
       end
     end
 
@@ -175,34 +170,13 @@ module Alchemy
     end
 
     def has_validations?
-      definition['validate'].present?
-    end
-
-    # Returns a string to be passed to Rails form field tags to ensure we have same params layout everywhere.
-    #
-    # === Example:
-    #
-    #   <%= text_field_tag content.form_field_name, content.ingredient %>
-    #
-    # === Options:
-    #
-    # You can pass an Essence column_name. Default is 'ingredient'
-    #
-    # ==== Example:
-    #
-    #   <%= text_field_tag content.form_field_name(:link), content.ingredient %>
-    #
-    def form_field_name(essence_column = 'ingredient')
-      "contents[#{id}][#{essence_column}]"
-    end
-
-    def form_field_id(essence_column = 'ingredient')
-      "contents_#{id}_#{essence_column}"
+      definition["validate"].present?
     end
 
     # Returns a string used as dom id on html elements.
     def dom_id
-      return '' if essence.nil?
+      return "" if essence.nil?
+
       "#{essence_partial_name}_#{id}"
     end
 
@@ -217,7 +191,7 @@ module Alchemy
 
     # Returns true if this content should be taken for element preview.
     def preview_content?
-      !!definition['as_element_title']
+      !!definition["as_element_title"]
     end
 
     # Proxy method that returns the preview text from essence.
@@ -227,7 +201,8 @@ module Alchemy
     end
 
     def essence_partial_name
-      return '' if essence.nil?
+      return "" if essence.nil?
+
       essence.partial_name
     end
 
@@ -255,7 +230,7 @@ module Alchemy
     #
     # If the value is a symbol it gets passed through i18n
     # inside the +alchemy.default_content_texts+ scope
-    def default_text(default)
+    def default_value(default = definition[:default])
       case default
       when Symbol
         Alchemy.t(default, scope: :default_content_texts)

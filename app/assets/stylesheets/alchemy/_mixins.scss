@@ -49,9 +49,8 @@
     border-color: $hover-border-color;
   }
 
-  &:active, &:active:focus {
-    border-color: $hover-border-color;
-    box-shadow: none;
+  &:active, &.active {
+    box-shadow: inset $button-box-shadow;
   }
 
   &:focus {
@@ -136,13 +135,23 @@
   box-shadow: $shadow;
 }
 
-@mixin tag-base($margin: 2*$default-margin 0, $padding: $default-padding 3*$default-padding) {
+@mixin label-base($margin: 2*$default-margin 0, $padding: $default-padding 3*$default-padding) {
+  display: inline-block;
+  vertical-align: middle;
   padding: $padding;
   margin: $margin;
   background-color: $medium-gray;
   overflow: hidden;
   position: relative;
   border-radius: $default-border-radius;
+  color: $text-color;
+}
+
+@mixin tag-base($margin: 2*$default-margin 0, $padding: $default-padding 3*$default-padding) {
+  @include label-base(
+    $margin: $margin,
+    $padding: $padding
+  );
 
   &:before {
     content: fa-content($fa-var-tag);

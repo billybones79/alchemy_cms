@@ -9,7 +9,6 @@
     <label class="control-label"><%= Alchemy.t(:page_status) %></label>
     <div class="control_group">
       <%= render 'alchemy/admin/pages/publication_fields' %>
-      <%= page_status_checkbox(@page, :visible) %>
       <%= page_status_checkbox(@page, :restricted) %>
       <% if configuration(:sitemap)['show_flag'] %>
         <%= page_status_checkbox(@page, :sitemap) %>
@@ -18,7 +17,7 @@
   </div>
 
   <%= f.input :name, autofocus: true %>
-  <%= f.input :urlname, as: 'string', input_html: {value: @page.slug} %>
+  <%= f.input :urlname, as: 'string', input_html: {value: @page.slug}, label: Alchemy::Page.human_attribute_name(:slug) %>
   <%= f.input :title,
     input_html: {'data-alchemy-char-counter' => 60} %>
 
@@ -43,12 +42,10 @@
     as: 'text',
     hint: Alchemy.t('pages.update.comma_seperated') %>
 
-  <% if @page.taggable? %>
-    <div class="input string autocomplete_tag_list">
-      <%= f.label :tag_list %>
-      <%= render 'alchemy/admin/partials/autocomplete_tag_list', f: f %>
-    </div>
-  <% end %>
+  <div class="input string autocomplete_tag_list">
+    <%= f.label :tag_list %>
+    <%= render 'alchemy/admin/partials/autocomplete_tag_list', f: f %>
+  </div>
 
   <%= f.submit Alchemy.t(:save) %>
 <% end %>

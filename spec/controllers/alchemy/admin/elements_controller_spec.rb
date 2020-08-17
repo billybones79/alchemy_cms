@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+require "rails_helper"
 
 module Alchemy
   describe Admin::ElementsController do
@@ -13,59 +13,44 @@ module Alchemy
 
     before { authorize_user(:as_author) }
 
-    describe '#index' do
-      let(:alchemy_page) { build_stubbed(:alchemy_page) }
+    describe "#index" do
+      let!(:alchemy_page)    { create(:alchemy_page) }
+      let!(:element)         { create(:alchemy_element, page: alchemy_page) }
+      let!(:trashed_element) { create(:alchemy_element, page: alchemy_page).tap(&:trash!) }
+      let!(:nested_element)  { create(:alchemy_element, :nested, page: alchemy_page) }
+      let!(:hidden_element)  { create(:alchemy_element, page: alchemy_page, public: false) }
 
-      before do
-        expect(Page).to receive(:find).and_return alchemy_page
-      end
+      context "with fixed elements" do
+        let!(:fixed_element) do
+          create(:alchemy_element, :fixed,
+            page: alchemy_page)
+        end
 
-      context 'with fixed elements' do
-        let(:fixed_element) { build_stubbed(:alchemy_element, :fixed, page: alchemy_page) }
+        let!(:fixed_hidden_element) do
+          create(:alchemy_element, :fixed,
+            public: false,
+            page: alchemy_page)
+        end
 
-        before do
-          expect(alchemy_page).to receive(:fixed_elements).and_return [fixed_element]
+        let!(:fixed_trashed_element) do
+          create(:alchemy_element, :fixed,
+            public: false,
+            page: alchemy_page).tap(&:trash!)
         end
 
         it "assigns fixed elements" do
           get :index, params: {page_id: alchemy_page.id}
-          expect(assigns(:fixed_elements)).to eq([fixed_element])
+          expect(assigns(:fixed_elements)).to eq([fixed_element, fixed_hidden_element])
         end
       end
 
       it "assigns page elements" do
-        expect(alchemy_page).to receive(:elements).and_return(double(not_trashed: []))
         get :index, params: {page_id: alchemy_page.id}
+        expect(assigns(:elements)).to eq([element, hidden_element])
       end
     end
 
-    describe '#list' do
-      context 'without page_id, but with page_urlname' do
-        it "loads page from urlname" do
-          expect {
-            get :list, params: {page_urlname: alchemy_page.urlname}, xhr: true
-          }.to_not raise_error
-        end
-
-        describe 'view' do
-          render_views
-
-          it "should return a select tag with elements" do
-            get :list, params: {page_urlname: alchemy_page.urlname}, xhr: true
-            expect(response.body).to match(/select(.*)elements_from_page_selector(.*)option/)
-          end
-        end
-      end
-
-      context 'with page_id' do
-        it "loads page from urlname" do
-          get :list, params: {page_id: alchemy_page.id}, xhr: true
-          expect(assigns(:page_id)).to eq(alchemy_page.id.to_s)
-        end
-      end
-    end
-
-    describe '#order' do
+    describe "#order" do
       let(:element_1)   { create(:alchemy_element) }
       let(:element_2)   { create(:alchemy_element, page: page) }
       let(:element_3)   { create(:alchemy_element, page: page) }
@@ -77,8 +62,8 @@ module Alchemy
         expect(Element.all.pluck(:id)).to eq(element_ids)
       end
 
-      context 'with missing [:element_ids] param' do
-        it 'does not raise any error and silently rejects to order' do
+      context "with missing [:element_ids] param" do
+        it "does not raise any error and silently rejects to order" do
           expect {
             post :order, params: {page_id: page.id}, xhr: true
           }.to_not raise_error
@@ -88,21 +73,21 @@ module Alchemy
       context "when nested inside parent element" do
         let(:parent) { create(:alchemy_element) }
 
-        it 'touches the cache key of parent element' do
+        it "touches the cache key of parent element" do
           expect(Element).to receive(:find_by) { parent }
           expect(parent).to receive(:touch) { true }
           post :order, params: {
             page_id: page.id,
             element_ids: element_ids,
-            parent_element_id: parent.id
+            parent_element_id: parent.id,
           }, xhr: true
         end
 
-        it 'assigns parent element id to each element' do
+        it "assigns parent element id to each element" do
           post :order, params: {
             page_id: page.id,
             element_ids: element_ids,
-            parent_element_id: parent.id
+            parent_element_id: parent.id,
           }, xhr: true
           [element_1, element_2, element_3].each do |element|
             expect(element.reload.parent_element_id).to eq parent.id
@@ -111,13 +96,7 @@ module Alchemy
       end
 
       context "untrashing" do
-        let(:trashed_element) { create(:alchemy_element) }
-
-        before do
-          # Because of a before_create filter it can not be created with a nil position
-          # and needs to be trashed here
-          trashed_element.trash!
-        end
+        let!(:trashed_element) { create(:alchemy_element).tap(&:trash!) }
 
         it "sets a list of trashed element ids" do
           post :order, params: {page_id: page.id, element_ids: [trashed_element.id]}, xhr: true
@@ -142,7 +121,7 @@ module Alchemy
       end
     end
 
-    describe '#new' do
+    describe "#new" do
       let(:alchemy_page) { build_stubbed(:alchemy_page) }
 
       before do
@@ -156,9 +135,9 @@ module Alchemy
 
       context "with elements in clipboard" do
         let(:element) { build_stubbed(:alchemy_element) }
-        let(:clipboard_items) { [{'id' => element.id.to_s, 'action' => 'copy'}] }
+        let(:clipboard_items) { [{"id" => element.id.to_s, "action" => "copy"}] }
 
-        before { clipboard['elements'] = clipboard_items }
+        before { clipboard["elements"] = clipboard_items }
 
         it "should load all elements from clipboard" do
           expect(Element).to receive(:all_from_clipboard_for_page).and_return(clipboard_items)
@@ -168,29 +147,29 @@ module Alchemy
       end
     end
 
-    describe '#create' do
-      describe 'insertion position' do
+    describe "#create" do
+      describe "insertion position" do
         before { element }
 
         it "should insert the element at bottom of list" do
-          post :create, params: {element: {name: 'news', page_id: alchemy_page.id}}, xhr: true
+          post :create, params: {element: {name: "news", page_id: alchemy_page.id}}, xhr: true
           expect(alchemy_page.elements.count).to eq(2)
-          expect(alchemy_page.elements.last.name).to eq('news')
+          expect(alchemy_page.elements.last.name).to eq("news")
         end
 
         context "on a page with a setting for insert_elements_at of top" do
           before do
             expect(PageLayout).to receive(:get).at_least(:once).and_return({
-              'name' => 'news',
-              'elements' => ['news'],
-              'insert_elements_at' => 'top'
+              "name" => "news",
+              "elements" => ["news"],
+              "insert_elements_at" => "top",
             })
           end
 
           it "should insert the element at top of list" do
-            post :create, params: {element: {name: 'news', page_id: alchemy_page.id}}, xhr: true
+            post :create, params: {element: {name: "news", page_id: alchemy_page.id}}, xhr: true
             expect(alchemy_page.elements.count).to eq(2)
-            expect(alchemy_page.elements.first.name).to eq('news')
+            expect(alchemy_page.elements.first.name).to eq("news")
           end
         end
       end
@@ -199,7 +178,7 @@ module Alchemy
         let(:parent_element) { create(:alchemy_element, :with_nestable_elements, page: alchemy_page) }
 
         it "creates the element in the parent element" do
-          post :create, params: {element: {name: 'slide', page_id: alchemy_page.id, parent_element_id: parent_element.id}}, xhr: true
+          post :create, params: {element: {name: "slide", page_id: alchemy_page.id, parent_element_id: parent_element.id}}, xhr: true
           expect(Alchemy::Element.last.parent_element_id).to eq(parent_element.id)
         end
       end
@@ -208,7 +187,7 @@ module Alchemy
         render_views
 
         before do
-          clipboard['elements'] = [{'id' => element_in_clipboard.id.to_s, 'action' => 'cut'}]
+          clipboard["elements"] = [{"id" => element_in_clipboard.id.to_s, "action" => "cut"}]
         end
 
         it "should create an element from clipboard" do
@@ -220,7 +199,7 @@ module Alchemy
         context "and with cut as action parameter" do
           it "should also remove the element id from clipboard" do
             post :create, params: {paste_from_clipboard: element_in_clipboard.id, element: {page_id: alchemy_page.id}}, xhr: true
-            expect(session[:alchemy_clipboard]['elements'].detect { |item| item['id'] == element_in_clipboard.id.to_s }).to be_nil
+            expect(session[:alchemy_clipboard]["elements"].detect { |item| item["id"] == element_in_clipboard.id.to_s }).to be_nil
           end
         end
 
@@ -235,7 +214,7 @@ module Alchemy
         end
       end
 
-      context 'if element could not be saved' do
+      context "if element could not be saved" do
         subject { post :create, params: {element: {page_id: alchemy_page.id}} }
 
         before do
@@ -248,11 +227,11 @@ module Alchemy
       end
     end
 
-    describe '#update' do
+    describe "#update" do
       let(:page)    { build_stubbed(:alchemy_page) }
       let(:element) { build_stubbed(:alchemy_element, page: page) }
-      let(:contents_parameters) { ActionController::Parameters.new(1 => {ingredient: 'Title'}) }
-      let(:element_parameters) { ActionController::Parameters.new(tag_list: 'Tag 1', public: false) }
+      let(:contents_parameters) { ActionController::Parameters.new(1 => {ingredient: "Title"}) }
+      let(:element_parameters) { ActionController::Parameters.new(tag_list: "Tag 1", public: false) }
 
       before do
         expect(Element).to receive(:find).and_return element
@@ -267,7 +246,7 @@ module Alchemy
       it "updates the element" do
         expect(controller).to receive(:element_params).and_return(element_parameters)
         expect(element).to receive(:update_contents).and_return(true)
-        expect(element).to receive(:update_attributes!).with(element_parameters).and_return(true)
+        expect(element).to receive(:update).with(element_parameters).and_return(true)
         put :update, params: {id: element.id}, xhr: true
       end
 
@@ -280,9 +259,9 @@ module Alchemy
       end
     end
 
-    describe 'params security' do
+    describe "params security" do
       context "contents params" do
-        let(:parameters) { ActionController::Parameters.new(contents: {1 => {ingredient: 'Title'}}) }
+        let(:parameters) { ActionController::Parameters.new(contents: {1 => {ingredient: "Title"}}) }
 
         specify ":contents is required" do
           expect(controller.params).to receive(:fetch).and_return(parameters)
@@ -305,7 +284,7 @@ module Alchemy
           expect(parameters).to receive(:fetch).with(:element, {}).and_return(parameters)
         end
 
-        context 'with taggable element' do
+        context "with taggable element" do
           before do
             controller.instance_variable_set(:'@element', mock_model(Element, taggable?: true))
           end
@@ -316,7 +295,7 @@ module Alchemy
           end
         end
 
-        context 'with not taggable element' do
+        context "with not taggable element" do
           before do
             controller.instance_variable_set(:'@element', mock_model(Element, taggable?: false))
           end
@@ -329,7 +308,7 @@ module Alchemy
       end
     end
 
-    describe '#trash' do
+    describe "#trash" do
       subject { delete :trash, params: {id: element.id}, xhr: true }
 
       let(:element) { build_stubbed(:alchemy_element) }
@@ -342,7 +321,7 @@ module Alchemy
       end
     end
 
-    describe '#fold' do
+    describe "#fold" do
       subject { post :fold, params: {id: element.id}, xhr: true }
 
       let(:element) { build_stubbed(:alchemy_element) }
@@ -352,7 +331,7 @@ module Alchemy
         expect(Element).to receive(:find).and_return element
       end
 
-      context 'if element is folded' do
+      context "if element is folded" do
         before { expect(element).to receive(:folded).and_return true }
 
         it "sets folded to false." do
@@ -361,7 +340,7 @@ module Alchemy
         end
       end
 
-      context 'if element is not folded' do
+      context "if element is not folded" do
         before { expect(element).to receive(:folded).and_return false }
 
         it "sets folded to true." do

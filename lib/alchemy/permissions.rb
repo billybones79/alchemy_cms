@@ -36,7 +36,7 @@ module Alchemy
     module GuestUser
       def alchemy_guest_user_rules
         can([:show, :download], Alchemy::Attachment) { |a| !a.restricted? }
-        can :see,               Alchemy::Page,       restricted: false, visible: true
+        can :see, Alchemy::Page, restricted: false
 
         can :read, Alchemy::Content, Alchemy::Content.available.not_restricted do |c|
           c.public? && !c.restricted? && !c.trashed?
@@ -64,7 +64,7 @@ module Alchemy
 
         # Resources
         can [:show, :download], Alchemy::Attachment
-        can :see,               Alchemy::Page, restricted: true, visible: true
+        can :see, Alchemy::Page, restricted: true
 
         can :read, Alchemy::Content, Alchemy::Content.available do |c|
           c.public? && !c.trashed?
@@ -95,10 +95,11 @@ module Alchemy
           :alchemy_admin_attachments,
           :alchemy_admin_dashboard,
           :alchemy_admin_layoutpages,
+          :alchemy_admin_nodes,
           :alchemy_admin_pages,
           :alchemy_admin_pictures,
           :alchemy_admin_tags,
-          :alchemy_admin_users
+          :alchemy_admin_users,
         ]
 
         # Controller actions
@@ -116,6 +117,7 @@ module Alchemy
         can :manage,                Alchemy::EssenceFile
         can :manage,                Alchemy::EssencePicture
         can :manage,                Alchemy::LegacyPageUrl
+        can :manage,                Alchemy::Node
         can :read,                  Alchemy::Picture
         can [:read, :autocomplete], Alchemy::Tag
         can(:edit_content,          Alchemy::Page) { |p| p.editable_by?(@user) }
@@ -135,7 +137,7 @@ module Alchemy
         # Navigation
         can :index, [
           :alchemy_admin_languages,
-          :alchemy_admin_users
+          :alchemy_admin_users,
         ]
 
         # Controller actions
@@ -149,7 +151,7 @@ module Alchemy
           :flush,
           :order,
           :sort,
-          :switch_language
+          :switch_language,
         ], Alchemy::Page
 
         can :manage, Alchemy::PageTranslation
@@ -165,7 +167,7 @@ module Alchemy
         can([
           :create,
           :destroy,
-          :publish
+          :publish,
         ], Alchemy::Page) { |p| p.editable_by?(@user) }
 
         can :manage, Alchemy::Picture
@@ -201,6 +203,7 @@ module Alchemy
 
     def user_role_rules
       return alchemy_guest_user_rules if @user.alchemy_roles.blank?
+
       @user.alchemy_roles.each do |role|
         exec_role_rules(role)
       end

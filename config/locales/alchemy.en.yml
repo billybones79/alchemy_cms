@@ -49,6 +49,14 @@ en:
     #
     content_names:
 
+
+    # === Translations for menu names
+    # Used for the translations of the names of root menu nodes.
+    #
+    menu_names:
+      main_menu: Main Menu
+      footer_menu: Footer Menu
+
     # === Translations for content validations
     # Used when a user did not enter (correct) values to the content field.
     #
@@ -155,10 +163,12 @@ en:
 
     resource_help_texts:
       site:
-        aliases: Please separate additional domains with spaces or new lines.
+        host: Either enter a <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name" target="_blank">FQDN</a> or use a asterisk (*) to allow all domains to access this site.
+        aliases: Enter additional domains this site should be accessible by. Please separate them by space or new line.
 
     add_nested_element: "Add %{name}"
     anchor: 'Anchor'
+    anchor_link_headline: "You can link to an element anchor from the actual page."
     attribute_fixed: Value can't be changed for this page type
     back: 'back'
     create_tree_as_new_language: "Create %{language} as a new language tree"
@@ -281,7 +291,6 @@ en:
     "User deleted": "%{name} User deleted"
     "User updated": "%{name} User updated"
     "Validation failed": "Validation failed"
-    "Version": "Version"
     "View File": "View File"
     "Attachment Preview": "Attachment Preview"
     "Visit page": "Visit page"
@@ -307,13 +316,12 @@ en:
     assign_file: "Assign a file"
     assign_file_from_archive: "assign a file from your archive"
     assign_image: "Assign an image"
+    attached_to: "attached to"
     attachment_filename_notice: "* Please do not use any special characters for the filename."
     auto_play: "Play movie after load"
     big_thumbnails: "Big thumbnails"
     cancel: "cancel"
     cannot_delete_picture_notice: "Cannot delete Picture %{name}, because it's still in use."
-    choose_element_as_target: "Please choose an element as target"
-    choose_element_to_link: "Please choose an element"
     choose_file_to_link: "Please choose a file to link"
     "clear clipboard": "clear clipboard"
     "clear trash": "clear trash"
@@ -322,6 +330,8 @@ en:
     confirm_to_delete_image: "Do you really want to delete this image from server?"
     confirm_to_delete_image_from_server: "Do you really want to delete this image from the server?"
     confirm_to_delete_images_from_server: "Do you really want to delete these images from the server?"
+    confirm_to_delete_menu: "Do you really want to delete this menu?"
+    confirm_to_delete_node: "Do you really want to delete this menu node?"
     confirm_to_delete_page: "Do you really want to delete this page? All its elements (even trashed ones) will get lost!"
     content_essence_not_found: "Content essence not found"
     content_not_found: "Field for content not present."
@@ -337,12 +347,16 @@ en:
     "Create language": "Create a new language"
     "Create site": "Create a new site"
     create_language_tree_heading: "Create empty language tree"
+    create_menu: "Add a menu"
+    create_node: "Add a menu node"
     create_page: "Create a new subpage"
     currently_edited_by: "This page is locked by"
     cut_element: "Cut this element."
     delete_file: "Delete this file from server."
     delete_image: "Remove this image"
     delete_language: "Delete this language"
+    delete_menu: "Delete this menu"
+    delete_node: "Delete this menu node"
     delete_page: "Delete this page"
     delete_tag: 'Delete tag'
     document: "File"
@@ -353,6 +367,8 @@ en:
     edit_file_properties: "Edit file properties."
     edit_image_properties: "Edit image properties."
     edit_language: "Edit language"
+    edit_menu: "Edit menu"
+    edit_node: "Edit menu node"
     edit_page: "Edit this page"
     edit_page_properties: "Edit page properties"
     edit_tag: 'Edit tag'
@@ -392,9 +408,8 @@ en:
     image_caption: "Caption"
     image_name: "Name"
     image_title: "Title-tag"
-    internal_link_headline: "Choose a page to link to."
-    internal_link_page_elements_explanation: "Additionally you can click right beside a page on 'Show Elements' to link to an anchor of an element from that page."
-    internal_link_page_anchors_explanation: "Alternatively you can link to an anchor of the actual page."
+    internal_link_headline: "Search for a page to link to by entering its name into the Page select."
+    internal_link_page_elements_explanation: "Additionally you can choose an anchor to an element from selected page."
     "item copied to clipboard": "Copied %{name} to clipboard"
     "item moved to clipboard": "Moved %{name} to clipboard"
     "item removed from clipboard": "Removed %{name} from clipboard"
@@ -408,6 +423,7 @@ en:
     legacy_url_info_text: "A link is a redirect from an old URL to the current URL of this page. This redirect happens with a <a href='https://support.google.com/webmasters/answer/93633' target='_blank'>301 status code</a>."
     link_image: "Link this image."
     link_overlay_tab_label:
+      anchor: "Anchor"
       contactform: "Contact form"
       external: "External"
       file: "File"
@@ -420,6 +436,7 @@ en:
     male: "Male"
     me: "Me"
     medium_thumbnails: "Medium thumbnails"
+    menu: Menu
     meta_data: "Meta-Data"
     meta_description: "Meta-Description"
     meta_keywords: "Meta-Keywords"
@@ -430,6 +447,7 @@ en:
       languages: "Languages"
       layoutpages: "Global Pages"
       library: "Library"
+      menus: "Menus"
       pages: "Pages"
       tags: "Tags"
       sites: "Sites"
@@ -437,7 +455,7 @@ en:
       users: "Users"
     name: "Name"
     names: "Names"
-    navigation_name: "Navigation name"
+    node_url_hint: "Please use either a leading slash (/) or an url with protocol (ie. https:)"
     no_image_for_cropper_found: "No image found. Please save the element first."
     no: "No"
     "no pages": "no pages"
@@ -447,13 +465,16 @@ en:
     no_files_in_archive: "You do not have any files in your archive."
     no_images_in_archive: "You don't have any images in your archive."
     no_more_elements_to_add: "No more elements available."
+    no_resource_found:
+      default: "No %{resource} found. Please add your first one below."
+      alchemy/language: "<h2>Your website does not have any languages yet.</h2><p>You need at least one language to work with. Please create one below.</p>"
+      alchemy/node: "<h2>You do not have any menus yet.</h2><p>With menus your users can navigate your website. You can have multiple menus on your website. How many depends on your website template.</p><p>Please chose which menu you want to create first.</p>"
+      alchemy/site: "<h2>You do not have any websites yet.</h2><p>In order to serve requests you need to create a website first.</p><p>This form has been filled with sensible defaults that work in most cases.</p>"
     no_search_results: "Your search did not return any results."
     "not a valid image": "This is not an valid image."
     "or": 'or'
     or_replace_it_with_an_existing_tag: 'Or replace it with an existing tag'
     "Page created": "Page: '%{name}' created."
-    page_for_links:
-      choose_page: "Choose %{name}"
     page_infos: 'Page info'
     page_layout_changed_notice: "Page type was changed. Elements not usable anymore have been moved into the trash."
     page_properties: "Page properties"
@@ -461,9 +482,6 @@ en:
     page_published: "Published page"
     page_restricted: "restricted"
     page_states:
-      visible:
-        "true": "Page is visible in navigation."
-        "false": "Page is not visible in navigation."
       public:
         "true": "Page is published."
         "false": "Page is unpublished."
@@ -526,7 +544,6 @@ en:
     select_element: "Select element"
     seperate_tags_with_comma: "Seperate tags with comma"
     show_element_content: "Show content of this element."
-    show_elements_from_page: "Show all elements from this page"
     show_eq: "Show EQ"
     show_navigation: "Show in navigation"
     show_page_in_sitemap: "Show page in sitemap."
@@ -559,8 +576,6 @@ en:
         button_label: Upload image(s)
         upload_success: "Picture %{name} uploaded successfully"
         upload_failure: "Error while uploading %{name}: %{error}"
-    url_name: "URL-Name"
-    visible: "visible"
     want_to_create_new_language: "Do you want to create a new empty language tree?"
     want_to_make_copy_of_existing_language: "Do you want to copy an existing language tree?"
     "We need at least one default.": "A default language must exist."
@@ -613,11 +628,17 @@ en:
       error_notification:
         default_message: "Please review the problems below:"
 
+  # Alchemy date formats
+  date:
+    formats:
+      alchemy:
+        default: "%Y-%m-%d"
+
   # Alchemy time formats
   time:
     formats:
       alchemy:
-        default: "%a, %d %b %Y %H:%M:%S %z"
+        default: "%m.%d.%Y %H:%M"
         essence_date: "%Y-%m-%d"
         page_status: "%m.%d.%Y %H:%M"
         short_datetime: "%d %b %H:%M"
@@ -650,9 +671,9 @@ en:
           page_layout:
             blank: "^Please choose a page layout."
           urlname:
-            too_short: "^The pages urlname is too short (minimum of 3 characters)."
-            taken: "^URL-Name already taken."
-            exclusion: "^URL-Name reserved."
+            too_short: "^URL-Path is too short (minimum of 3 characters)."
+            taken: "^URL-Path already taken."
+            exclusion: "^URL-Path reserved."
       alchemy/picture:
         attributes:
           image_file:
@@ -684,6 +705,20 @@ en:
 
   # Translations for Alchemy database models
   activerecord:
+    errors:
+      models:
+        alchemy/node:
+          attributes:
+            base:
+              essence_nodes_present: "This menu item is in use inside an Alchemy element on the following pages: %{page_names}."
+        alchemy/site:
+          attributes:
+            languages:
+              still_present: "are still attached to this site. Please remove them first."
+        alchemy/language:
+          attributes:
+            pages:
+              still_present: "are still attached to this language. Please remove them first."
     models:
       gutentag/tag:
         one: Tag
@@ -700,6 +735,9 @@ en:
       alchemy/language:
         one: "Language"
         other: "Languages"
+      alchemy/node:
+        one: "Menu node"
+        other: "Menu nodes"
       alchemy/page:
         one: "Page"
         other: "Pages"
@@ -757,7 +795,15 @@ en:
         locale: Localization
         code: ISO Code
       alchemy/legacy_page_url:
-        urlname: "URL path"
+        urlname: "URL-Path"
+      alchemy/node:
+        menu_type: Menu Type
+        name: "Name"
+        title: "Title"
+        nofollow: "Search engine must not follow"
+        url: "URL"
+        page: "Page"
+        external: "Open link in new tab"
       alchemy/page:
         created_at: "Created at"
         language: "Language"
@@ -775,8 +821,8 @@ en:
         tag_list: Tags
         title: "Title"
         updated_at: "Updated at"
-        urlname: "Urlname"
-        visible: "visible in navigation"
+        urlname: "URL-Path"
+        slug: "Slug"
       alchemy/picture:
         image_file_name: "Filename"
         image_file_height: "Height"

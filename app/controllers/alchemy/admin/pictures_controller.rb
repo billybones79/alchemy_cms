@@ -6,7 +6,7 @@ module Alchemy
       include UploaderResponses
       include ArchiveOverlay
 
-      helper 'alchemy/admin/tags'
+      helper "alchemy/admin/tags"
 
       before_action :load_resource,
         only: [:show, :edit, :update, :destroy, :info]
@@ -14,13 +14,14 @@ module Alchemy
       authorize_resource class: Alchemy::Picture
 
       def index
-        @size = params[:size].present? ? params[:size] : 'medium'
+        @size = params[:size].present? ? params[:size] : "medium"
         @query = Picture.ransack(search_filter_params[:q])
         @pictures = Picture.search_by(
           search_filter_params,
           @query,
-          items_per_page
+          items_per_page,
         )
+        @pictures = @pictures.includes(:thumbs)
 
         if in_overlay?
           archive_overlay
@@ -31,7 +32,7 @@ module Alchemy
         @previous = @picture.previous(params)
         @next = @picture.next(params)
         @assignments = @picture.essence_pictures.joins(content: {element: :page})
-        render action: 'show'
+        render action: "show"
       end
 
       def create
@@ -46,19 +47,19 @@ module Alchemy
 
       def edit_multiple
         @pictures = Picture.where(id: params[:picture_ids])
-        @tags = @pictures.collect(&:tag_list).flatten.uniq.join(', ')
+        @tags = @pictures.collect(&:tag_list).flatten.uniq.join(", ")
       end
 
       def update
         if @picture.update(picture_params)
           @message = {
             body: Alchemy.t(:picture_updated_successfully, name: @picture.name),
-            type: 'notice'
+            type: "notice",
           }
         else
           @message = {
             body: Alchemy.t(:picture_update_failed),
-            type: 'error'
+            type: "error",
           }
         end
         render :update
@@ -89,7 +90,7 @@ module Alchemy
           if not_deletable.any?
             flash[:warn] = Alchemy.t(
               "These pictures could not be deleted, because they were in use",
-              names: not_deletable.to_sentence
+              names: not_deletable.to_sentence,
             )
           else
             flash[:notice] = Alchemy.t("Pictures deleted successfully", names: names.to_sentence)
@@ -116,15 +117,15 @@ module Alchemy
       def items_per_page
         if in_overlay?
           case params[:size]
-          when 'small' then 25
-          when 'large' then 4
+          when "small" then 25
+          when "large" then 4
           else
             9
           end
         else
           cookies[:alchemy_pictures_per_page] = params[:per_page] ||
-                                                cookies[:alchemy_pictures_per_page] ||
-                                                pictures_per_page_for_size(params[:size])
+            cookies[:alchemy_pictures_per_page] ||
+            pictures_per_page_for_size(params[:size])
         end
       end
 
@@ -137,8 +138,8 @@ module Alchemy
 
       def pictures_per_page_for_size(size)
         case size
-        when 'small' then 60
-        when 'large' then 12
+        when "small" then 60
+        when "large" then 12
         else
           20
         end
@@ -154,8 +155,8 @@ module Alchemy
             :size,
             :element_id,
             :swap,
-            :content_id
-          ]
+            :content_id,
+          ],
         )
       end
 

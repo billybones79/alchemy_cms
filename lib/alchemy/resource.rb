@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'active_support'
-require 'active_support/core_ext'
-require 'active_support/inflector'
+require "active_support"
+require "active_support/core_ext"
+require "active_support/inflector"
 
 module Alchemy
   # = Alchemy::Resource
@@ -101,8 +101,8 @@ module Alchemy
     attr_accessor :resource_relations, :model_associations
     attr_reader :model
 
-    DEFAULT_SKIPPED_ATTRIBUTES = %w(id updated_at created_at creator_id updater_id)
-    DEFAULT_SKIPPED_ASSOCIATIONS = %w(creator updater)
+    DEFAULT_SKIPPED_ATTRIBUTES = %w(id created_at creator_id)
+    DEFAULT_SKIPPED_ASSOCIATIONS = %w(creator)
     SEARCHABLE_COLUMN_TYPES = [:string, :text]
 
     def initialize(controller_path, module_definition = nil, custom_model = nil)
@@ -113,13 +113,14 @@ module Alchemy
         if !model.respond_to?(:reflect_on_all_associations)
           raise MissingActiveRecordAssociation
         end
+
         store_model_associations
         map_relations
       end
     end
 
     def resource_array
-      @_resource_array ||= controller_path_array.reject { |el| el == 'admin' }
+      @_resource_array ||= controller_path_array.reject { |el| el == "admin" }
     end
 
     def resources_name
@@ -138,7 +139,7 @@ module Alchemy
       @_namespaced_resources_name ||= begin
         resource_name_array = resource_array.dup
         resource_name_array.delete(engine_name) if in_engine?
-        resource_name_array.join('_')
+        resource_name_array.join("_")
       end
     end
 
@@ -152,6 +153,7 @@ module Alchemy
     #
     def model_association_names
       return unless model_associations
+
       model_associations.map do |assoc|
         assoc.name.to_sym
       end
@@ -160,12 +162,20 @@ module Alchemy
     def attributes
       @_attributes ||= model.columns.collect do |col|
         next if skipped_attributes.include?(col.name)
+
         {
           name: col.name,
           type: resource_column_type(col),
-          relation: resource_relation(col.name)
+          relation: resource_relation(col.name),
         }.delete_if { |_k, v| v.nil? }
       end.compact
+    end
+
+    def sorted_attributes
+      @_sorted_attributes ||= attributes.
+        sort_by  { |attr| attr[:name] == "name" ? 0 : 1 }.
+        sort_by! { |attr| attr[:type] == :boolean ? 1 : 0 }.
+        sort_by! { |attr| attr[:name] == "updated_at" ? 1 : 0 }
     end
 
     def editable_attributes
@@ -197,10 +207,10 @@ module Alchemy
     end
 
     def engine_name
-      @module_definition && @module_definition['engine_name']
+      @module_definition && @module_definition["engine_name"]
     end
 
-    # Returns a help text for resource's form
+    # Returns a help text for resource's form or nil if no help text is available
     #
     # === Example:
     #
@@ -213,7 +223,7 @@ module Alchemy
     def help_text_for(attribute)
       ::I18n.translate!(attribute[:name], scope: [:alchemy, :resource_help_texts, resource_name])
     rescue ::I18n::MissingTranslationData
-      false
+      nil
     end
 
     # Return attributes that should be viewable but not editable.
@@ -254,16 +264,16 @@ module Alchemy
     def searchable_relation_attribute(attribute)
       {
         name: "#{attribute[:relation][:model_association].name}_#{attribute[:relation][:attr_method]}",
-        type: attribute[:relation][:attr_type]
+        type: attribute[:relation][:attr_type],
       }
     end
 
     def guess_model_from_controller_path
-      resource_array.join('/').classify.constantize
+      resource_array.join("/").classify.constantize
     end
 
     def controller_path_array
-      @controller_path.split('/')
+      @controller_path.split("/")
     end
 
     def namespace_diff
@@ -286,7 +296,7 @@ module Alchemy
     def map_relations
       self.resource_relations = {}
       model.alchemy_resource_relations.each do |name, options|
-        name = name.to_s.gsub(/_id$/, '') # ensure that we don't have an id
+        name = name.to_s.gsub(/_id$/, "") # ensure that we don't have an id
         association = association_from_relation_name(name)
         foreign_key = association.options[:foreign_key] || "#{association.name}_id".to_sym
         resource_relations[foreign_key] = options.merge(model_association: association, name: name)

@@ -5,8 +5,8 @@
  */
 
 @import "fontawesome/fontawesome";
-@import "fontawesome/fa-regular";
-@import "fontawesome/fa-solid";
+@import "fontawesome/regular";
+@import "fontawesome/solid";
 @import "alchemy/defaults";
 @import "alchemy/archive";
 @import "alchemy/navigation";
@@ -29,7 +29,11 @@
 @import "alchemy/hints";
 @import "alchemy/icons";
 @import "alchemy/image_library";
+@import "alchemy/labels";
+@import "alchemy/nodes";
+@import "alchemy/node-select";
 @import "alchemy/notices";
+@import "alchemy/page-select";
 @import "alchemy/pagination";
 @import "alchemy/preview_window";
 @import "alchemy/resource_info";

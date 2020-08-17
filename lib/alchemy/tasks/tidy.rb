@@ -1,4 +1,5 @@
-require 'alchemy/shell'
+# frozen_string_literal: true
+require "alchemy/shell"
 
 module Alchemy
   class Tidy
@@ -45,14 +46,14 @@ module Alchemy
 
       def remove_orphaned_elements
         puts "\n## Removing orphaned elements"
-        elements = Alchemy::Element.unscoped.all
+        elements = Alchemy::Element.unscoped.not_nested
         if elements.any?
           orphaned_elements = elements.select do |element|
             element.page.nil? && element.page_id.present?
           end
           if orphaned_elements.any?
             log "Found #{orphaned_elements.size} orphaned elements"
-            destroy_orphaned_records(orphaned_elements, 'element')
+            destroy_orphaned_records(orphaned_elements, "element")
           else
             log "No orphaned elements found", :skip
           end
@@ -71,7 +72,7 @@ module Alchemy
           end
           if orphaned_contents.any?
             log "Found #{orphaned_contents.size} orphaned contents"
-            destroy_orphaned_records(orphaned_contents, 'content')
+            destroy_orphaned_records(orphaned_contents, "content")
           else
             log "No orphaned contents found", :skip
           end

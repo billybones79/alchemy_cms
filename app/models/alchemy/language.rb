@@ -20,12 +20,17 @@
 #  locale         :string
 #
 
+require_dependency "alchemy/site"
+
 module Alchemy
   class Language < BaseRecord
     belongs_to :site
-    has_many :pages
+    has_many :pages, inverse_of: :language
+    has_many :nodes, inverse_of: :language
 
     before_validation :set_locale, if: -> { locale.blank? }
+
+    has_one :root_page, -> { where(parent: nil, layoutpage: false) }, class_name: "Alchemy::Page"
 
     validates :name, presence: true
     validates :page_layout, presence: true
@@ -52,15 +57,23 @@ module Alchemy
     after_update :unpublish_pages,
       if: :should_unpublish_pages?
 
-    before_destroy :check_for_default
-    after_destroy :delete_language_root_page
+    before_destroy if: -> { pages.any? } do
+      errors.add(:pages, :still_present)
+      throw(:abort)
+    end
 
-    scope :published,       -> { where(public: true) }
-    scope :with_root_page,  -> { joins(:pages).where(Page.table_name => {language_root: true}) }
-    scope :on_site,         ->(s) { s ? where(site_id: s.id) : all }
-    scope :on_current_site, -> { on_site(Site.current) }
+    scope :published, -> { where(public: true) }
+    scope :with_root_page, -> { joins(:pages).where(Page.table_name => { language_root: true }) }
 
     class << self
+      def on_site(site)
+        site ? where(site_id: site.id) : all
+      end
+
+      def on_current_site
+        on_site(Site.current)
+      end
+
       # Store the current language in the current thread.
       def current=(language)
         RequestStore.store[:alchemy_current_language] = language
@@ -73,6 +86,8 @@ module Alchemy
 
       # The root page of the current language.
       def current_root_page
+        return unless current
+
         current.pages.language_roots.first
       end
 
@@ -92,16 +107,6 @@ module Alchemy
 
     include Alchemy::Language::Code
 
-    # Root page
-    def root_page
-      @root_page ||= pages.language_roots.first
-    end
-
-    # Layout root page
-    def layout_root_page
-      @layout_root_page ||= Page.layout_root_for(id)
-    end
-
     # All available locales matching this language
     #
     # Matching either the code (+language_code+ + +country_code+) or the +language_code+
@@ -110,8 +115,12 @@ module Alchemy
     #
     def matching_locales
       @_matching_locales ||= ::I18n.available_locales.select do |locale|
-        locale.to_s.split('-')[0] == language_code
+        locale.to_s.split("-")[0] == language_code
       end
+    end
+
+    def available_menu_names
+      Alchemy::Node.available_menu_names - nodes.reject(&:parent_id).map(&:menu_type)
     end
 
     private
@@ -149,36 +158,21 @@ module Alchemy
     def remove_old_default
       lang = Language.on_site(site).default
       return true if lang.nil?
+
       lang.default = false
       lang.save(validate: false)
     end
 
     def should_set_pages_language?
-      if active_record_5_1?
-        saved_change_to_language_code? || saved_change_to_country_code?
-      else
-        language_code_changed? || country_code_changed?
-      end
+      saved_change_to_language_code? || saved_change_to_country_code?
     end
 
     def set_pages_language
       pages.update_all language_code: code
     end
 
-    def check_for_default
-      raise DefaultLanguageNotDeletable if default?
-    end
-
-    def delete_language_root_page
-      root_page.try(:destroy) && layout_root_page.try(:destroy)
-    end
-
     def should_unpublish_pages?
-      if active_record_5_1?
-        saved_changes[:public] == [true, false]
-      else
-        changes[:public] == [true, false]
-      end
+      saved_changes[:public] == [true, false]
     end
 
     def unpublish_pages

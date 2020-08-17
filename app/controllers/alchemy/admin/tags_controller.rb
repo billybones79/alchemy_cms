@@ -7,6 +7,7 @@ module Alchemy
 
       def index
         @query = Gutentag::Tag.ransack(search_filter_params[:q])
+        @query.sorts = default_sort_order if @query.sorts.empty?
         @tags = @query
                   .result
                   .page(params[:page] || 1)
@@ -20,7 +21,7 @@ module Alchemy
 
       def create
         @tag = Gutentag::Tag.create(tag_params)
-        render_errors_or_redirect @tag, admin_tags_path, Alchemy.t('New Tag Created')
+        render_errors_or_redirect @tag, admin_tags_path, Alchemy.t("New Tag Created")
       end
 
       def edit
@@ -31,11 +32,10 @@ module Alchemy
         if tag_params[:merge_to]
           @new_tag = Gutentag::Tag.find(tag_params[:merge_to])
           Tag.replace(@tag, @new_tag)
-          operation_text = Alchemy.t('Replaced Tag') % {old_tag: @tag.name, new_tag: @new_tag.name}
+          operation_text = Alchemy.t("Replaced Tag") % {old_tag: @tag.name, new_tag: @new_tag.name}
           @tag.destroy
         else
-          @tag.update_attributes(tag_params)
-          @tag.save
+          @tag.update(tag_params)
           operation_text = Alchemy.t(:successfully_updated_tag)
         end
         render_errors_or_redirect @tag, admin_tags_path, operation_text
@@ -66,7 +66,8 @@ module Alchemy
 
       def tags_from_term(term)
         return [] if term.blank?
-        Gutentag::Tag.where(['LOWER(name) LIKE ?', "#{term.downcase}%"])
+
+        Gutentag::Tag.where(["LOWER(name) LIKE ?", "#{term.downcase}%"])
       end
 
       def json_for_autocomplete(items, attribute)

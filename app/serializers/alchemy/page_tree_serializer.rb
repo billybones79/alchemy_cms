@@ -3,7 +3,7 @@
 module Alchemy
   class PageTreeSerializer < BaseSerializer
     def attributes
-      {'pages' => nil}
+      {"pages" => nil}
     end
 
     def pages
@@ -53,17 +53,15 @@ module Alchemy
         id: page.id,
         name: page.name,
         public: page.public?,
-        visible: page.visible?,
         restricted: page.restricted?,
         page_layout: page.page_layout,
         slug: page.slug,
-        redirects_to_external: page.redirects_to_external?,
         urlname: page.urlname,
-        external_urlname: page.redirects_to_external? ? page.external_urlname : nil,
+        url_path: page.url_path,
         level: level,
-        root: level == 1,
-        root_or_leaf: level == 1 || !has_children,
-        children: []
+        root: page.depth == 1,
+        root_or_leaf: page.depth == 1 || !has_children,
+        children: [],
       }
 
       if opts[:elements]
@@ -75,9 +73,9 @@ module Alchemy
           definition_missing: page.definition.blank?,
           folded: folded,
           locked: page.locked?,
-          locked_notice: page.locked? ? Alchemy.t('This page is locked', name: page.locker_name) : nil,
+          locked_notice: page.locked? ? Alchemy.t("This page is locked", name: page.locker_name) : nil,
           permissions: page_permissions(page, opts[:ability]),
-          status_titles: page_status_titles(page)
+          status_titles: page_status_titles(page),
         })
       else
         p_hash
@@ -85,10 +83,10 @@ module Alchemy
     end
 
     def page_elements(page)
-      if opts[:elements] == 'true'
+      if opts[:elements] == "true"
         page.elements
       else
-        page.elements.named(opts[:elements].split(',') || [])
+        page.elements.named(opts[:elements].split(",") || [])
       end
     end
 
@@ -99,15 +97,14 @@ module Alchemy
         copy: ability.can?(:copy, page),
         destroy: ability.can?(:destroy, page),
         create: ability.can?(:create, Alchemy::Page),
-        edit_content: ability.can?(:edit_content, page)
+        edit_content: ability.can?(:edit_content, page),
       }
     end
 
     def page_status_titles(page)
       {
         public: page.status_title(:public),
-        visible: page.status_title(:visible),
-        restricted: page.status_title(:restricted)
+        restricted: page.status_title(:restricted),
       }
     end
   end
