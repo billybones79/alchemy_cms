@@ -78,13 +78,9 @@ module Alchemy
     # descendant it finds. If no public page can be found it renders a 404 error.
     #
     def show
-      if redirect_url.present?
-        puts "c'est quand meme gossant ce redirect la"
-        redirect_permanently_to redirect_url
-      else
+
         authorize! :show, @page
         render_page if render_fresh_page?
-      end
 
     end
 
