@@ -58,6 +58,10 @@ module Alchemy
       end
     end
 
+    def body_class
+      ""
+    end
+
     # Renders the flash partial (+alchemy/admin/partials/flash+)
     #
     # @param [String] notice The notice you want to display
