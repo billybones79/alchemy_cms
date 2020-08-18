@@ -102,6 +102,7 @@ module Alchemy
       unless params[:locale].blank?
         Language.current = Language.find_by!(locale: params[:locale])
       end
+    end
     # Redirects to requested action without locale prefixed
     def enforce_no_locale
       redirect_permanently_to additional_params.merge(locale: nil)
