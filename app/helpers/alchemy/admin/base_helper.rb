@@ -337,6 +337,9 @@ module Alchemy
             content_tag(:span, element.hint.html_safe, class: "hint-bubble")
         end
       end
+      def body_class
+        alchemy_body_class
+      end
 
       # Appends the current controller and action to body as css class.
       def alchemy_body_class
