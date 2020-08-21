@@ -1,0 +1,12 @@
+<%- cache(hamburger_menu_boxed_page) do -%>
+
+  <%# Render boxed page hyperlink inside a double <div> with the right classes for each.
+      Since the "class" option overwrites the default (hamburger_menu_boxed_page),
+      add it explicitly to help with styling. %>
+  <%= element_view_for(hamburger_menu_boxed_page, tag: 'div', class: 'hamburger_menu_boxed_page box-link-holder justify-content-center d-block mx-3') do |el| -%>
+    <%= content_tag(:div, class: 'box-link mt-2') do -%>
+      <%= el.render :link, {}, class: 'py-3 px-4' -%>
+    <%- end -%>
+  <%- end -%>
+
+<%- end -%>

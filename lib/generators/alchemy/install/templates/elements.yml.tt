@@ -3,19 +3,168 @@
 # For further information please see http://guides.alchemy-cms.com/stable/elements.html
 
 <%- unless @options[:skip_demo_files] -%>
-- name: article
-  hint: true
-  unique: true
+# le preview de la blog page
+- name: blog_info
   contents:
+  - name: header
+    type: EssenceText
+  - name: image
+    type: EssencePicture
+  - name: preview_text
+    type: EssenceText
+
+- name: blog_header
+  contents:
+  - name: banner
+    type: EssencePicture
   - name: headline
     type: EssenceText
-    default: :article_headline
-    hint: true
-  - name: picture
-    type: EssencePicture
-    hint: true
-  - name: text
+
+ # contenu du blog
+- name: blog_content
+  contents:
+  - name: body
     type: EssenceRichtext
-    default: :article_text
-    hint: true
+
+
+- name: related_products
+  nestable_elements:
+    - related_product
+
+- name: related_product
+  contents:
+  - name: product
+    type: EssenceSpreeProduct
+
+
+#un preview de quelques blog posts
+- name: blog_previews
+  taggable: true
+  contents:
+  - name: title
+    type: essenceText
+  - name: link
+    type: essenceText
+  - name: number
+    type: essenceText
+    validate: [ format: !ruby/regexp '/^([0-9]+\,?\ ?)*$/']
+  - name: root
+    type: EssencePage
+
+#featured_article que on met dans le top du blog
+- name: featured_article
+  contents:
+  - name: featured_article
+    type: EssencePage
+
+
+
 <%- end -%>
+
+# Hamburger menu items
+# - Header text
+- name: hamburger_menu_header
+  hint: Displays a small, uppercased header
+  contents:
+  - name: text
+    type: EssenceText
+    hint: Header text (please don't use the same text twice in the same (sub)menu)
+    validate:
+    - presence: true    # Forbid blank headers
+    - uniqueness: false # "true" checks every (sub)menu while we only want to forbid duplicate headers within the same (sub)menu, so use "false"
+    settings:
+      linkable: false   # NOT an hyperlink; use page & taxon lists instead
+# - Horizontal line
+- name: hamburger_menu_line
+  hint: Displays a horizontal line separator
+# - Boxed page link
+- name: hamburger_menu_boxed_page
+  hint: Displays a boxed hyperlink to an internal or external page
+  contents:
+  - name: link
+    type: EssenceText # EssenceLink doesn't allow the editor to change the link text
+    hint: Hyperlink text (please don't use the same text twice in the same (sub)menu)
+    validate:
+    - presence: true    # Forbid blank link text
+    - uniqueness: false # "true" checks every (sub)menu while we only want to forbid duplicate link text within the same (sub)menu, so use "false"
+    settings:
+      linkable: true   # Hyperlink
+- name: hamburger_menu_list
+  hint: Main container for ordering and displaying links to pages, taxons or submenus
+  contents:
+  - name: text_size
+    type: EssenceSelect
+    hint: |
+      Size of hyperlink text for all items.
+      Use "big" for main lists and "small" for secondary lists.
+    default: 'big' # Empty if a nested element is saved but the list itself isn't, so prevent this
+    validate:
+    - presence: true # Force a selection (a default is selected anyway, so this line is optional)
+    settings:
+      select_values: ['big', 'small']
+  nestable_elements:
+  - hamburger_menu_list_page
+  - hamburger_menu_list_taxon
+  - hamburger_menu_list_submenu
+
+# Hamburger menu items
+# - Page link
+- name: hamburger_menu_list_page
+  hint: Displays a non-boxed, stylizable hyperlink to an internal or external page
+  contents:
+  - name: link
+    type: EssenceText # EssenceLink doesn't allow the editor to change the link text
+    hint: Hyperlink text (please don't use the same text twice in the same (sub)menu)
+    validate:
+    - presence: true    # Forbid blank items (i.e. empty link text)
+    - uniqueness: false # "true" checks every (sub)menu while we only want to forbid duplicate link text within the same (sub)menu, so use "false"
+    settings:
+      linkable: true   # Hyperlink
+  - name: strong
+    type: EssenceBoolean # Checkbox for embolding the link text
+    hint: Makes the hyperlink text bolder
+  - name: underline
+    type: EssenceBoolean # Checkbox for underlining the link text
+    hint: Underlines the hyperlink text
+# - Taxon link
+- name: hamburger_menu_list_taxon
+  hint: Displays a non-boxed, stylizable hyperlink to a Solidus taxon (i.e. product category/brand) by using the taxon's name as the hyperlink text
+  contents:
+  - name: taxon
+    type: EssenceSpreeTaxon # Place taxon on the page (alchemy-cms.com/extensions/2-alchemy-solidus)
+    hint: Taxon's name (please don't use the same taxon twice in the same (sub)menu)
+    validate:
+    - presence: true    # Forbid blank taxons (mandatory by default, so this line is optional)
+    - uniqueness: false # "true" checks every (sub)menu while we only want to forbid duplicate taxons within the same (sub)menu, so use "false"
+  - name: strong
+    type: EssenceBoolean # Checkbox for embolding the taxon
+    hint: Makes the taxon's name bolder
+  - name: underline
+    type: EssenceBoolean # Checkbox for underlining the taxon
+    hint: Underlines the taxon's name
+# - Submenu (level 2, 3, etc.)
+- name: hamburger_menu_list_submenu
+  hint: |
+    Secondary container with a (displayed) label for ordering and displaying a hamburger submenu.
+    Clicking the label opens the submenu while clicking the generated "back" button closes it.
+  contents:
+  - name: label
+    type: EssenceText
+    hint: Label text for accessing the submenu (please don't use the same label twice in the same (sub)menu)
+    validate:
+    - presence: true    # Forbid blank labels
+    - uniqueness: false # "true" checks every (sub)menu while we only want to forbid duplicate labels within the same (sub)menu, so use "false"
+    settings:
+      linkable: false  # Submenu back-and-forth is handled by the view, so NO hyperlink
+  - name: strong
+    type: EssenceBoolean # Checkbox for embolding the label
+    hint: Makes the label text bolder
+  - name: underline
+    type: EssenceBoolean # Checkbox for underlining the label
+    hint: Underlines the hyperlink text
+  nestable_elements:
+  # Should be the same list as hamburger_menu
+  - hamburger_menu_list
+  - hamburger_menu_boxed_page
+  - hamburger_menu_header
+  - hamburger_menu_line

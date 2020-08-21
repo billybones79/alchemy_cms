@@ -1,0 +1,19 @@
+
+<%= element_view_for(related_product, tag: 'article') do |el| -%>
+
+  <% if product = related_product.content_by_name(:product).essence.ingredient %>
+  <li class=" columns four  <%=cycle("alpha", "secondary", "", "omega secondary", :name => "classes") %> <%= (product.taxons.map{|t| t.name}).join(' ') %>"  >
+    <div  id="product_<%= product.id %>"
+          class ="lazy-partial"
+          data-product-name="<%= product.name %>"
+          data-lazy-url="<%= spree.api_lazy_product_path(product.id)%>"
+          data-hook="products_list_item" itemscope itemtype="http://schema.org/Product">
+      <%= link_to spree.product_path(product), remote: true do %>
+        <i class='fa fa-spinner fa-spin fa-3x'></i>
+      <% end %>
+
+    </div>
+  </li>
+  <% end %>
+
+<% end %>

@@ -1,0 +1,5 @@
+<%- cache(blog_content) do -%>
+  <%= element_view_for(blog_content, tag: 'article') do |el| -%>
+    <%= el.render :body %>
+  <%- end -%>
+<%- end -%>

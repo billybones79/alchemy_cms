@@ -1,0 +1,19 @@
+<%- cache(hamburger_menu_list) do -%>
+  <%# Since class options are element specific, do not specify the wrapping tag here %>
+  <%= element_view_for(hamburger_menu_list, tag: false) do |el| -%>
+
+    <%# Convert text_size selection into a proper HTML class %>
+    <%-
+      list_class = case el.ingredient(:text_size)
+                   when "big"   then "main-nav d-flex flex-column"
+                   when "small" then "main-small-nav mt-3"
+                   end
+    -%>
+
+    <%# Render nested elements into an unordered list <ul> with the converted class %>
+    <%= content_tag(:ul, class: list_class) do -%>
+      <%= render hamburger_menu_list.nested_elements.available -%>
+    <%- end -%>
+
+  <%- end -%>
+<%- end -%>

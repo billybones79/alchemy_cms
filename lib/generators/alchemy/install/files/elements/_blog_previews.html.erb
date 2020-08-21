@@ -1,0 +1,60 @@
+<%- cache(element) do -%>
+  <%= element_view_for(element, tag: false) do |el| -%>
+    <% if index = element.content_by_name("root").ingredient %>
+      <% logger.debug "index: #{index.children.length}" %>
+      <section class="news">
+        <div class="container left_margin">
+          <h3><%= el.render :title %></h3>
+          <a class="all_news" href="<%= show_alchemy_page_path(index) %>"><%= el.render :link %> <i class="icon icon-right-arrow"></i></a>
+          <div class="clearfix"></div>
+        </div>
+
+        <ul class="news_list animate">
+          <% limit = element.content_by_name("number").try(:ingredient).try(:to_i) || 4 %>
+
+          <% if element.tag_list.any? %>
+            <% posts = index.children.reorder(created_at: :desc).published.tagged_with(element.tag_list).joins(:descendent_elements).where("alchemy_elements.name = ?", "blog_info").limit(limit) %>
+          <%else%>
+            <% posts = index.children.reorder(created_at: :desc).published.joins(:elements).where("alchemy_elements.public = ?", true).where("alchemy_elements.name = ?", "blog_info").limit(limit) %>
+          <%end%>
+          <% logger.debug "posts: #{p.inspect}" %>
+          <%posts.each do |p|%>
+
+            <% blog_info = p.elements.where(name: "blog_info").first%>
+
+            <li class="news_item">
+              <div class="news_title"><%= blog_info.content_by_name("header").ingredient %></div>
+              <div class="news_info">
+                <ul class="icon_list">
+                  <li class="date">
+                    <div class="icon calendar"><i class="icon-calendar-4"></i></div>
+                    <div class="text"><%= l(p.created_at, format: :day) %></div>
+                    <div class="clearfix"></div>
+                  </li>
+                </ul>
+
+                <div class="news_content">
+                  <p><%=  blog_info.content_by_name("preview_text").ingredient.html_safe %></p>
+                </div>
+              </div>
+
+              <!-- hover -->
+              <div class="news_hover" <% if image = blog_info.content_by_name("image") %> style="background-image:url(<%=alchemy.show_attachment_path(image.ingredient, size: "800x800") %>);" <%end%>>
+                <div class="image"></div>
+                <%= link_to  alchemy.show_page_path(urlname: p.urlname), class: "inline-link" do %>
+                  <div class="link_container">
+                    <div> <%= t("blog.read_more") %> </div>
+                    <div class="icon right-arrow"></div>
+                  </div>
+                <% end %>
+              </div>
+            </li>
+
+
+          <% end %>
+        </ul>
+
+      </section><!-- .content -->
+    <% end %>
+  <% end %>
+<% end %>

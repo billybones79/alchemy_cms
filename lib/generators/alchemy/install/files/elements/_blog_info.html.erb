@@ -1,0 +1,58 @@
+
+<%  if essence = element.content_by_name('image').essence.ingredient %>
+  <% header_image = show_alchemy_picture_url(essence) %>
+<%end%>
+<%= render "shared/social_head", title: element.page.title, url:  alchemy.show_page_url(urlname: element.page.urlname),  color: "orange", description: (element.content_by_name('preview_text').essence.ingredient) , image: header_image %>
+
+<%- cache(element) do -%>
+
+
+  <%  if essence = element.content_by_name('image').essence.ingredient %>
+    <% header_image = show_alchemy_picture_url(essence) %>
+  <%end%>
+
+
+  <%= element_view_for(element, tag: false)  do |el| -%>
+    <!-- BANNER -->
+    <div class="banner news_detail_banner">
+
+      <div class="left_wrapper block block-66">
+
+        <div class="photo" style="background-image:url('<%= header_image %>');">
+        </div>
+
+        <%= render "shared/socials", url:  alchemy.show_page_url(urlname: element.page.urlname),  color: "orange", description: (el.render :preview_text) , image: header_image %>
+
+
+
+      </div>
+
+      <div class="right_wrapper block block-33">
+
+        <div class="news_title_wrapper">
+          <div class="news_title_container">
+            <div class="news_title">
+
+              <div class="page_name"><%= t('nouvelles') %> -- <span class="date"><%= l(Alchemy::Page.find(element.page_id).published_at, format: :day) %></span></div>
+
+              <div class="title_container black">
+                <div class="title_bar"></div>
+                <div class="title">            <%= el.render :header %></div>
+                <div class="title_bar"></div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+
+
+      </div>
+      <div class="clearfix"></div>
+
+    </div><!-- banner end -->
+
+
+  <% end %>
+<% end %>

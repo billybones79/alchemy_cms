@@ -1,0 +1,13 @@
+<%- cache(related_products) do -%>
+  <%= element_view_for(related_products, tag: 'article') do |el| -%>
+    <div class=" columns twelve omega clear">
+      <ul  id="products" class="inline product-listing" >
+
+        <% element.nested_elements.each do |nested_element| %>
+          <%= render_element nested_element %>
+        <% end %>
+      </ul>
+    </div>
+
+  <%- end -%>
+<%- end -%>
