@@ -8,6 +8,7 @@ module Alchemy
   module ElementsHelper
     include Alchemy::UrlHelper
     include Alchemy::ElementsBlockHelper
+    include Alchemy::EssencesHelper
 
     # Renders elements from given page
     #
