@@ -1,0 +1,8 @@
+<%- cache(hamburger_menu_header) do -%>
+
+  <%# Simply wrap the header text with tag <h3> %>
+  <%= element_view_for(hamburger_menu_header, tag: 'h3') do |el| -%>
+    <%= el.render :text -%>
+  <%- end -%>
+
+<%- end -%>

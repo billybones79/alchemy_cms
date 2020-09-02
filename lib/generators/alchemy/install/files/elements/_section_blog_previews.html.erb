@@ -1,0 +1,29 @@
+<%- cache(section_blog_previews) do -%>
+
+  <%# Render section inside a <section> with the right classes.
+      Since the "class" option overwrites the default (section_blog_previews),
+      add it explicitly to help with styling. %>
+  <!-- BLOG -->
+  <%=
+    element_view_for(section_blog_previews,
+      tag: 'section',
+      class: 'section_blog_previews section full-width-slider-section slider-content blog-preview-content pt-0'
+    ) do |el|
+  -%>
+
+    <%-
+      blog_index_page = el.ingredient(:blog_index)
+      blog_index_path = show_alchemy_page_path(blog_index_page) if blog_index_page # Prevent error if page is nil
+    -%>
+
+    <%# Render text and blog links displayed before the blog previews %>
+    <%- section_heading = element.nested_elements.find_by(name: 'section_blog_previews_heading') -%>
+    <%= render_element(section_heading, locals: {blog_index_path: blog_index_path}) if section_heading -%>
+
+    <%# Render previews of existing blog pages according to options in editor %>
+    <%- section_body = element.nested_elements.find_by(name: 'section_blog_previews_body') -%>
+    <%= render_element(section_body, locals: {blog_index_page: blog_index_page}) if section_body -%>
+
+  <%- end -%>
+
+<%- end -%>

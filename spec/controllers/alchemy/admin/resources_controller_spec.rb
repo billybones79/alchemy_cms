@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+require "rails_helper"
 
 describe Admin::EventsController do
   it "should include ResourcesHelper" do
     expect(controller.respond_to?(:resource_window_size)).to be_truthy
   end
 
-  describe '#index' do
+  describe "#index" do
     let(:params)  { Hash.new }
-    let!(:peter)  { create(:event, name: 'Peter') }
-    let!(:lustig) { create(:event, name: 'Lustig') }
+    let!(:peter)  { create(:event, name: "Peter") }
+    let!(:lustig) { create(:event, name: "Lustig") }
 
     before do
       authorize_user(:as_admin)
@@ -22,7 +22,7 @@ describe Admin::EventsController do
       expect(assigns(:events)).to include(lustig)
     end
 
-    context 'with search query given' do
+    context "with search query given" do
       let(:params) { {q: {name_or_hidden_name_or_description_or_location_name_cont: "PeTer"}} }
 
       it "returns only matching records" do
@@ -32,7 +32,7 @@ describe Admin::EventsController do
       end
 
       context "but searching for record with certain association" do
-        let(:bauwagen) { create(:location, name: 'Bauwagen') }
+        let(:bauwagen) { create(:location, name: "Bauwagen") }
         let(:params)   { {q: {name_or_hidden_name_or_description_or_location_name_cont: "Bauwagen"}} }
 
         before do
@@ -47,70 +47,116 @@ describe Admin::EventsController do
         end
       end
 
-      context 'with sort parameter given' do
-        let(:params) { {q: {s: "name asc"}} }
+      context "with sort parameter given" do
+        let(:params) { {q: {s: "name desc"}} }
 
-        it "returns records in the right order" do
+        it "returns records in the defined order" do
           get :index, params: params
-          expect(assigns(:events)).to eq([lustig, peter])
+          expect(assigns(:events)).to eq([peter, lustig])
+        end
+      end
+
+      context "without sort parameter given" do
+        context "if resource has name attribute" do
+          it "returns records sorted by name" do
+            get :index
+            expect(assigns(:events)).to eq([lustig, peter])
+          end
+        end
+
+        context "if resource has no name attribute" do
+          let!(:booking1) { Booking.create!(from: 2.week.from_now) }
+          let!(:booking2) { Booking.create!(from: 1.weeks.from_now) }
+
+          controller(::Alchemy::Admin::ResourcesController) do
+            def resource_handler
+              @_resource_handler ||= Alchemy::Resource.new(controller_path, alchemy_module, Booking)
+            end
+          end
+
+          it "returns records sorted by first attribute" do
+            get :index
+            expect(assigns(:resources)).to eq([booking2, booking1])
+          end
         end
       end
     end
   end
 
-  describe '#update' do
-    let(:params) { {q: {name_or_hidden_name_or_description_or_location_name_cont: 'some_query'}, page: 6} }
+  describe "#update" do
+    let(:params) { {q: {name_or_hidden_name_or_description_or_location_name_cont: "some_query"}, page: 6} }
 
-    context 'with regular noun model name' do
-      let(:peter) { create(:event, name: 'Peter') }
+    context "with regular noun model name" do
+      let(:peter) { create(:event, name: "Peter") }
 
-      it 'redirects to index, keeping the current location parameters' do
+      it "redirects to index, keeping the current location parameters" do
         post :update, params: {id: peter.id, event: {name: "Hans"}}.merge(params)
         expect(response.redirect_url).to eq("http://test.host/admin/events?page=6&q%5Bname_or_hidden_name_or_description_or_location_name_cont%5D=some_query")
       end
     end
 
-    context 'with zero plural noun model name' do
-      let!(:peter) { create(:series, name: 'Peter') }
-      let(:params) { {q: { name_cont: 'some_query'}, page: 6} }
+    context "with zero plural noun model name" do
+      let!(:peter) { create(:series, name: "Peter") }
+      let(:params) { {q: { name_cont: "some_query"}, page: 6} }
 
-      it 'redirects to index, keeping the current location parameters' do
-        expect(controller).to receive(:controller_path) { 'admin/series' }
+      it "redirects to index, keeping the current location parameters" do
+        expect(controller).to receive(:controller_path) { "admin/series" }
         post :update, params: {id: peter.id, series: {name: "Hans"}}.merge(params)
         expect(response.redirect_url).to eq("http://test.host/admin/series?page=6&q%5Bname_cont%5D=some_query")
       end
     end
   end
 
-  describe '#create' do
-    let(:params) { {q: {name_or_hidden_name_or_description_or_location_name_cont: 'some_query'}, page: 6} }
+  describe "#create" do
+    let(:params) { {q: {name_or_hidden_name_or_description_or_location_name_cont: "some_query"}, page: 6} }
     let!(:location) { create(:location) }
 
-    context 'with regular noun model name' do
-      it 'redirects to index, keeping the current location parameters' do
+    context "with regular noun model name" do
+      it "redirects to index, keeping the current location parameters" do
         post :create, params: {event: {name: "Hans", location_id: location.id}}.merge(params)
         expect(response.redirect_url).to eq("http://test.host/admin/events?page=6&q%5Bname_or_hidden_name_or_description_or_location_name_cont%5D=some_query")
       end
     end
 
-    context 'with zero plural noun model name' do
-      let(:params) { {q: {name_cont: 'some_query'}, page: 6} }
+    context "with zero plural noun model name" do
+      let(:params) { {q: {name_cont: "some_query"}, page: 6} }
 
-      it 'redirects to index, keeping the current location parameters' do
-        expect(controller).to receive(:controller_path) { 'admin/series' }
+      it "redirects to index, keeping the current location parameters" do
+        expect(controller).to receive(:controller_path) { "admin/series" }
         post :create, params: {series: {name: "Hans"}}.merge(params)
         expect(response.redirect_url).to eq("http://test.host/admin/series?page=6&q%5Bname_cont%5D=some_query")
       end
     end
   end
 
-  describe '#destroy' do
-    let(:params) { {q: {name_or_hidden_name_or_description_or_location_name_cont: 'some_query'}, page: 6} }
-    let!(:peter)  { create(:event, name: 'Peter') }
+  describe "#destroy" do
+    let(:params) { {q: {name_or_hidden_name_or_description_or_location_name_cont: "some_query"}, page: 6} }
+    let!(:peter)  { create(:event, name: "Peter") }
 
-    it 'redirects to index, keeping the current location parameters' do
+    it "redirects to index, keeping the current location parameters" do
       delete :destroy, params: {id: peter.id}.merge(params)
       expect(response.redirect_url).to eq("http://test.host/admin/events?page=6&q%5Bname_or_hidden_name_or_description_or_location_name_cont%5D=some_query")
+    end
+
+    context "If the resource is not destroyable" do
+      let!(:undestroyable) { create(:event, name: "Undestructible") }
+
+      it "adds an error flash" do
+        delete :destroy, params: {id: undestroyable.id}.merge(params)
+
+        expect(response.redirect_url).to eq("http://test.host/admin/events?page=6&q%5Bname_or_hidden_name_or_description_or_location_name_cont%5D=some_query")
+        expect(flash[:error]).to eq("This is the undestructible event!")
+      end
+    end
+  end
+
+  describe "#common_search_filter_includes" do
+    before do
+      allow(controller).to receive(:alchemy_module) { { name: "events" } }
+    end
+
+    it "should not be frozen" do
+      expect(controller.send(:common_search_filter_includes)).to_not be_frozen
     end
   end
 end

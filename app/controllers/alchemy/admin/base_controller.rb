@@ -6,11 +6,9 @@ module Alchemy
       include Userstamp
       include Locale
 
-      before_action { enforce_ssl if ssl_required? && !request.ssl? }
       before_action :load_locked_pages
 
-      helper_method :clipboard_empty?, :trash_empty?, :get_clipboard, :is_admin?,
-        :options_from_params
+      helper_method :clipboard_empty?, :trash_empty?, :get_clipboard, :is_admin?
 
       check_authorization
 
@@ -28,14 +26,14 @@ module Alchemy
 
       def leave
         authorize! :leave, :alchemy_admin
-        render template: '/alchemy/admin/leave', layout: !request.xhr?
+        render template: "/alchemy/admin/leave", layout: !request.xhr?
       end
 
       private
 
       # Disable layout rendering for xhr requests.
       def set_layout
-        request.xhr? ? false : 'alchemy/admin'
+        request.xhr? ? false : "alchemy/admin"
       end
 
       # Handles exceptions
@@ -56,7 +54,7 @@ module Alchemy
         if request.xhr?
           render action: "error_notice"
         else
-          render '500', status: 500
+          render "500", status: 500
         end
       end
 
@@ -90,6 +88,7 @@ module Alchemy
       # Returns true if the current_alchemy_user (The logged-in Alchemy User) has the admin role.
       def is_admin?
         return false if !current_alchemy_user
+
         current_alchemy_user.admin?
       end
 
@@ -105,40 +104,21 @@ module Alchemy
           flash[:notice] = Alchemy.t(flash_notice)
           do_redirect_to redirect_url
         else
-          render action: (params[:action] == 'update' ? 'edit' : 'new')
+          render action: (params[:action] == "update" ? "edit" : "new")
         end
-      end
-
-      def per_page_value_for_screen_size
-        Alchemy::Deprecation.warn("#per_page_value_for_screen_size is deprecated, please use #items_per_page instead")
-        return items_per_page if session[:screen_size].blank?
-        screen_height = session[:screen_size].split('x').last.to_i
-        (screen_height / 50) - 12
       end
 
       # Does redirects for html and js requests
       #
       def do_redirect_to(url_or_path)
         respond_to do |format|
-          format.js   {
+          format.js {
             @redirect_url = url_or_path
             render :redirect
           }
           format.html { redirect_to url_or_path }
         end
       end
-
-      # Extracts options from params and permits all keys
-      #
-      # If no options are present it returns an empty parameters hash.
-      #
-      # @returns [ActionController::Parameters]
-      def options_from_params
-        @_options_from_params ||= begin
-          (params[:options] || ActionController::Parameters.new).permit!
-        end
-      end
-      deprecate :options_from_params, deprecator: Alchemy::Deprecation
 
       # This method decides if we want to raise an exception or not.
       #
@@ -150,7 +130,7 @@ module Alchemy
 
       # Are we currently in the page edit mode page preview.
       def is_page_preview?
-        controller_path == 'alchemy/admin/pages' && action_name == 'show'
+        controller_path == "alchemy/admin/pages" && action_name == "show"
       end
 
       def load_locked_pages
@@ -161,11 +141,11 @@ module Alchemy
       #
       def current_alchemy_site
         @current_alchemy_site ||= begin
-          site_id = params[:site_id] || session[:alchemy_site_id]
-          site = Site.find_by(id: site_id) || super
-          session[:alchemy_site_id] = site.id
-          site
-        end
+            site_id = params[:site_id] || session[:alchemy_site_id]
+            site = Site.find_by(id: site_id) || super
+            session[:alchemy_site_id] = site&.id
+            site
+          end
       end
     end
   end

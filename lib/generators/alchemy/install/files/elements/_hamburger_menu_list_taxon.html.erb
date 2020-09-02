@@ -1,0 +1,18 @@
+<%- cache(hamburger_menu_list_taxon) do -%>
+  <%= element_view_for(hamburger_menu_list_taxon, tag: 'li') do |el| -%>
+
+    <%# Generate list of styling classes according to checked options in editor %>
+    <%-
+      taxon_class = []
+      taxon_class << "strong"    if el.has? :strong
+      taxon_class << "underline" if el.has? :underline
+    -%>
+
+    <%# Render taxon hyperlink with the generated class list %>
+    <%- if el.has? :taxon # Required content that is temporarily blank in the page editor preview before saving -%>
+      <%- taxon = el.ingredient(:taxon) #Spree::Taxon instance -%>
+      <%= link_to taxon.name, spree.nested_taxons_path(taxon), class: taxon_class -%>
+    <%- end -%>
+
+  <%- end -%>
+<%- end -%>

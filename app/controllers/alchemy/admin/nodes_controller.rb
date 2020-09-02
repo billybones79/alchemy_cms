@@ -3,15 +3,16 @@
 module Alchemy
   module Admin
     class NodesController < Admin::ResourcesController
+      include Alchemy::Admin::CurrentLanguage
+
       def index
         @root_nodes = Node.language_root_nodes
       end
 
       def new
         @node = Node.new(
-          site: Alchemy::Site.current,
           parent_id: params[:parent_id],
-          language: Language.current
+          language: @current_language,
         )
       end
 
@@ -19,7 +20,7 @@ module Alchemy
 
       def resource_params
         params.require(:node).permit(
-          :site_id,
+          :menu_type,
           :parent_id,
           :language_id,
           :page_id,
@@ -27,7 +28,7 @@ module Alchemy
           :url,
           :title,
           :nofollow,
-          :external
+          :external,
         )
       end
     end

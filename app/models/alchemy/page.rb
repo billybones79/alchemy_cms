@@ -17,7 +17,6 @@
 #  rgt              :integer
 #  parent_id        :integer
 #  depth            :integer
-#  visible          :boolean          default(FALSE)
 #  locked_by        :integer
 #  restricted       :boolean          default(FALSE)
 #  robot_index      :boolean          default(TRUE)
@@ -44,11 +43,10 @@ module Alchemy
 
     DEFAULT_ATTRIBUTES_FOR_COPY = {
       autogenerate_elements: false,
-      visible: false,
       public_on: nil,
       public_until: nil,
       locked_at: nil,
-      locked_by: nil
+      locked_by: nil,
     }
 
     SKIPPED_ATTRIBUTES_ON_COPY = %w(
@@ -80,16 +78,16 @@ module Alchemy
       :urlname,
       :visible,
       :layoutpage,
-      :menu_id,
       :long_excerpt,
-      :short_excerpt
+      :short_excerpt,
+      :menu_id
     ]
 
-    acts_as_nested_set(dependent: :destroy)
+    acts_as_nested_set(dependent: :destroy, scope: [:layoutpage, :language_id])
 
     stampable stamper_class_name: Alchemy.user_class_name
 
-    belongs_to :language, optional: true
+    belongs_to :language
 
     belongs_to :creator,
       primary_key: Alchemy.user_class_primary_key,
@@ -112,48 +110,38 @@ module Alchemy
     has_one :site, through: :language
     has_many :site_languages, through: :site, source: :languages
     has_many :folded_pages
-    has_many :legacy_urls, class_name: 'Alchemy::LegacyPageUrl'
-    has_many :nodes, class_name: 'Alchemy::Node', inverse_of: :page
+    has_many :legacy_urls, class_name: "Alchemy::LegacyPageUrl"
+    has_many :nodes, class_name: "Alchemy::Node", inverse_of: :page
 
     has_many :translations_relation, foreign_key: "from_id", class_name: "Alchemy::PageTranslation", dependent: :destroy
     has_many :translates_relation, foreign_key: "to_id", class_name: "Alchemy::PageTranslation", dependent: :destroy
 
     has_many :translations, through: :translations_relation, source: :to
 
-    validates_presence_of :language, on: :create, unless: :root
-    validates_presence_of :page_layout, unless: :systempage?
-    validates_format_of :page_layout, with: /\A[a-z0-9_-]+\z/, unless: -> { systempage? || page_layout.blank? }
-    validates_presence_of :parent_id, if: proc { Page.count > 1 }
+    before_validation :set_language,
+      if: -> { language.nil? }
+
+    validates_presence_of :page_layout
+    validates_format_of :page_layout, with: /\A[a-z0-9_-]+\z/, unless: -> { page_layout.blank? }
+    validates_presence_of :parent, unless: -> { layoutpage? || language_root? }
 
     before_save :set_language_code,
-      if: -> { language.present? },
-      unless: :systempage?
+      if: -> { language.present? }
 
     before_save :set_restrictions_to_child_pages,
-      if: :restricted_changed?,
-      unless: :systempage?
+      if: :restricted_changed?
 
     before_save :inherit_restricted_status,
-      if: -> { parent && parent.restricted? },
-      unless: :systempage?
+      if: -> { parent && parent.restricted? }
 
     before_save :set_published_at,
-      if: -> { public_on.present? && published_at.nil? },
-      unless: :systempage?
+      if: -> { public_on.present? && published_at.nil? }
 
     before_save :set_fixed_attributes,
       if: -> { fixed_attributes.any? }
 
-    before_create :set_language_from_parent_or_default,
-      if: -> { language_id.blank? },
-      unless: :systempage?
-
     after_update :create_legacy_url,
-      if: :should_create_legacy_url?,
-      unless: -> { definition['redirects_to_external'] }
-
-    after_update :attach_to_menu!,
-      if: :should_attach_to_menu?
+      if: :saved_change_to_urlname?
 
     after_update -> { nodes.update_all(updated_at: Time.current) }
 
@@ -166,21 +154,23 @@ module Alchemy
     # site_name accessor
     delegate :name, to: :site, prefix: true, allow_nil: true
 
-    attr_accessor :menu_id
-
     # Class methods
     #
     class << self
-      # The root page of the page tree
-      #
-      # Internal use only. You wouldn't use this page ever.
-      #
-      # Automatically created when accessed the first time.
-      #
-      def root
-        super || create!(name: 'Root')
+      # The url_path class
+      # @see Alchemy::Page::UrlPath
+      def url_path_class
+        @_url_path_class ||= Alchemy::Page::UrlPath
       end
-      alias_method :rootpage, :root
+
+      # Set a custom url path class
+      #
+      #     # config/initializers/alchemy.rb
+      #     Alchemy::Page.url_path_class = MyPageUrlPathClass
+      #
+      def url_path_class=(klass)
+        @_url_path_class = klass
+      end
 
       # Used to store the current page previewed in the edit page template.
       #
@@ -225,29 +215,12 @@ module Alchemy
         end
       end
 
-      def layout_root_for(language_id)
-        where({parent_id: Page.root.id, layoutpage: true, language_id: language_id}).limit(1).first
-      end
-
-      def find_or_create_layout_root_for(language_id)
-        layoutroot = layout_root_for(language_id)
-        return layoutroot if layoutroot
-        language = Language.find(language_id)
-        Page.create!(
-          name: "Layoutroot for #{language.name}",
-          layoutpage: true,
-          language: language,
-          autogenerate_elements: false,
-          parent_id: Page.root.id
-        )
-      end
-
       def copy_and_paste(source, new_parent, new_name)
         page = copy(source, {
           parent_id: new_parent.id,
           language: new_parent.language,
           name: new_name,
-          title: new_name
+          title: new_name,
         })
         if source.children.any?
           source.copy_children_to(page)
@@ -257,23 +230,25 @@ module Alchemy
 
       def all_from_clipboard(clipboard)
         return [] if clipboard.blank?
-        where(id: clipboard.collect { |p| p['id'] })
+
+        where(id: clipboard.collect { |p| p["id"] })
       end
 
       def all_from_clipboard_for_select(clipboard, language_id, layoutpage = false)
         return [] if clipboard.blank?
+
         clipboard_pages = all_from_clipboard(clipboard)
         allowed_page_layouts = Alchemy::PageLayout.selectable_layouts(language_id, layoutpage)
-        allowed_page_layout_names = allowed_page_layouts.collect { |p| p['name'] }
+        allowed_page_layout_names = allowed_page_layouts.collect { |p| p["name"] }
         clipboard_pages.select { |cp| allowed_page_layout_names.include?(cp.page_layout) }
       end
 
       def link_target_options
-        options = [[Alchemy.t(:default, scope: 'link_target_options'), '']]
+        options = [[Alchemy.t(:default, scope: "link_target_options"), ""]]
         link_target_options = Config.get(:link_target_options)
         link_target_options.each do |option|
-          options << [Alchemy.t(option, scope: 'link_target_options',
-                                default: option.to_s.humanize), option]
+          options << [Alchemy.t(option, scope: "link_target_options",
+                                        default: option.to_s.humanize), option]
         end
         options
       end
@@ -320,7 +295,7 @@ module Alchemy
         differences.stringify_keys!
         attributes = source.attributes.merge(differences)
         attributes.merge!(DEFAULT_ATTRIBUTES_FOR_COPY)
-        attributes['name'] = new_name_for_copy(differences['name'], source.name)
+        attributes["name"] = new_name_for_copy(differences["name"], source.name)
         attributes.except(*SKIPPED_ATTRIBUTES_ON_COPY)
       end
 
@@ -336,7 +311,8 @@ module Alchemy
       #
       def new_name_for_copy(custom_name, source_name)
         return custom_name if custom_name.present?
-        "#{source_name} (#{Alchemy.t('Copy')})"
+
+        "#{source_name} (#{Alchemy.t("Copy")})"
       end
     end
 
@@ -364,15 +340,16 @@ module Alchemy
     #   Use this for your custom element loading logic.
     #
     # @return [ActiveRecord::Relation]
-    def find_elements(options = {}, show_non_public = false)
-      if show_non_public
-        Alchemy::Deprecation.warn "Passing true as second argument to page#find_elements to include" \
-          " invisible elements has been removed. Please implement your own ElementsFinder" \
-          " and pass it with options[:finder]."
-      end
-
+    def find_elements(options = {})
       finder = options[:finder] || Alchemy::ElementsFinder.new(options)
       finder.elements(page: self)
+    end
+
+    # = The url_path for this page
+    #
+    # @see Alchemy::Page::UrlPath#call
+    def url_path
+      self.class.url_path_class.new(self).call
     end
 
     # The page's view partial is dependent from its page layout
@@ -401,9 +378,10 @@ module Alchemy
     #   only public pages (true), skip public pages (false)
     #
     def previous(options = {})
-      pages = self_and_siblings.where('lft < ?', lft)
+      pages = self_and_siblings.where("lft < ?", lft)
       select_page(pages, options.merge(order: :desc))
     end
+
     alias_method :previous_page, :previous
 
     # Returns the next page on the same level or nil.
@@ -414,9 +392,10 @@ module Alchemy
     #   only public pages (true), skip public pages (false)
     #
     def next(options = {})
-      pages = self_and_siblings.where('lft > ?', lft)
+      pages = self_and_siblings.where("lft > ?", lft)
       select_page(pages, options.merge(order: :asc))
     end
+
     alias_method :next_page, :next
 
     # Locks the page to given user
@@ -462,9 +441,10 @@ module Alchemy
     def copy_children_to(new_parent, translate: false)
       children.each do |child|
         next if child == new_parent
+
         new_child = Page.copy(child, {
           language_id: new_parent.language_id,
-          language_code: new_parent.language_code
+          language_code: new_parent.language_code,
         })
         new_child.move_to_child_of(new_parent)
         if translate
@@ -528,22 +508,22 @@ module Alchemy
       update_columns(
         published_at: current_time,
         public_on: already_public_for?(current_time) ? public_on : current_time,
-        public_until: still_public_for?(current_time) ? public_until : nil
+        public_until: still_public_for?(current_time) ? public_until : nil,
       )
     end
 
     # Updates an Alchemy::Page based on a new ordering to be applied to it
     #
     # Note: Page's urls should not be updated (and a legacy URL created) if nesting is OFF
-    # or if a page is external or if the URL is the same
+    # or if the URL is the same
     #
     # @param [TreeNode]
     #   A tree node with new lft, rgt, depth, url, parent_id and restricted indexes to be updated
     #
     def update_node!(node)
-      hash = {lft: node.left, rgt: node.right, parent_id: node.parent, depth: node.depth, restricted: node.restricted}
+      hash = { lft: node.left, rgt: node.right, parent_id: node.parent, depth: node.depth, restricted: node.restricted }
 
-      if Config.get(:url_nesting) && !definition['redirects_to_external'] && urlname != node.url
+      if urlname != node.url
         LegacyPageUrl.create(page_id: id, urlname: urlname)
         hash[:urlname] = node.url
       end
@@ -568,6 +548,7 @@ module Alchemy
     #
     def editable_by?(user)
       return true unless has_limited_editors?
+
       (editor_roles & user.alchemy_roles).any?
     end
 
@@ -593,7 +574,7 @@ module Alchemy
     # does not respond to +#name+ it returns +'unknown'+
     #
     def creator_name
-      creator.try(:name) || Alchemy.t('unknown')
+      creator.try(:name) || Alchemy.t("unknown")
     end
 
     # Returns the name of the last updater of this page.
@@ -602,7 +583,7 @@ module Alchemy
     # does not respond to +#name+ it returns +'unknown'+
     #
     def updater_name
-      updater.try(:name) || Alchemy.t('unknown')
+      updater.try(:name) || Alchemy.t("unknown")
     end
 
     # Returns the name of the user currently editing this page.
@@ -611,7 +592,7 @@ module Alchemy
     # does not respond to +#name+ it returns +'unknown'+
     #
     def locker_name
-      locker.try(:name) || Alchemy.t('unknown')
+      locker.try(:name) || Alchemy.t("unknown")
     end
 
     # Menus (aka. root nodes) this page is attached to
@@ -635,8 +616,8 @@ module Alchemy
         .limit(1).first
     end
 
-    def set_language_from_parent_or_default
-      self.language = parent.language || Language.default
+    def set_language
+      self.language = parent&.language || Language.current
       set_language_code
     end
 
@@ -644,41 +625,13 @@ module Alchemy
       self.language_code = language.code
     end
 
-    def should_create_legacy_url?
-      if active_record_5_1?
-        saved_change_to_urlname?
-      else
-        urlname_changed?
-      end
-    end
-
     # Stores the old urlname in a LegacyPageUrl
     def create_legacy_url
-      if active_record_5_1?
-        former_urlname = urlname_before_last_save
-      else
-        former_urlname = urlname_was
-      end
-      legacy_urls.find_or_create_by(urlname: former_urlname)
+      legacy_urls.find_or_create_by(urlname: urlname_before_last_save)
     end
 
     def set_published_at
       self.published_at = Time.current
-    end
-
-    def attach_to_menu!
-      current_site_id = Alchemy::Site.current.id
-      node = Alchemy::Node.find_by!(id: menu_id, site_id: current_site_id)
-      node.children.create!(
-        site_id: current_site_id,
-        language_id: language_id,
-        page_id: id,
-        name: name
-      )
-    end
-
-    def should_attach_to_menu?
-      menu_id.present? && nodes.none?
     end
   end
 end

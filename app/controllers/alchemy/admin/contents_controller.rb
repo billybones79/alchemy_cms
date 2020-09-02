@@ -3,13 +3,12 @@
 module Alchemy
   module Admin
     class ContentsController < Alchemy::Admin::BaseController
-      helper 'alchemy/admin/essences'
+      helper "alchemy/admin/essences"
 
       authorize_resource class: Alchemy::Content
 
       def create
         @content = Content.create(content_params)
-        @html_options = params[:html_options] || {}
       end
 
       private

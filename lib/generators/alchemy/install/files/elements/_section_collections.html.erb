@@ -1,0 +1,27 @@
+<%- cache(section_collections) do -%>
+
+  <%# Render section inside a <section> with the right classes.
+      Since the "class" option overwrites the default (section_collections),
+      add it explicitly to help with styling. %>
+  <!-- COLLECTIONS -->
+  <%=
+    element_view_for(section_collections,
+      tag: 'section',
+      class: 'section_collections section full-width-slider-section slider-content'
+    ) do |el|
+  -%>
+
+    <div class="swiper-container-categories">
+      <div class="swiper-container">
+        <div class="swiper-wrapper">
+
+          <%# Render every item (collection) by respecting their order in the editor %>
+          <%= render section_collections.nested_elements.available -%>
+
+        </div>
+      </div>
+    </div>
+
+  <%- end -%>
+
+<%- end -%>

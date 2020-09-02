@@ -1,0 +1,120 @@
+<%# Expected locals:
+    - metadata:  Alchemy::Element instance of the current page's metadata (i.e.
+                 "blog_page_metadata") in order to (possibly) display some of it.
+                 Can be nil.
+    - page_path: Relative URL of the current page.
+    - featured:  Boolean deciding whether the preview gets rendered in "featured" mode.
+                 This mode outputs a bigger or more remarkable display and is ideal
+                 for highlighting specific previews.
+%>
+<%- cache(blog_page_preview) do -%>
+
+  <%- if featured -%>
+
+      <%# HTML structure of a featured preview: inside a <div> with the right
+          classes. Added element-specific class "blog_page_preview_featured"
+          to help with styling. %>
+      <%=
+        element_view_for(blog_page_preview,
+          tag: 'div',
+          class: 'blog_page_preview_featured col-12 col-xl-6'
+        ) do |el|
+      %>
+        <div class="tile-wrapper first-article h-100">
+
+          <%# Render background image uploaded in editor by generating a relative
+              image URI and by using CSS property "background-image". Empty images
+              generate nil URIs, so leave the inline CSS blank in this case. %>
+          <%-
+            background_image_url = el.essence(:background_image).picture_url
+            banner_section_style = "background-image: url('#{background_image_url}')" if background_image_url
+          -%>
+          <%=
+            content_tag(:section,
+              style: banner_section_style,
+              class: "blog_page_preview_background_image banner d-flex align-items-center position-relative h-100"
+            ) do
+          -%>
+
+            <%# Make the whole preview clickable and linking to the full blog page %>
+            <%= link_to '', page_path, class: 'block-link' %>
+
+            <div class="overlay position-absolute w-100 h-100"></div>
+            <div class="container mt-lg-5">
+              <div class="content-banner position-relative text-center pb-5">
+
+                <%# Render preview title (header text) %>
+                <h2 class="blog_page_preview_title my-4"><%= el.render :title -%></h2>
+
+                <%# Render every paragraph of the preview blurb inside a <p> tag
+                    (tag is automatic for rich text). Since el.render appears to
+                    ignore HTML attributes, use a custom helper to add classes. %>
+                <%- add_class_to_richtext_content el.content(:blurb), 'blog_page_preview_blurb' -%>
+                <%= el.render :blurb -%>
+
+                <%# Render button unless it is nil (i.e. absent or hidden in the
+                    editor). Also pass down the page's metadata, relative path and
+                    featured status in case the button requires this info. %>
+                <%- preview_button = element.nested_elements.find_by(name: 'blog_page_preview_button') -%>
+                <%=
+                  render_element(preview_button,
+                    locals: {metadata: metadata, page_path: page_path, featured: featured}
+                  ) if preview_button
+                -%>
+
+              </div>
+            </div>
+
+          <%- end -%>
+
+        </div>
+      <%- end -%>
+
+  <%- else -%>
+
+      <%# HTML structure of a normal preview: inside a <div> with the right classes.
+          Added element-specific class "blog_page_preview" to help with styling. %>
+      <%=
+        element_view_for(blog_page_preview,
+          tag: 'div',
+          class: 'blog_page_preview tile-wrapper col-12 col-md-6 col-lg-6 swiper-slide'
+        ) do |el|
+      %>
+        <div class="card-tile card-post position-relative p-0">
+
+          <%# Make the whole preview clickable and linking to the full blog page %>
+          <%= link_to '', page_path, class: 'card_block-link' %>
+
+          <div class="card_inner py-5 px-4 d-flex align-items-end justify-content-center">
+            <div class="card_post position-relative">
+              <div class="card_caption d-flex flex-column align-items-center justify-content-center">
+
+                <%# Render preview title (header text) %>
+                <span class="blog_page_preview_title card_caption-heading"><%= el.render :title -%></span>
+
+                <%# Render every paragraph of the preview blurb inside a <p> tag
+                    (tag is automatic for rich text). Since el.render appears to
+                    ignore HTML attributes, use a custom helper to add classes. %>
+                <%- add_class_to_richtext_content el.content(:blurb), 'blog_page_preview_blurb card_caption-description' -%>
+                <%= el.render :blurb -%>
+
+                <%# Render button unless it is nil (i.e. absent or hidden in the
+                    editor). Also pass down the page's metadata, relative path and
+                    featured status in case the button requires this info. %>
+                <%- preview_button = element.nested_elements.find_by(name: 'blog_page_preview_button') -%>
+                <%=
+                  render_element(preview_button,
+                    locals: {metadata: metadata, page_path: page_path, featured: featured}
+                  ) if preview_button
+                -%>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+      <%- end -%>
+
+  <%- end -%>
+
+<%- end -%>

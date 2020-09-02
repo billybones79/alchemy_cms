@@ -1,0 +1,19 @@
+<%- cache(newsletter_signup_text) do -%>
+
+  <%# Render header and paragraph(s) inside a <div> with the right classes.
+      Since the "class" option overwrites the default (newsletter_signup_text),
+      add it explicitly to help with styling. %>
+  <%= element_view_for(newsletter_signup_text, tag: 'div', class: 'newsletter_signup_text col-12 col-xl-5') do |el| -%>
+
+    <%# Render header text %>
+    <h2 class="newsletter_signup_text_header mb-5"><%= el.render :header -%></h2>
+
+    <%# Render every paragraph inside a <p> tag (tag is automatic for rich text).
+        Since el.render appears to ignore HTML attributes, use a custom helper
+        to add classes. %>
+    <%- add_class_to_richtext_content el.content(:paragraphs), 'newsletter_signup_text_paragraph' -%>
+    <%= el.render :paragraphs -%>
+
+  <%- end -%>
+
+<%- end -%>

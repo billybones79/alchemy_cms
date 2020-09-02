@@ -1,0 +1,45 @@
+{
+  "name": "@alchemy_cms/admin",
+  "version": "0.2.0",
+  "description": "AlchemyCMS",
+  "browser": "package/admin.js",
+  "files": [
+    "package/**/*"
+  ],
+  "directories": {
+    "lib": "package"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlchemyCMS/alchemy_cms.git"
+  },
+  "keywords": [],
+  "author": "Thomas von Deyen",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/AlchemyCMS/alchemy_cms/issues"
+  },
+  "homepage": "https://github.com/AlchemyCMS/alchemy_cms#readme",
+  "dependencies": {
+    "sortablejs": "^1.10.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.9.6",
+    "@babel/preset-env": "^7.9.6",
+    "babel-jest": "^26.0.1",
+    "jest": "^25.2.7",
+    "prettier": "^2.0.2",
+    "xhr-mock": "^2.5.1"
+  },
+  "jest": {
+    "globals": {
+      "Alchemy": {}
+    },
+    "roots": [
+      "package"
+    ]
+  }
+}

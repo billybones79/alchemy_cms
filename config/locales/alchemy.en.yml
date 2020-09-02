@@ -1,6 +1,5 @@
 en:
 
-
   # = Alchemy Translations
   # All translations used in Alchemy CMS are inside this alchemy namespace.
   alchemy:
@@ -164,7 +163,8 @@ en:
 
     resource_help_texts:
       site:
-        aliases: Please separate additional domains with spaces or new lines.
+        host: Either enter a <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name" target="_blank">FQDN</a> or use a asterisk (*) to allow all domains to access this site.
+        aliases: Enter additional domains this site should be accessible by. Please separate them by space or new line.
 
     add_nested_element: "Add %{name}"
     anchor: 'Anchor'
@@ -465,7 +465,11 @@ en:
     no_files_in_archive: "You do not have any files in your archive."
     no_images_in_archive: "You don't have any images in your archive."
     no_more_elements_to_add: "No more elements available."
-    no_resource_found: "No %{resource} found. Please add your first one below."
+    no_resource_found:
+      default: "No %{resource} found. Please add your first one below."
+      alchemy/language: "<h2>Your website does not have any languages yet.</h2><p>You need at least one language to work with. Please create one below.</p>"
+      alchemy/node: "<h2>You do not have any menus yet.</h2><p>With menus your users can navigate your website. You can have multiple menus on your website. How many depends on your website template.</p><p>Please chose which menu you want to create first.</p>"
+      alchemy/site: "<h2>You do not have any websites yet.</h2><p>In order to serve requests you need to create a website first.</p><p>This form has been filled with sensible defaults that work in most cases.</p>"
     no_search_results: "Your search did not return any results."
     "not a valid image": "This is not an valid image."
     "or": 'or'
@@ -478,9 +482,6 @@ en:
     page_published: "Published page"
     page_restricted: "restricted"
     page_states:
-      visible:
-        "true": "Page is visible in navigation."
-        "false": "Page is not visible in navigation."
       public:
         "true": "Page is published."
         "false": "Page is unpublished."
@@ -575,8 +576,6 @@ en:
         button_label: Upload image(s)
         upload_success: "Picture %{name} uploaded successfully"
         upload_failure: "Error while uploading %{name}: %{error}"
-    url_name: "URL-Name"
-    visible: "visible"
     want_to_create_new_language: "Do you want to create a new empty language tree?"
     want_to_make_copy_of_existing_language: "Do you want to copy an existing language tree?"
     "We need at least one default.": "A default language must exist."
@@ -601,7 +600,7 @@ en:
     "Successfully updated": "Successfully updated"
     "Successfully removed": "Successfully removed"
     "Nothing found": "Nothing found."
-    complete: 'Complete'
+    complete: 'Abgeschlossen'
     "Update available": 'Update available'
     "Update status unavailable": 'Update status unavailable'
     "Uploading": "Uploading"
@@ -638,14 +637,8 @@ en:
   # Alchemy time formats
   time:
     formats:
-      schedule_date: "%B %d %I:%M%p"
-      hour: "%I:%M%p"
-      sortable_hour: "%e %p %I:%M"
-      day: "%B %e %Y"
-      day_and_time: "%B %e - %I:%M%p"
-      time: "%I:%M%p"
       alchemy:
-        default: "%a, %d %b %Y %H:%M:%S %z"
+        default: "%m.%d.%Y %H:%M"
         essence_date: "%Y-%m-%d"
         page_status: "%m.%d.%Y %H:%M"
         short_datetime: "%d %b %H:%M"
@@ -678,9 +671,9 @@ en:
           page_layout:
             blank: "^Please choose a page layout."
           urlname:
-            too_short: "^The pages urlname is too short (minimum of 3 characters)."
-            taken: "^URL-Name already taken."
-            exclusion: "^URL-Name reserved."
+            too_short: "^URL-Path is too short (minimum of 3 characters)."
+            taken: "^URL-Path already taken."
+            exclusion: "^URL-Path reserved."
       alchemy/picture:
         attributes:
           image_file:
@@ -712,6 +705,20 @@ en:
 
   # Translations for Alchemy database models
   activerecord:
+    errors:
+      models:
+        alchemy/node:
+          attributes:
+            base:
+              essence_nodes_present: "This menu item is in use inside an Alchemy element on the following pages: %{page_names}."
+        alchemy/site:
+          attributes:
+            languages:
+              still_present: "are still attached to this site. Please remove them first."
+        alchemy/language:
+          attributes:
+            pages:
+              still_present: "are still attached to this language. Please remove them first."
     models:
       gutentag/tag:
         one: Tag
@@ -788,8 +795,9 @@ en:
         locale: Localization
         code: ISO Code
       alchemy/legacy_page_url:
-        urlname: "URL path"
+        urlname: "URL-Path"
       alchemy/node:
+        menu_type: Menu Type
         name: "Name"
         title: "Title"
         nofollow: "Search engine must not follow"
@@ -813,8 +821,8 @@ en:
         tag_list: Tags
         title: "Title"
         updated_at: "Updated at"
-        urlname: "Urlname"
-        visible: "visible in navigation"
+        urlname: "URL-Path"
+        slug: "Slug"
       alchemy/picture:
         image_file_name: "Filename"
         image_file_height: "Height"

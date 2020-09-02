@@ -33,7 +33,7 @@ module Alchemy
         helpers.render(content, {
           content: content,
           options: options,
-          html_options: html_options
+          html_options: html_options,
         })
       end
 
@@ -60,15 +60,6 @@ module Alchemy
       def essence(name)
         content(name).try(:essence)
       end
-    end
-
-    # Block-level helper class for element editors.
-    # @deprecated
-    class ElementEditorHelper < BlockHelper
-      def edit(name, *args)
-        helpers.render_essence_editor_by_name(element, name.to_s, *args)
-      end
-      deprecate :edit, deprecator: Alchemy::Deprecation
     end
 
     # Block-level helper for element views. Constructs a DOM element wrapping
@@ -116,7 +107,7 @@ module Alchemy
         tag: :div,
         id: element_dom_id(element),
         class: element.name,
-        tags_formatter: ->(tags) { tags.join(" ") }
+        tags_formatter: ->(tags) { tags.join(" ") },
       }.merge(options)
 
       # capture inner template block
@@ -139,26 +130,6 @@ module Alchemy
 
       # that's it!
       output
-    end
-
-    # Block-level helper for element editors. Provides a block helper object
-    # you can use for concise access to Alchemy's various helpers.
-    #
-    # === Example:
-    #
-    #   <%= element_editor_for(element) do |el| %>
-    #     <%= el.edit :title %>
-    #     <%= el.edit :body %>
-    #     <%= el.edit :target_url %>
-    #   <% end %>
-    #
-    # @param [Alchemy::Element] element
-    #   The element to display.
-    #
-    def element_editor_for(element)
-      capture do
-        yield ElementEditorHelper.new(self, element: element) if block_given?
-      end
     end
   end
 end

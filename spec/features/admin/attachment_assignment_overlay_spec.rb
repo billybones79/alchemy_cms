@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+require "rails_helper"
 
 RSpec.describe "Attachment assignment overlay", type: :system do
   before do
@@ -33,9 +33,9 @@ RSpec.describe "Attachment assignment overlay", type: :system do
           expect(page).to have_selector("#assign_file_list .list a", count: 1)
           expect(page).to have_selector("#assign_file_list .list a span", text: "job alert")
         end
-      rescue Capybara::ElementNotFound => error
-        pending error.message
-        raise error
+      rescue Capybara::ElementNotFound => e
+        pending e.message
+        raise e
       end
     end
   end

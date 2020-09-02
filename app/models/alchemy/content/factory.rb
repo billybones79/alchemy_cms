@@ -22,10 +22,13 @@ module Alchemy
         if definition.blank?
           raise ContentDefinitionError, "No definition found in elements.yml for #{attributes.inspect} and #{element.inspect}"
         end
-        super(name: definition['name'], element_id: element.id)
+
+        super(
+          name: definition[:name],
+          essence_type: normalize_essence_type(definition[:type]),
+          element_id: element.id
+        ).tap(&:build_essence)
       end
-      alias_method :build, :new
-      deprecate build: :new, deprecator: Alchemy::Deprecation
 
       # Creates a new content from elements definition in the +elements.yml+ file.
       #
@@ -34,20 +37,11 @@ module Alchemy
       #
       # @return [Alchemy::Content]
       #
-      def create(*args)
-        attributes = args.last || {}
-        if args.length > 1
-          Alchemy::Deprecation.warn 'Passing an element as first argument to Alchemy::Content.create is deprecated! Pass an attribute hash with element inside instead.'
-          element = args.first
-        else
-          element = attributes[:element]
-        end
-        new(attributes.merge(element: element)).tap do |content|
-          content.create_essence!(attributes[:essence_type])
+      def create(attributes = {})
+        new(attributes).tap do |content|
+          content.essence.save && content.save
         end
       end
-      alias_method :create_from_scratch, :create
-      deprecate create_from_scratch: :create, deprecator: Alchemy::Deprecation
 
       # Creates a copy of source and also copies the associated essence.
       #
@@ -62,11 +56,11 @@ module Alchemy
         new_content = Content.new(
           source.attributes.
             except(*SKIPPED_ATTRIBUTES_ON_COPY).
-            merge(differences.with_indifferent_access)
+            merge(differences.with_indifferent_access),
         )
         new_essence = source.essence.class.create!(
           source.essence.attributes.
-            except(*SKIPPED_ATTRIBUTES_ON_COPY)
+            except(*SKIPPED_ATTRIBUTES_ON_COPY),
         )
         new_content.tap do |content|
           content.essence = new_essence
@@ -77,7 +71,7 @@ module Alchemy
       # Returns all content definitions from elements.yml
       #
       def definitions
-        definitions = Element.definitions.flat_map { |e| e['contents'] }
+        definitions = Element.definitions.flat_map { |e| e["contents"] }
         definitions.compact!
         definitions
       end
@@ -119,12 +113,22 @@ module Alchemy
       element.content_definition_for(name) || {}
     end
 
+    # Build essence from definition.
+    #
+    # If an optional type is passed, this type of essence gets created.
+    #
+    def build_essence(type = essence_type)
+      self.essence = essence_class(type).new({
+        ingredient: default_value,
+      })
+    end
+
     # Creates essence from definition.
     #
     # If an optional type is passed, this type of essence gets created.
     #
     def create_essence!(type = nil)
-      self.essence = essence_class(type).create!(prepared_attributes_for_essence)
+      build_essence(type).save!
       save!
     end
 
@@ -135,18 +139,7 @@ module Alchemy
     # If an optional type is passed, this type of essence gets constantized.
     #
     def essence_class(type = nil)
-      Content.normalize_essence_type(type || definition['type']).constantize
-    end
-
-    # Prepares the attributes for creating the essence.
-    #
-    # 1. It sets a default text if given in +elements.yml+
-    #
-    def prepared_attributes_for_essence
-      attributes = {
-        ingredient: default_text(definition['default'])
-      }
-      attributes
+      Content.normalize_essence_type(type || definition["type"]).constantize
     end
   end
 end

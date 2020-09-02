@@ -1,0 +1,15 @@
+<%- cache(hamburger_menu_list_page) do -%>
+  <%= element_view_for(hamburger_menu_list_page, tag: 'li') do |el| -%>
+
+    <%# Generate list of styling classes according to checked options in editor %>
+    <%-
+      page_class = []
+      page_class << "strong"    if el.has? :strong
+      page_class << "underline" if el.has? :underline
+    -%>
+
+    <%# Render page hyperlink with the generated class list %>
+    <%= el.render :link, {}, class: page_class -%>
+
+  <%- end -%>
+<%- end -%>

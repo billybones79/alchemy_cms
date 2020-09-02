@@ -1,0 +1,70 @@
+<%- cache(section_collections_item) do -%>
+
+  <%# Render item (i.e. single collection) inside a <div> with the right classes.
+      Since the "class" option overwrites the default class
+      (section_collections_item), add it explicitly to help with styling. %>
+  <!-- COLLECTIONS-ITEM -->
+  <%=
+    element_view_for(section_collections_item,
+      tag: 'div',
+      class: 'section_collections_item card-tile card-image swiper-slide position-relative col-12 col-md-6 col-lg-4 col-xl-3 p-0'
+    ) do |el|
+  -%>
+
+    <%# Retrieve taxon's name & URL for display.
+        Although the taxon is mandatory, it's blank in the editor preview before
+        the first save, so use fallback values until then. %>
+    <%-
+      taxon      = el.ingredient(:taxon) # Spree::Taxon (nil if it doesn't exist)
+      taxon_name = el.has?(:taxon) ? taxon.name : ''
+      taxon_url  = el.has?(:taxon) ? spree.nested_taxons_path(taxon) : '#'
+    -%>
+
+    <%# Render taxon hyperlink with the right classes. Also add an essence-specific
+        class to help with styling. %>
+    <%= link_to '', taxon_url, class: 'section_collections_item_taxon card_block-link' -%>
+
+    <div class="card_inner">
+      <div class="card_image position-relative">
+
+        <%# Display background image with a <img src="..."> tag (tag is skipped if
+            there's no image). Add an essence-specific class to help with styling.
+            Disable captions & links since their <figure> & <a> tags could mess
+            with tag-sensitive styling. %>
+        <%=
+          el.render(:background_image,
+            {show_caption: false, disable_link: true},
+            class: 'section_collections_item_background_image'
+          )
+        -%>
+
+        <%# Mysterious <div> that doesn't apply to the first item? %>
+        <%= tag.div(class: 'overlay position-absolute h-100 w-100') if el.element.position > 1 -%>
+
+        <div class="card_caption">
+
+          <%# Render taxon's name with no description.
+              Also add an essence-specific class to help with styling. %>
+          <%= tag.span(taxon_name, class: 'section_collections_item_taxon card_caption-heading') %>
+          <span class="card_caption-description"></span>
+
+          <%# Render button hyperlink along with its text.
+              Also add essence-specific classes to help with styling. %>
+          <figure class="card_caption-btn">
+            <%=
+              link_to(taxon_url,
+                class: 'section_collections_item_taxon button button-radius d-flex align-items-center justify-content-center opaque-white'
+              ) do
+            %>
+              <span class="section_collections_item_button_text"><%= el.render :button_text -%></span>
+            <%- end -%>
+          </figure>
+
+        </div>
+
+      </div>
+    </div>
+
+  <%- end -%>
+
+<%- end -%>

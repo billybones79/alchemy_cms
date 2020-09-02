@@ -1,6 +1,7 @@
 # Relaxed.Ruby.Style
 
 AllCops:
+  TargetRubyVersion: 2.4
   Exclude:
     - 'bin/rspec'
     - 'vendor/**/*'
@@ -8,16 +9,10 @@ AllCops:
     - 'spec/dummy/config/**/*'
     - 'alchemy_cms.gemspec'
     - 'Rakefile'
-
-  TargetRubyVersion: 2.3
+    - 'node_modules/**/*'
 
 # Really, rubocop?
 Bundler/OrderedGems:
-  Enabled: false
-
-# Sometimes I believe this reads better
-# This also causes spacing issues on multi-line fixes
-Style/BracesAroundHashParameters:
   Enabled: false
 
 Style/EmptyLiteral:
@@ -26,6 +21,9 @@ Style/EmptyLiteral:
 # We use class vars and will have to continue doing so for compatability
 Style/ClassVars:
   Enabled: false
+
+Style/FloatDivision:
+  EnforcedStyle: left_coerce
 
 # This has been used for customization
 Style/MutableConstant:
@@ -55,13 +53,13 @@ Style/MixinUsage:
   Exclude:
     - spec/**/*
 
-Performance/Count:
+Layout/ArgumentAlignment:
   Enabled: false
 
-Layout/AlignHash:
+Layout/HashAlignment:
   Enabled: false
 
-Layout/AlignParameters:
+Layout/ParameterAlignment:
   Enabled: false
 
 Layout/ClosingParenthesisIndentation:
@@ -77,16 +75,20 @@ Layout/ElseAlignment:
 Layout/EmptyLineAfterMagicComment:
   Enabled: false
 
-Layout/IndentArray:
+Layout/EmptyLinesAroundAccessModifier:
+  Exclude:
+    - lib/alchemy/test_support/factories/*.rb
+
+Layout/FirstArrayElementIndentation:
   Enabled: false
 
-Layout/IndentHash:
+Layout/FirstHashElementIndentation:
   Enabled: false
-
-Layout/IndentHeredoc:
-  EnforcedStyle: active_support
 
 Layout/IndentationWidth:
+  Enabled: false
+
+Layout/LineLength:
   Enabled: false
 
 Layout/MultilineHashBraceLayout:
@@ -115,7 +117,10 @@ Layout/SpaceInsideParens:
 Layout/EndAlignment:
   Enabled: false
 
-Lint/HandleExceptions:
+Layout/RescueEnsureAlignment:
+  Enabled: false
+
+Lint/SuppressedException:
   Exclude:
     - 'config/initializers/mini_profiler.rb'
 
@@ -216,8 +221,19 @@ Style/SpecialGlobalVars:
   StyleGuide: http://relaxed.ruby.style/#stylespecialglobalvars
 
 Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+Style/TrailingCommaInArguments:
   Enabled: false
-  StyleGuide: http://relaxed.ruby.style/#stylestringliterals
+
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: consistent_comma
 
 Style/WhileUntilModifier:
   Enabled: false
@@ -266,9 +282,6 @@ Metrics/ModuleLength:
   Enabled: false
 
 Metrics/CyclomaticComplexity:
-  Enabled: false
-
-Metrics/LineLength:
   Enabled: false
 
 Metrics/MethodLength:

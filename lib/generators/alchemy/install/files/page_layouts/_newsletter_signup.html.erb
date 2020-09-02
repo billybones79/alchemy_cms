@@ -1,0 +1,16 @@
+<%# Added page-specific class "newsletter_signup banner" to help with styling %>
+<section class="newsletter_signup banner d-flex align-items-center bg-main-color-darker py-5">
+
+  <div class="container my-5">
+    <div class="content-banner position-relative text-center d-flex flex-wrap">
+
+      <%# Render text displayed before (or next to) the sign-up form %>
+      <%= render_elements only: 'newsletter_signup_text', from_page: 'newsletter_signup' -%>
+
+      <%# Render the sign-up form itself %>
+      <%= render_elements only: 'newsletter_signup_form', from_page: 'newsletter_signup' -%>
+
+    </div>
+  </div>
+
+</section>

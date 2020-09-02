@@ -14,13 +14,8 @@
     <p><%= @page.layout_display_name %></p>
   </div>
   <div class="value">
-  <% if @page.definition['redirects_to_external'] %>
     <label><%= Alchemy::Page.human_attribute_name(:urlname) %></label>
-    <p><%= @page.urlname %></p>
-  <% else %>
-    <label><%= Alchemy::LegacyPageUrl.human_attribute_name(:urlname) %></label>
     <p><%= "/#{@page.urlname}" %></p>
-  <% end %>
   </div>
   <div class="value">
     <label><%= Alchemy.t(:page_status) %></label>
@@ -28,10 +23,6 @@
       <span class="page_status">
         <%= render_icon(:compass, transform: 'shrink-2', class: @page.public? ? nil : 'disabled') %>
         <%= @page.status_title(:public) %>
-      </span>
-      <span class="page_status">
-        <%= render_icon(:eye, transform: 'shrink-2', class: @page.visible? ? nil : 'disabled') %>
-        <%= @page.status_title(:visible) %>
       </span>
       <span class="page_status">
         <%= render_icon(:lock, transform: 'shrink-2', class: @page.restricted? ? nil : 'disabled') %>

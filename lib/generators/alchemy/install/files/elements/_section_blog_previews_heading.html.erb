@@ -1,0 +1,25 @@
+<%# Expected locals:
+    - blog_index_path: Relative URL to some blog index page
+ %>
+<%- cache(section_blog_previews_heading) do -%>
+
+  <%# Render heading inside a <div> with the right classes. Since the
+      "class" option overwrites the default (section_blog_previews_heading),
+      add it explicitly to help with styling. %>
+  <%=
+    element_view_for(section_blog_previews_heading,
+      tag: 'div',
+      class: 'section_blog_previews_heading section-heading text-center mb-5'
+    ) do |el|
+  -%>
+
+    <%# Render header text %>
+    <h2 class="section_blog_previews_heading_title mb-3"><%= el.render :title -%></h2>
+
+    <%# Render hyperlink to blog index by using the URL stored in "blog_index_path".
+        Ignore this step for an empty URL since it will link to the current page. %>
+    <%= link_to(el.ingredient(:link), blog_index_path, class: 'section_blog_previews_heading_link see-all') if blog_index_path %>
+
+  <%- end -%>
+
+<%- end -%>

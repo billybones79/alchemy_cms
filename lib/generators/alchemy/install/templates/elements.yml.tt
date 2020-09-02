@@ -1,0 +1,378 @@
+# == In this configuration, you set up Alchemy's element layouts.
+#
+# For further information please see http://guides.alchemy-cms.com/stable/elements.html
+
+<%- unless @options[:skip_demo_files] -%>
+# le preview de la blog page
+- name: blog_info
+  contents:
+  - name: header
+    type: EssenceText
+  - name: image
+    type: EssencePicture
+  - name: preview_text
+    type: EssenceText
+
+- name: blog_header
+  contents:
+  - name: banner
+    type: EssencePicture
+  - name: headline
+    type: EssenceText
+
+ # contenu du blog
+- name: blog_content
+  contents:
+  - name: body
+    type: EssenceRichtext
+
+
+- name: related_products
+  nestable_elements:
+    - related_product
+
+- name: related_product
+  contents:
+  - name: product
+    type: EssenceSpreeProduct
+
+
+#un preview de quelques blog posts
+- name: blog_previews
+  taggable: true
+  contents:
+  - name: title
+    type: essenceText
+  - name: link
+    type: essenceText
+  - name: number
+    type: essenceText
+    validate: [ format: !ruby/regexp '/^([0-9]+\,?\ ?)*$/']
+  - name: root
+    type: EssencePage
+
+#featured_article que on met dans le top du blog
+- name: featured_article
+  contents:
+  - name: featured_article
+    type: EssencePage
+
+
+
+<%- end -%>
+
+# --- Blog page/post (blog_page) elements
+# Metadata (author, version number, etc.)
+- name: blog_page_metadata
+  unique: true # No need to define metadata twice
+  hint: |
+    Edit metadata relating to the page, such as author names.
+    This information may be displayed only in previews or not at all.
+  contents:
+  - name: author_names
+    type: EssenceText
+    hint: Name of page author(s) in 255 characters or less (optional)
+  - name: reading_time
+    type: EssenceText # EssenceDate renders a calendar which doesn't allow the editor to enter a time value
+    hint: |
+      Estimated reading time for the page in minutes and seconds using the format MM:SS.
+      For video-only pages, enter the video length instead (optional)
+    validate:
+    - format: !ruby/regexp '/\A\s*([0-5]\d:[0-5]\d)?\s*\z/' # Force format MM:SS where minutes and seconds are between 00 and 59, but allow leading & trailing whitespace to avoid frustration
+    settings:
+      input_type: text # "time" expects hours and minutes and thus sets an upper limit on MM (23)
+# Page preview content (text, images, etc.)
+- name: blog_page_preview
+  unique: true # No need to define preview content twice
+  hint: |
+    Edit page preview with the desired text, background image and button.
+    NOTE: The preview isn't displayed here, but can appear on home or index pages alongside other previews.
+  contents:
+  - name: title
+    type: EssenceText
+    hint: Header text of 255 characters maximum
+    default: Your preview title
+    validate:
+    - presence: true # Forbid blank titles because they're important
+  - name: blurb
+    type: EssenceRichtext
+    hint: |
+      Short blurb ideally describing or promoting the page.
+      Press "Enter" to create another paragraph and don't forget the "Special character" button for symbols.
+    default: <p>Your preview blurb</p> # <p> tags don't show up in the editor and are added automatically after the first save
+    settings:
+      tinymce:
+        toolbar:
+          # Limit options to guarantee proper formatting.
+          # Default options are listed here: www.rubydoc.info/github/AlchemyCMS/alchemy_cms/Alchemy/Tinymce
+          - 'charmap | undo redo | fullscreen'
+  - name: background_image
+    type: EssencePicture
+    hint: |
+      Click the 2nd icon from the left to upload an image or to select one from the library.
+      Click the top-right "X" to remove it.
+      NOTE: Editing the hyperlink (3rd & 4th icons) or properties (5th icon) doesn't have any effect because the image is displayed via URL.
+      Also note that some preview styles won't display the image.
+    settings:
+      crop: false # Disabled cropper tool because cropped images are displayed as uncropped (BUG)
+  nestable_elements:
+  - blog_page_preview_button
+# Page preview button
+- name: blog_page_preview_button
+  unique: true # No need for more than one button (BUG: editor allows multiple buttons)
+  hint: |
+    Customize the appearance of the button inside the page preview.
+    This button (along with the entire preview) links to this page.
+  contents:
+  - name: style
+    type: EssenceSelect
+    hint: |
+      Color and shape of the button.
+      A rectangular button may contain text but doesn't display any metadata.
+      Conversely, a circular button doesn't contain text but displays metadata (if it exists).
+    default: 'white rectangle' # Value is empty before the first save, so prevent this
+    validate:
+    - presence: true # Force a selection (a default is selected anyway, so this line is optional)
+    settings:
+      select_values: ['white rectangle', 'green circle']
+  - name: icon
+    type: EssenceSelect
+    hint: Use "play arrow" to highlight playable content and "book" for everything else.
+    default: 'book' # Value is empty before the first save, so prevent this
+    validate:
+    - presence: true # Force a selection (a default is selected anyway, so this line is optional)
+    settings:
+      select_values: ['book', 'play arrow']
+  - name: text
+    type: EssenceText
+    hint: Text of 255 characters maximum displayed on the button (ignored if the button is circular)
+    default: Read post
+    settings:
+      linkable: false  # Button always redirects to the blog page, so NO hyperlink
+
+# --- Section "Blog Previews" (section_blog_previews) and its elements
+- name: section_blog_previews
+  unique: true # No need to have it twice on a page
+  hint: Adds section with customizable content and appearance for displaying blog post previews
+  contents:
+  - name: blog_index
+    type: EssencePage
+    hint: |
+      Blog index whose posts are displayed as previews in this section.
+      The selected page must be of type "Blog index".
+    validate:
+    - presence: true # Force editor to select a page (mandatory by default, so this line is optional)
+  nestable_elements:
+  - section_blog_previews_heading
+  - section_blog_previews_body
+# Section heading
+- name: section_blog_previews_heading
+  unique: true # No need for more than one heading
+  hint: Edit text and blog links displayed before the blog previews
+  contents:
+  - name: title
+    type: EssenceText
+    hint: Header text of 255 characters maximum (optional)
+    default: Blog
+  - name: link
+    type: EssenceText
+    hint: |
+      Text of 255 characters maximum linking to the blog index (optional).
+      NOTE: Text won't show up until a blog index has been selected above.
+    default: See all
+    settings:
+      linkable: false  # URL is generated from the selected blog index at the section level, so NO hyperlink
+# Body (blog previews)
+- name: section_blog_previews_body
+  unique: true # No need for more than one body
+  hint: |
+    Customize how blog previews are displayed and how many.
+    Previews showcase the most recent blog posts and are ordered by their publication timestamp.
+    The most recent post is also highlighted.
+  contents:
+  - name: number_of_previews
+    type: EssenceText
+    hint: |
+      Number of previews to display.
+      Please enter a non-negative integer: 0, 1, 2, etc..
+    default: 5
+    validate:
+    - presence: true                   # Force a selection (a default is selected anyway, so this line is optional)
+    - format: !ruby/regexp '/\A\d*\z/' # Non-negative integer (0, 1, 2, etc.). Blank value allows "presence" validation to run
+    settings:
+      input_type: number # Allowed characters: 0123456789e,.+-
+
+# --- Section "Collections" (section_collections) and its elements
+- name: section_collections
+  unique: true # No need to have it twice on a page
+  hint: Adds section with customizable content and appearance for displaying cards that showcase taxons (i.e. product categories or collections)
+  nestable_elements:
+  - section_collections_item
+# Item (collection)
+- name: section_collections_item
+  hint: Add or edit a collection with the desired taxon, background image and text
+  contents:
+  - name: taxon
+    type: EssenceSpreeTaxon # Provides a taxon select box in the editor along with Ruby objects for accessing a taxon's name or URL (alchemy-cms.com/extensions/2-alchemy-solidus)
+    hint: Taxon's name (please don't use the same taxon twice)
+    validate:
+    - presence: true    # Forbid blank taxons (mandatory by default, so this line is optional)
+    - uniqueness: true  # Forbid 2 collections from using the same taxon to avoid redundancy
+  - name: background_image
+    type: EssencePicture
+    hint: |
+      Click the 2nd icon from the left to upload an image or to select one from the library.
+      Click the top-right "X" to remove it.
+      Click the 5th icon to edit the image's title and alternative text.
+      NOTE: Editing the hyperlink (3rd & 4th icons), caption or position (5th icon) doesn't have any effect on purpose.
+    settings:
+      crop: false  # Disabled cropper tool because cropped images are displayed as uncropped (BUG)
+  - name: button_text
+    type: EssenceText
+    hint: Text of 255 characters maximum displayed on the button
+    default: Shop
+    validate:
+    - presence: true   # Forbid blank text
+    settings:
+      linkable: false  # URL is generated from the selected taxon, so NO hyperlink
+
+# --- Hamburger Menu (hamburger_menu) elements
+# Header text
+- name: hamburger_menu_header
+  hint: Displays a small, uppercased header
+  contents:
+  - name: text
+    type: EssenceText
+    hint: Header text (please don't use the same text twice in the same (sub)menu)
+    validate:
+    - presence: true    # Forbid blank headers
+    - uniqueness: false # "true" checks every (sub)menu while we only want to forbid duplicate headers within the same (sub)menu, so use "false"
+    settings:
+      linkable: false   # NOT an hyperlink; use page & taxon lists instead
+# Horizontal line
+- name: hamburger_menu_line
+  hint: Displays a horizontal line separator
+# Boxed page link
+- name: hamburger_menu_boxed_page
+  hint: Displays a boxed hyperlink to an internal or external page
+  contents:
+  - name: link
+    type: EssenceText # EssenceLink doesn't allow the editor to change the link text
+    hint: Hyperlink text (please don't use the same text twice in the same (sub)menu)
+    validate:
+    - presence: true    # Forbid blank link text
+    - uniqueness: false # "true" checks every (sub)menu while we only want to forbid duplicate link text within the same (sub)menu, so use "false"
+    settings:
+      linkable: true   # Hyperlink
+# List of links & submenus
+- name: hamburger_menu_list
+  hint: Main container for ordering and displaying links to pages, taxons or submenus
+  contents:
+  - name: text_size
+    type: EssenceSelect
+    hint: |
+      Size of hyperlink text for all items.
+      Use "big" for main lists and "small" for secondary lists.
+    default: 'big' # Empty if a nested element is saved but the list itself isn't, so prevent this
+    validate:
+    - presence: true # Force a selection (a default is selected anyway, so this line is optional)
+    settings:
+      select_values: ['big', 'small']
+  nestable_elements:
+  - hamburger_menu_list_page
+  - hamburger_menu_list_taxon
+  - hamburger_menu_list_submenu
+# Page link
+- name: hamburger_menu_list_page
+  hint: Displays a non-boxed, stylizable hyperlink to an internal or external page
+  contents:
+  - name: link
+    type: EssenceText # EssenceLink doesn't allow the editor to change the link text
+    hint: Hyperlink text (please don't use the same text twice in the same (sub)menu)
+    validate:
+    - presence: true    # Forbid blank items (i.e. empty link text)
+    - uniqueness: false # "true" checks every (sub)menu while we only want to forbid duplicate link text within the same (sub)menu, so use "false"
+    settings:
+      linkable: true   # Hyperlink
+  - name: strong
+    type: EssenceBoolean # Checkbox for embolding the link text
+    hint: Makes the hyperlink text bolder
+  - name: underline
+    type: EssenceBoolean # Checkbox for underlining the link text
+    hint: Underlines the hyperlink text
+# Taxon link
+- name: hamburger_menu_list_taxon
+  hint: Displays a non-boxed, stylizable hyperlink to a Solidus taxon (i.e. product category/brand) by using the taxon's name as the hyperlink text
+  contents:
+  - name: taxon
+    type: EssenceSpreeTaxon # Place taxon on the page (alchemy-cms.com/extensions/2-alchemy-solidus)
+    hint: Taxon's name (please don't use the same taxon twice in the same (sub)menu)
+    validate:
+    - presence: true    # Forbid blank taxons (mandatory by default, so this line is optional)
+    - uniqueness: false # "true" checks every (sub)menu while we only want to forbid duplicate taxons within the same (sub)menu, so use "false"
+  - name: strong
+    type: EssenceBoolean # Checkbox for embolding the taxon
+    hint: Makes the taxon's name bolder
+  - name: underline
+    type: EssenceBoolean # Checkbox for underlining the taxon
+    hint: Underlines the taxon's name
+# Submenu (level 2, 3, etc.)
+- name: hamburger_menu_list_submenu
+  hint: |
+    Secondary container with a (displayed) label for ordering and displaying a hamburger submenu.
+    Clicking the label opens the submenu while clicking the generated "back" button closes it.
+  contents:
+  - name: label
+    type: EssenceText
+    hint: Label text for accessing the submenu (please don't use the same label twice in the same (sub)menu)
+    validate:
+    - presence: true    # Forbid blank labels
+    - uniqueness: false # "true" checks every (sub)menu while we only want to forbid duplicate labels within the same (sub)menu, so use "false"
+    settings:
+      linkable: false  # Submenu back-and-forth is handled by the view, so NO hyperlink
+  - name: strong
+    type: EssenceBoolean # Checkbox for embolding the label
+    hint: Makes the label text bolder
+  - name: underline
+    type: EssenceBoolean # Checkbox for underlining the label
+    hint: Underlines the hyperlink text
+  nestable_elements:
+  # Should be the same list as hamburger_menu
+  - hamburger_menu_list
+  - hamburger_menu_boxed_page
+  - hamburger_menu_header
+  - hamburger_menu_line
+
+# --- Newsletter Sign-up (newsletter_signup) elements
+# Text
+- name: newsletter_signup_text
+  unique: true # No need for more than one
+  hint: Edit text displayed before (or next to) the sign-up form
+  contents:
+  - name: header
+    type: EssenceText
+    hint: Header text of 255 characters maximum (optional)
+    default: Your header
+  - name: paragraphs
+    type: EssenceRichtext
+    hint: |
+      Paragraphs below the header (optional).
+      Press "Enter" to create another paragraph and don't forget the "Special character" button for symbols.
+    default: <p>Your paragraph</p> # <p> tags don't show up in the editor and are added automatically after the first save
+    settings:
+      tinymce:
+        toolbar:
+        # Limit options to guarantee proper formatting.
+        # Default options are listed here: www.rubydoc.info/github/AlchemyCMS/alchemy_cms/Alchemy/Tinymce
+        - 'charmap | undo redo | fullscreen'
+# Form
+- name: newsletter_signup_form
+  unique: true # No need for more than one
+  hint: Edit text displayed inside the sign-up form itself
+  contents:
+  - name: hint
+    type: EssenceText
+    hint: Text of 255 characters maximum hinting at the expected input (optional)
+    default: Your email address
+    settings:
+      input_type: text # "email" renders the wrong HTML and enforces an email address format (ex: a@b.c)

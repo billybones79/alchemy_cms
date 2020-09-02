@@ -1,0 +1,47 @@
+<%- cache(hamburger_menu_list_submenu) do -%>
+  <%= element_view_for(hamburger_menu_list_submenu, tag: 'li') do |el| -%>
+
+    <%# Generate unique ID (format is unimportant) for the submenu's "back" button
+        in order to link to the correct parent submenu.
+        Generate a list of styling classes according to checked options in editor. %>
+    <%-
+      submenu_id = dom_id(el.content(:label), :submenu)
+
+      label_class = []
+      label_class << "strong"    if el.has? :strong
+      label_class << "underline" if el.has? :underline
+    -%>
+
+    <%# Render text label (with the generated ID and class list) that displays
+        the submenu once clicked %>
+    <%= content_tag(:label, for: submenu_id, class: label_class) do -%>
+      <%= el.render :label -%>
+    <%- end -%>
+    <%= tag.input type: 'checkbox', id: submenu_id, name: submenu_id, class: 'menu-checkbox' -%>
+
+    <%# Submenu itself %>
+    <div class="menu">
+
+      <div class="d-flex position-fixed justify-content-between w-100 p-0 px-x-3 py-3">
+        <div class="col d-flex justify-content-start p-0 px-3">
+
+          <%# "Back" button using the generated ID %>
+          <%= content_tag(:label, class: 'menu-toggle', for: submenu_id) do -%>
+            <i class="icon-back-menu"></i>
+          <%- end -%>
+
+        </div>
+        <div class="col d-flex justify-content-end p-0 px-3">
+          <div class="close-menu">
+            <i class="icon-close-menu"></i>
+          </div>
+        </div>
+      </div>
+
+      <%# Render all elements composing the submenu (lists, boxed links, etc.) %>
+      <%= render hamburger_menu_list_submenu.nested_elements.available -%>
+
+    </div>
+
+  <%- end -%>
+<%- end -%>

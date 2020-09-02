@@ -29,6 +29,11 @@ module Alchemy
   #
   # @deprecated Use Rails' `render(content)` method directly instead
   module EssencesHelper
+
+    # Custom module in "lws" folder isn't recognized in element views, so
+    # include it here (hack)
+    include Alchemy::Lws::EssencesHelper
+
     # Renders the +Essence+ view partial from +Element+ by name.
     #
     # Pass the name of the +Content+ from +Element+ as second argument.

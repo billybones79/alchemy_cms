@@ -14,20 +14,18 @@ module Alchemy
     end
 
     def taggable?
-      definition['taggable'] == true
+      definition["taggable"] == true
     end
+
+    deprecate :taggable?, deprecator: Alchemy::Deprecation
 
     def rootpage?
       !new_record? && parent_id.blank?
     end
 
-    def systempage?
-      return true if Page.count.zero?
-      rootpage? || (parent_id == Page.root.id && !language_root?)
-    end
-
     def folded?(user_id)
       return unless Alchemy.user_class < ActiveRecord::Base
+
       folded_pages.where(user_id: user_id, folded: true).any?
     end
 
@@ -51,46 +49,22 @@ module Alchemy
 
     def editor_roles
       return unless has_limited_editors?
+
       definition["editable_by"]
     end
-
-    # Returns true or false if the pages definition for config/alchemy/page_layouts.yml contains redirects_to_external: true
-    # @deprecated Please use a menu node with an external url instead.
-    def redirects_to_external?
-      !!definition["redirects_to_external"]
-    end
-    deprecate redirects_to_external?: 'Please use a menu node with an external url instead.', deprecator: Alchemy::Deprecation
-
-    # @deprecated
-    def has_controller?
-      !PageLayout.get(page_layout).nil? && !PageLayout.get(page_layout)["controller"].blank?
-    end
-    deprecate :has_controller?, deprecator: Alchemy::Deprecation
 
     # True if page locked_at timestamp and locked_by id are set
     def locked?
       locked_by? && locked_at?
     end
 
-    # @deprecated Please use a menu node with an url pointing to your controller path instead.
-    def controller_and_action
-      if definition['controller']
-        {
-          controller: definition["controller"].gsub(/(^\b)/, "/#{$1}"),
-          action: definition["action"]
-        }
-      end
-    end
-    deprecate controller_and_action: 'Please use a menu node with an url pointing to your controller path instead.', deprecator: Alchemy::Deprecation
-
     # Returns a Hash describing the status of the Page.
     #
     def status
       {
         public: public?,
-        visible: visible?,
         locked: locked?,
-        restricted: restricted?
+        restricted: restricted?,
       }
     end
 
@@ -116,7 +90,7 @@ module Alchemy
     # Page layout names are defined inside the config/alchemy/page_layouts.yml file.
     # Translate the name in your config/locales language yml file.
     def layout_display_name
-      Alchemy.t(page_layout, scope: 'page_layout_names')
+      Alchemy.t(page_layout, scope: "page_layout_names")
     end
 
     # Returns the name for the layout partial
@@ -174,8 +148,9 @@ module Alchemy
     #
     def cache_page?
       return false unless caching_enabled?
+
       page_layout = PageLayout.get(self.page_layout)
-      page_layout['cache'] != false && page_layout['searchresults'] != true
+      page_layout["cache"] != false && page_layout["searchresults"] != true
     end
 
     private

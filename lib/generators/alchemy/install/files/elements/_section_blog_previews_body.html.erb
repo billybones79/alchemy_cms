@@ -1,0 +1,99 @@
+<%# Expected locals:
+    - blog_index_page: Alchemy::Page instance of some blog index page
+%>
+<%- cache(section_blog_previews_body) do -%>
+
+  <%# Render blog previews inside a <div> with the right classes.
+      Since the "class" option overwrites the default (section_blog_previews_body),
+      add it explicitly to help with styling. %>
+  <%=
+    element_view_for(section_blog_previews_body,
+      tag: 'div',
+      class: 'section_blog_previews_body fake-row d-flex flex-wrap flex-column-reverse flex-lg-row'
+    ) do |el|
+  -%>
+
+    <%# To help avoid errors, only try to display blog previews from blog indexes
+        using the correct layout/type. Watch out for unset (nil) blog indexes. %>
+    <%- if blog_index_page&.page_layout == "blog_index" -%>
+
+        <%# Fetch N newest, previewble blog posts where N is an upper limit set in
+            the editor. The meaning of "previewable" is detailed below. %>
+        <%-
+          nb_blog_previews = el.ingredient(:number_of_previews)
+
+          newest_previewable_blog_posts =
+            blog_index_page.children     # Get all subpages of blog index (blog posts)
+              .published.visible         # Only include posts that are published & visible in navigation (compass & eye icons in admin panel)
+              .joins(:elements)          # Used with "where" condition below to filter out posts without a visible preview (Alchemy element "blog_page_preview")
+              .where("alchemy_elements.name = ?", "blog_page_preview")
+              .reorder(public_on: :desc) # Order posts from newest to oldest according to their initial publication timestamp
+              .limit(nb_blog_previews)   # Apply upper limit N on number of previews
+              .to_a;                     # Convert results to array for easier manipulation
+        -%>
+
+        <%- unless newest_previewable_blog_posts.empty? -%>
+
+            <%# Render preview of newest post in featured mode in order to make it
+                bigger or more remarkable. Also pass down its metadata (ex: authors)
+                and relative path (ex: /my/path) in order to display/link them. %>
+            <%-
+              first_post          = newest_previewable_blog_posts.first
+              first_post_path     = show_alchemy_page_path(first_post) # Empty check above guarantees first_post isn't nil
+              first_post_metadata = first_post.elements.find_by(name: 'blog_page_metadata') # nil if absent or hidden
+              first_post_preview  = first_post.elements.find_by(name: 'blog_page_preview')  # Never nil by design
+            -%>
+
+            <!-- FIRST-ARTICLE -->
+            <%=
+              render_element(first_post_preview,
+                locals: {metadata: first_post_metadata, page_path: first_post_path, featured: true}
+              )
+            %>
+
+            <%# Render HTML wrapping previews of other posts %>
+            <!-- OTHER-ARTICLE -->
+            <div class="col-12 col-xl-6 other-article">
+              <div class="swiper-container-post">
+                <div class="swiper-container">
+                  <div class="swiper-wrapper">
+
+                    <%# Remove newest post from the array because it has already
+                        been rendered, then iterate over the remaining posts
+                        (if there's any) %>
+                    <%-
+                      newest_previewable_blog_posts.shift
+                      other_posts = newest_previewable_blog_posts
+                    -%>
+                    <%- other_posts.each do |other_post| -%>
+
+                      <%# Render preview in normal (i.e. non-featured mode).
+                          Also pass down its metadata (ex: authors) and relative
+                          path (ex: /my/path) in order to display/link them. %>
+                      <%-
+                        other_post_path     = show_alchemy_page_path(other_post) # "other_post" cannot be nil in an iteration
+                        other_post_metadata = other_post.elements.find_by(name: 'blog_page_metadata') # nil if absent or hidden
+                        other_post_preview  = other_post.elements.find_by(name: 'blog_page_preview')  # Never nil by design
+                      -%>
+
+                      <!-- ARTICLE-ITEM -->
+                      <%=
+                        render_element(other_post_preview,
+                          locals: {metadata: other_post_metadata, page_path: other_post_path, featured: false}
+                        )
+                      %>
+
+                    <%- end -%>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+
+        <%- end -%>
+
+    <%- end -%>
+
+  <%- end -%>
+
+<%- end -%>

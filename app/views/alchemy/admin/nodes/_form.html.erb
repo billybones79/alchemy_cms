@@ -1,23 +1,26 @@
 <%= alchemy_form_for([:admin, node]) do |f| %>
-  <% if node.root? %>
-    <%= f.input :name,
-      collection: Alchemy::Node.available_menu_names.map { |n| [I18n.t(n, scope: [:alchemy, :menu_names]), n] },
+  <% if node.new_record? && node.root? %>
+    <%= f.input :menu_type,
+      collection: Alchemy::Language.current.available_menu_names.map { |n| [I18n.t(n, scope: [:alchemy, :menu_names]), n] },
       include_blank: false,
       input_html: { class: 'alchemy_selectbox' } %>
   <% else %>
-    <%= f.input :name, input_html: {
-      autofocus: true,
-      value: node.page && node.read_attribute(:name).blank? ? nil : node.name,
-      placeholder: node.page ? node.page.name : nil
-    } %>
-    <%= f.input :page_id, label: Alchemy::Page.model_name.human, input_html: { class: 'alchemy_selectbox' } %>
-    <%= f.input :url, input_html: { disabled: node.page }, hint: Alchemy.t(:node_url_hint) %>
-    <%= f.input :title %>
-    <%= f.input :nofollow %>
-    <%= f.input :external %>
-    <%= f.hidden_field :parent_id %>
+    <% if node.root? %>
+      <%= f.input :name %>
+    <% else %>
+      <%= f.input :name, input_html: {
+        autofocus: true,
+        value: node.page && node.read_attribute(:name).blank? ? nil : node.name,
+        placeholder: node.page ? node.page.name : nil
+      } %>
+      <%= f.input :page_id, label: Alchemy::Page.model_name.human, input_html: { class: 'alchemy_selectbox' } %>
+      <%= f.input :url, input_html: { disabled: node.page }, hint: Alchemy.t(:node_url_hint) %>
+      <%= f.input :title %>
+      <%= f.input :nofollow %>
+      <%= f.input :external %>
+      <%= f.hidden_field :parent_id %>
+    <% end %>
   <% end %>
-  <%= f.hidden_field :site_id %>
   <%= f.hidden_field :language_id %>
   <%= f.submit button_label %>
 <% end %>
@@ -30,7 +33,7 @@
     initialSelection: {
       id: <%= node.page_id %>,
       text: "<%= node.page.name %>",
-      url: "/<%= node.page.urlname %>"
+      url_path: "<%= node.page.url_path %>"
     }
     <% end %>
   }).on('change', function(e) {
@@ -39,7 +42,7 @@
       $('#node_url').val('').prop('disabled', false)
     } else {
       $('#node_name').attr('placeholder', e.added.name)
-      $('#node_url').val('/' + e.added.urlname).prop('disabled', true)
+      $('#node_url').val(e.added.url_path).prop('disabled', true)
     }
   })
 </script>

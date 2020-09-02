@@ -1,0 +1,8 @@
+<%# Simply render all elements (which represent page sections) added by the editor.
+    Also respect the order set by the editor, i.e. render the top element first,
+    then the second element, etc.. %>
+<%= render_elements %>
+<%# Render section for signing up to the newsletter via a form at the bottom of the
+    page. This section is configured as a global page. %>
+<!-- INFOLETTRE -->
+<%= render partial: "alchemy/page_layouts/newsletter_signup" -%>

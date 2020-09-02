@@ -1,0 +1,118 @@
+<%# Expected locals:
+    - metadata:  Alchemy::Element instance of the current page's metadata (i.e.
+                 "blog_page_metadata") in order to (possibly) display some of it.
+                 Can be nil.
+    - page_path: Relative URL of the current page.
+    - featured:  Boolean reporting whether the preview was rendered in "featured" mode.
+%>
+<%- cache(blog_page_preview_button) do -%>
+
+  <%# Safely extract metadata by defaulting to nil if it is missing %>
+  <%-
+    metadata_author_names = metadata&.ingredient(:author_names)
+    metadata_reading_time = metadata&.ingredient(:reading_time)
+  -%>
+
+  <%# Since HTML differs a lot between button styles, split their entire rendering
+      logic into separate cases. %>
+  <%- if element.ingredient(:style) == 'white rectangle' -%>
+
+      <%# Added element-specific classes "blog_page_preview_button" and
+          "blog_page_preview_button_icon" to help with styling.
+           The other classes are derived from the old, static buttons. %>
+      <%-
+        wrapper_tag_class = [
+          'blog_page_preview_button',
+          (featured ? 'mt-5' : 'mt-4'),
+          'button button-radius d-flex align-items-center justify-content-center opaque-white position-relative'
+        ]
+
+        button_icon_class = [
+          'blog_page_preview_button_icon',
+          (
+            case element.ingredient(:icon)
+            when 'book'       then 'fa fa-book mr-3'
+            when 'play arrow' then 'fa fa-play mr-3'
+            end
+          )
+        ]
+      -%>
+
+      <%# White rectangular button is rendered/wrapped inside a <div> %>
+      <%= element_view_for(blog_page_preview_button, tag: 'div', class: wrapper_tag_class) do |el| %>
+        <div class="d-flex align-items-center justify-content-center">
+
+          <%# Convert button to a hyperlink for the full blog post.
+              Use the button text as a hover tooltip. %>
+          <%= link_to '', page_path, title: el.ingredient(:text), class: 'position-absolute w-100 h-100' %>
+
+          <%# Render selected icon (with a <i> tag and inline CSS) along with
+              the button text. NOTE: "aria: {hidden:}" becomes HTML attribute
+              "aria-hidden". %>
+          <%= tag.i class: button_icon_class, aria: {hidden: "true"} %>
+          <span class="blog_page_preview_button_text"><%= el.render :text -%></span>
+
+        </div>
+      <%- end -%>
+
+  <%- elsif element.ingredient(:style) == 'green circle' -%>
+
+      <%# Added element-specific class "blog_page_preview_button_icon" to
+          help with styling. The other classes are derived from the old,
+          static buttons. %>
+      <%-
+        button_icon_class = [
+          'blog_page_preview_button_icon',
+          (
+            case element.ingredient(:icon)
+            when 'book'       then 'fa fa-book'
+            when 'play arrow' then 'fa fa-play'
+            end
+          )
+        ]
+      -%>
+
+      <%# Green circular button is rendered/wrapped inside a <figure>.
+          Added element-specific class "blog_page_preview_button" to
+          help with styling. %>
+      <%=
+        element_view_for(blog_page_preview_button,
+          tag: 'figure',
+          class: 'blog_page_preview_button card_caption-btn w-100 mt-5'
+        ) do |el|
+      %>
+        <div class="post-meta d-flex align-items-center justify-content-center">
+
+          <%# Left of the button: display the blog post's reading time exactly as
+              shown in the editor (MM:SS) or leave the <span> tag empty if absent. %>
+          <%=
+            content_tag(:span, metadata_reading_time,
+              class: 'blog_page_metadata_reading_time col-4 d-flex justify-content-end meta-string'
+            )
+          %>
+
+          <%# Button itself %>
+          <span class="col-4 d-flex justify-content-center action-btn d-flex align-items-center justify-content-center">
+            <div class="icon-holder d-flex align-items-center justify-content-center">
+
+              <%# Render selected icon with a <i> tag and inline CSS.
+                  NOTE: "aria: {hidden:}" becomes HTML attribute "aria-hidden". %>
+              <%= tag.i class: button_icon_class, aria: {hidden: "true"} %>
+
+            </div>
+          </span>
+
+          <%# Right of the button: display the blog post's author names or leave
+              the <span> tag empty if absent. %>
+          <%=
+            content_tag(:span, metadata_author_names,
+              class: 'blog_page_metadata_author_names col-4 d-flex justify-content-start meta-string'
+            )
+          %>
+
+        </div>
+      <%- end -%>
+
+  <%- end -%>
+
+<%- end -%>

@@ -1,0 +1,8 @@
+<%- cache(hamburger_menu_line) do -%>
+
+  <%# Simply generate the tag <hr class="mx-3 my-5">. Since the "class" option overwrites
+      the default (hamburger_menu_line), add it explicitly to help with styling. %>
+  <%= element_view_for(hamburger_menu_line, tag: 'hr', class: 'hamburger_menu_line mx-3 my-5') do |el| -%>
+  <%- end -%>
+
+<%- end -%>

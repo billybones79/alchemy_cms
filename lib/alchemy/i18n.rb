@@ -74,11 +74,12 @@ module Alchemy
 
       def humanize_default_string!(msg, options)
         return if options[:default].present?
+
         options[:default] = msg.is_a?(Symbol) ? msg.to_s.humanize : msg
       end
 
       def alchemy_scoped_scope(options)
-        default_scope = ['alchemy']
+        default_scope = ["alchemy"]
         case options[:scope]
         when Array
           default_scope + options[:scope]

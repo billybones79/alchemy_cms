@@ -8,7 +8,7 @@ module Alchemy
       before_action :set_current_alchemy_site
       before_action :set_alchemy_language
 
-      helper 'alchemy/pages'
+      helper "alchemy/pages"
 
       helper_method :current_alchemy_user,
         :alchemy_user_signed_in?,
@@ -36,6 +36,7 @@ module Alchemy
     def current_alchemy_user
       current_user_method = Alchemy.current_user_method
       raise NoCurrentUserFoundError if !respond_to?(current_user_method, true)
+
       send current_user_method
     end
 
@@ -66,8 +67,8 @@ module Alchemy
       else
         # find the best language and remember it for later
         @language = load_alchemy_language_from_params ||
-                    load_alchemy_language_from_session ||
-                    Language.default
+          load_alchemy_language_from_session ||
+          Language.default
       end
       store_current_alchemy_language(@language)
     end
@@ -81,7 +82,7 @@ module Alchemy
     # Load language from session if it's present on current site.
     # Otherwise return nil so we can load the default language from current site.
     def load_alchemy_language_from_session
-      if session[:alchemy_language_id].present?
+      if session[:alchemy_language_id].present? && Site.current
         Site.current.languages.find_by(id: session[:alchemy_language_id])
       end
     end
@@ -96,7 +97,7 @@ module Alchemy
     # Also stores language in +Language.current+
     #
     def store_current_alchemy_language(language)
-      if language && language.id
+      if language&.id
         session[:alchemy_language_id] = language.id
         Language.current = language
       end

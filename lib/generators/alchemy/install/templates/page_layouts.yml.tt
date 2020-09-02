@@ -1,0 +1,51 @@
+# == This file defines the page layouts for new pages.
+#
+# For further information please see http://guides.alchemy-cms.com/stable/page_layouts.html
+
+- name: index # Home page
+  unique: true # Only allow one home page to be used and edited across the site
+  elements:
+  - banniere_video
+  - section_blog_previews
+  - section_collections
+
+- name: blog_index
+  unique: true # Only allow one blog landing page to be used and edited across the site
+#  elements: [featured_article, blog_previews] (TO DO)
+#  autogenerate: [blog_previews] (TO DO)
+
+- name: blog_page
+  unique: false # Allow multiple blog posts of course (one page per post)
+  elements:
+  - blog_page_metadata
+  - blog_page_preview
+#  - blog_header (TO DO)
+#  - blog_content (TO DO)
+  autogenerate:
+  - blog_page_metadata
+  - blog_page_preview
+#  - blog_header (TO DO)
+#  - blog_content (TO DO)
+
+
+
+# == Global Pages
+- name: hamburger_menu
+  layoutpage: true
+  unique: true
+  elements:
+  - hamburger_menu_list
+  - hamburger_menu_boxed_page
+  - hamburger_menu_header
+  - hamburger_menu_line
+
+- name: newsletter_signup
+  layoutpage: true # Global page
+  unique: true     # Only allow one page instance to be used and edited across the site
+  cache: false     # Recommended for forms according to guides.alchemy-cms.com
+  elements:
+  - newsletter_signup_text
+  - newsletter_signup_form
+  autogenerate:
+  - newsletter_signup_text
+  - newsletter_signup_form

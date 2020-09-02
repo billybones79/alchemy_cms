@@ -14,23 +14,13 @@ module Alchemy
         @pages = Page.accessible_by(current_ability, :index)
       end
       @pages = @pages.includes(*page_includes)
-      if params[:page_layout].present?
-        Alchemy::Deprecation.warn <<~WARN
-          Passing page_layout parameter to Alchemy::Api::PagesController#index is deprecated.
-          Please pass a Ransack search query instead:
-              q: {
-                page_layout_eq: '#{params[:page_layout]}'
-              }
-        WARN
-        @pages = @pages.where(page_layout: params[:page_layout])
-      end
       @pages = @pages.ransack(params[:q]).result
 
       if params[:page]
         @pages = @pages.page(params[:page]).per(params[:per_page])
       end
 
-      render json: @pages, adapter: :json, root: 'pages', meta: meta_data
+      render json: @pages, adapter: :json, root: "pages", meta: meta_data
     end
 
     # Returns all pages as nested json object for tree views
@@ -70,9 +60,11 @@ module Alchemy
     end
 
     def load_page_by_urlname
+      return unless Language.current
+
       Language.current.pages.where(
         urlname: params[:urlname],
-        language_code: params[:locale] || Language.current.code
+        language_code: params[:locale] || Language.current.code,
       ).includes(page_includes).first
     end
 
@@ -80,7 +72,7 @@ module Alchemy
       {
         total_count: total_count_value,
         per_page: per_page_value,
-        page: page_value
+        page: page_value,
       }
     end
 
@@ -104,25 +96,26 @@ module Alchemy
       [
         :tags,
         {
+          language: :site,
           elements: [
             {
               nested_elements: [
                 {
                   contents: {
-                    essence: :ingredient_association
-                  }
+                    essence: :ingredient_association,
+                  },
                 },
-                :tags
-              ]
+                :tags,
+              ],
             },
             {
               contents: {
-                essence: :ingredient_association
-              }
+                essence: :ingredient_association,
+              },
             },
-            :tags
-          ]
-        }
+            :tags,
+          ],
+        },
       ]
     end
   end

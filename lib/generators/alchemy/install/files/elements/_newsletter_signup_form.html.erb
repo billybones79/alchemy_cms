@@ -1,0 +1,33 @@
+<%- cache(newsletter_signup_form) do -%>
+
+  <%# Render sign-up form (<form>) inside a double <div> with the right classes
+      for each. Since the "class" option overwrites the default class
+      (newsletter_signup_form), add it explicitly to help with styling. %>
+  <%= element_view_for(
+        newsletter_signup_form,
+        tag: 'div',
+        class: 'newsletter_signup_form newsletter-form mt-5 mt-xl-0 col-12 col-xl-7 d-flex align-items-center'
+      ) do |el| -%>
+    <div class="form-holder">
+      <form>
+
+        <%# Render input field for the email address by using the supplied hint
+            as a label. Also add an essence-specific class to help with styling. %>
+        <div class="focus-effect">
+          <label class="newsletter_signup_form_hint"><%= el.render :hint -%></label>
+          <input type="email" />
+        </div>
+
+        <%# Render static button for submitting the form %>
+        <div class="mt-3 mt-xl-0 button full-width-button icon-hover button-radius d-flex align-items-center justify-content-center opaque-main position-relative">
+          <div class="d-flex align-items-center justify-content-center ">
+            <a class="position-absolute w-100 h-100" href="#"></a>
+            <i class="fa fa-paper-plane" aria-hidden="true"></i>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  <%- end -%>
+
+<%- end -%>
