@@ -461,16 +461,20 @@ module Alchemy
       #we're moving up the tree, trying to find a page that is either translated in the correct language, or the root page, to set as parent
       if !self.language_root && self.translations.where("alchemy_page_translations.language_id = ?", language).count==0
         #this page is not translated, so we will create a translation and set it's parent to be the translated parent
-        page_copy= Page.copy(self, language_id: language)
+
+        page_copy= Page.copy(self, language_id: language, parent: parent.translate_in(language))
+
         link_translation page_copy
 
         #move it to be the translation of the parent
-        page_copy.move_to_child_of( parent.translate_in language)
+        #page_copy.move_to_child_of( parent.translate_in language)
         return page_copy
       elsif self.language_root
+
         #we've hit the root, so just return the root in the target language
         return Page.language_root_for(language)
       else
+
         #this page is already translated
         return self.translations.where("alchemy_page_translations.language_id = ?", language)
       end
